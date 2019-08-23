@@ -1,7 +1,7 @@
 # RNAseq-NF
 RNAseq expression quantification pipeline (prototype)
 
-To run this pipeline, make sure youre using the ['v19.05.0-edge'](https://github.com/nextflow-io/nextflow/releases/tag/v19.05.0-edge release).
+To run this pipeline, make sure youre using the ![v19.05.0-edge](https://github.com/nextflow-io/nextflow/releases/tag/v19.05.0-edge release).
 
 Run this pipeline on the HPC.
 
