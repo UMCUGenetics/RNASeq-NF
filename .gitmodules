@@ -1,0 +1,3 @@
+[submodule "NextflowModules"]
+	path = NextflowModules
+	url = https://github.com/UMCUGenetics/NextflowModules.git
