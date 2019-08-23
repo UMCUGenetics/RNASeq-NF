@@ -6,6 +6,6 @@ To run this pipeline, make sure youre using the DSL2 development release (https:
 
 ```
 module load Java/1.8.0_60
-sh nextflow run RNAseq-Reloaded/main.nf --outdir /path/to/out/dir --samplesheet /path/to/samplesheet.tsv -profile sge
+sh nextflow run RNAseq-NF/main.nf --outdir /path/to/out/dir --samplesheet /path/to/samplesheet.tsv -profile sge
 ```
 
