@@ -1,60 +1,41 @@
 #!/usr/bin/env nextflow
 
-params.run_fastqc = true
-params.run_star = true
-
 nextflow.preview.dsl=2
 
+include './utils/fastq.nf' params(params)
+include star_mapping from './workflows/star_mapping.nf' params(params) 
+include pre_mapping_QC from './workflows/pre_mapping_QC.nf' params(params)
+include post_mapping_QC from './workflows/post_mapping_QC.nf' params(params)
+include markdup_mapping from './workflows/mapping_deduplication.nf' params(params)
 
-if (params.endness == "paired"){
-  //Return paired-end channel
-  Channel.fromPath( file(params.samplesheet) )
-    .splitCsv(header: true, sep: '\t')
-    .map{row ->
-        def sample = row['sampleid']
-        def reads1 = row['R1'].tokenize( ',' ).collect { file(it) }
-        def reads2 = row['R2'].tokenize( ',' ).collect { file(it) }
-        return [ sample, reads1, reads2 ]
+
+workflow {
+  main :
+    genome_index = Channel.fromPath(params.star_index)
+    genome_bed = Channel.fromPath(params.genome_bed)
+    fastq_files = extractFastqFromDir(params.fastq_path)
+    if (params.singleEnd) {
+        r2 = []
+	trimmed = pre_mapping_QC(fastq_files)
+	merged = trimmed.groupTuple(by:0).map { sample_id, rg_ids, reads, logs, fqc -> [sample_id, rg_ids[0], reads, r2] }
+ 	mapped = star_mapping(merged, genome_index.collect())
+        mixed = mapped.bams.join(mapped.bais)
+        post_mapping_QC(mixed.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_bed.collect())
+        markdup_mapping(mixed.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
     }
-    .tap{samples_R1_R2_fastq} // set of all fastq R1 R2 per sample
-    .map { sample, reads1, reads2 ->
-        return [ sample, [reads1, reads2 ].flatten() ]
-    }
-    .tap{samples_all_fastq} // set of all fastq per sample
+    
+
+    //trimmed_fq = pre_mapping_QC(fastq_files)
+    //             .map{ sample_id, rg_ids, logs, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
+    //             .groupTuple(by:0)
+    //             .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1, r2] }       
+    
+    
+  
+
+  publish:
+    pre_mapping_QC.out to: "${params.out_dir}/PRE-QC/trimmed", mode: 'copy' 
+    star_mapping.out to: "${params.out_dir}/mapping/STAR", mode: 'copy'   
+    post_mapping_QC.out to: "${params.out_dir}/POST-QC/RSeQC", mode: 'copy'
+    markdup_mapping.out to: "${params.out_dir}/mapping/MarkDup", mode: 'copy'
 }
-//Return single ended channel
-else {
-   Channel.fromPath( file(params.samplesheet) )
-    .splitCsv(header: true, sep: '\t')
-    .map{row ->
-        def sample = row['sampleid']
-        def reads1 = row['R1'].tokenize( ',' ).collect { file(it) }
-        return [ sample, reads1  ]
-    }
-    .tap{samples_all_fastq; samples_all_fastq_star } // set of all fastq per sam
-}
-
-if (params.run_fastqc){
-    include FastQC from 'NextflowModules/FastQC/0.11.8/FastQC.nf' params(params)
-    FastQC(samples_all_fastq)
-}
-
-if (params.run_star) {
-    index = Channel.fromPath(params.star_index)
-    include AlignReads from 'NextflowModules/STAR/2.4.2a/AlignReads.nf' params(params)
-    include featureCount from 'NextflowModules/HTseq/featureCount.nf' params(params)
-    aligned = AlignReads(samples_R1_R2_fastq, index.collect())
-    featureCount(aligned[0])
-}
-
-
-
-
-
-
-
-
-
-
-
-
