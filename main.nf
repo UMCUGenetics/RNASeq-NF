@@ -3,10 +3,10 @@
 nextflow.preview.dsl=2
 
 include './NextflowModules/Utils/fastq.nf' params(params)
-include star_mapping from './workflows/star_mapping.nf' params(params) 
-include pre_mapping_QC from './workflows/pre_mapping_QC.nf' params(params)
-include post_mapping_QC from './workflows/post_mapping_QC.nf' params(params)
-include markdup_mapping from './workflows/mapping_deduplication.nf' params(params)
+include star_mapping from './sub-workflows/star_mapping.nf' params(params) 
+include pre_mapping_QC from './sub-workflows/pre_mapping_QC.nf' params(params)
+include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
+include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 
 
 workflow {
