@@ -2,7 +2,7 @@
 
 nextflow.preview.dsl=2
 
-include './utils/fastq.nf' params(params)
+include './NextflowModules/Utils/fastq.nf' params(params)
 include star_mapping from './workflows/star_mapping.nf' params(params) 
 include pre_mapping_QC from './workflows/pre_mapping_QC.nf' params(params)
 include post_mapping_QC from './workflows/post_mapping_QC.nf' params(params)
@@ -15,9 +15,8 @@ workflow {
     genome_bed = Channel.fromPath(params.genome_bed)
     fastq_files = extractFastqFromDir(params.fastq_path)
     if (params.singleEnd) {
-        r2 = []
 	trimmed = pre_mapping_QC(fastq_files)
-	merged = trimmed.groupTuple(by:0).map { sample_id, rg_ids, reads, logs, fqc -> [sample_id, rg_ids[0], reads, r2] }
+	merged = trimmed.groupTuple(by:0).map { sample_id, rg_ids, reads, logs, fqc -> [sample_id, rg_ids[0], reads, []]}
  	mapped = star_mapping(merged, genome_index.collect())
         mixed = mapped.bams.join(mapped.bais)
         post_mapping_QC(mixed.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_bed.collect())
