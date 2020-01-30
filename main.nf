@@ -15,23 +15,25 @@ workflow {
     genome_bed = Channel.fromPath(params.genome_bed)
     fastq_files = extractFastqFromDir(params.fastq_path)
     if (params.singleEnd) {
-	trimmed = pre_mapping_QC(fastq_files)
-	merged = trimmed.groupTuple(by:0).map { sample_id, rg_ids, reads, logs, fqc -> [sample_id, rg_ids[0], reads, []]}
- 	mapped = star_mapping(merged, genome_index.collect())
-        mixed = mapped.bams.join(mapped.bais)
-        post_mapping_QC(mixed.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_bed.collect())
-        markdup_mapping(mixed.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
-    }
+        if (!params.skipTrimming) {
+	    trimmed = pre_mapping_QC(fastq_files)
+	    final_fastqs = trimmed.groupTuple(by:0).map { sample_id, rg_ids, reads, logs, fqc -> [sample_id, rg_ids[0], reads, []]}
+ 	} else {
+            final_fastqs = fastq_files.groupTuple(by:0).map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten(), []]}
+        }          
+    } else {
+        if (!params.skipTrimming) {
+            trimmed = pre_mapping_QC(fastq_files)
+            final_fastqs = trimmed.map{ sample_id, rg_ids, reads, fqc, logs -> [sample_id, rg_ids, reads[0], reads[1]] }.groupTuple(by:0).map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1, r2] }
+        } else {
+            final_fastqs = fastq_files.map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }.groupTuple(by:0).map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1, r2] }
+        }
+    } 
+    star_mapped = star_mapping(final_fastqs, genome_index.collect())
+    mapped = star_mapped.bams.join(star_mapped.bais)
+    post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_bed.collect())
+    markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
     
-
-    //trimmed_fq = pre_mapping_QC(fastq_files)
-    //             .map{ sample_id, rg_ids, logs, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
-    //             .groupTuple(by:0)
-    //             .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1, r2] }       
-    
-    
-  
-
   publish:
     pre_mapping_QC.out to: "${params.out_dir}/PRE-QC/trimmed", mode: 'copy' 
     star_mapping.out to: "${params.out_dir}/mapping/STAR", mode: 'copy'   
