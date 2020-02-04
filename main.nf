@@ -16,9 +16,9 @@ workflow {
     genome_bed = Channel.fromPath(params.genome_bed)
     genome_model = Channel.fromPath(params.genome_gtf)
     fastq_files = extractFastqFromDir(params.fastq_path)
-    fastq_files.view()
-    FastQC(fastq_files) 
-    
+    if (!params.skipFastQC) {
+    	FastQC(fastq_files) 
+    }
     if (params.singleEnd) {
         if (!params.skipTrimming) {
 	    trimmed = TrimGalore(fastq_files)
@@ -36,10 +36,15 @@ workflow {
     } 
     star_mapped = star_mapping(final_fastqs, genome_index.collect())
     mapped = star_mapped.bams.join(star_mapped.bais)
-    post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_bed.collect())
-    markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
-    Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_model.collect())
- 
+    if (!params.skipPostQC) {
+    	post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_bed.collect())
+    }
+    if (!params.skipMarkDup {
+    	markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
+    }
+    if (!params.skipCount) {
+   	 Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_model.collect())
+    }
   publish:
     FastQC.out to: "${params.out_dir}/QC/FastQC", mode: 'copy'
     TrimGalore.out to: "${params.out_dir}/Trimming", mode: 'copy' 
