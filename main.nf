@@ -4,7 +4,7 @@ nextflow.preview.dsl=2
 
 include './NextflowModules/Utils/fastq.nf' params(params)
 include TrimGalore from './NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
-include FastQC from './NextflowModules/FastQC/0.11.5/FastQC.nf'
+include FastQC from './NextflowModules/FastQC/0.11.5/FastQC.nf' params(params)
 include star_mapping from './sub-workflows/star_mapping.nf' params(params) 
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
@@ -39,11 +39,11 @@ workflow {
     if (!params.skipPostQC) {
     	post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_bed.collect())
     }
-    if (!params.skipMarkDup {
+    if (!params.skipMarkDup) {
     	markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
     }
     if (!params.skipCount) {
-   	Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_model.collect())
+    	Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_model.collect())
     }
   publish:
     FastQC.out to: "${params.out_dir}/QC/FastQC", mode: 'copy'
