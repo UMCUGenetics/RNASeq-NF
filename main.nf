@@ -43,7 +43,7 @@ workflow {
     	markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
     }
     if (!params.skipCount) {
-   	 Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_model.collect())
+   	Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_model.collect())
     }
   publish:
     FastQC.out to: "${params.out_dir}/QC/FastQC", mode: 'copy'
