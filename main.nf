@@ -4,7 +4,7 @@ nextflow.preview.dsl=2
 
 include './NextflowModules/Utils/fastq.nf' params(params)
 include TrimGalore from './NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
-include FastQC from ' NextflowModules/FastQC/0.11.8/FastQC.nf'
+include FastQC from './NextflowModules/FastQC/0.11.8/FastQC.nf'
 include star_mapping from './sub-workflows/star_mapping.nf' params(params) 
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
