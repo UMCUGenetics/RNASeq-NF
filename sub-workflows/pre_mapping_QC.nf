@@ -1,4 +1,4 @@
-include TrimGalore from '../../NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
+include TrimGalore from '../NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
 
 workflow pre_mapping_QC {
     get:
