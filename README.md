@@ -11,7 +11,7 @@ The pipeline performs the following tasks.
 * PCR duplicate detection (MarkDup)
 * Expression quantification (HTSeq-count)
 
-The implementation is work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) link](http://example.com "Title").
+The implementation is work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq).
 
 
 
