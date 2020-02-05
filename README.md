@@ -11,7 +11,7 @@ The pipeline performs the following tasks.
 * PCR duplicate detection (MarkDup)
 * Expression quantification (HTSeq-count)
 
-The implementation is work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq).
+The implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to development in the field. Several components have been adapted from the (nf-core rnaseq pipeline)[https://github.com/nf-core/rnaseq] and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup.
 
 
 
