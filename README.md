@@ -13,7 +13,7 @@ The pipeline performs the following tasks.
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to development in the field. Several components have been adapted from the [nf-core rnaseq](https://github.com/nf-core/rnaseq) Nextflow community pipeline and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup.
 
-**Installation**
+***Installation***
 
 Install [Nextflow(https://www.nextflow.io/)
 
@@ -27,13 +27,13 @@ Make sure you have access to the Singularity containers on the HPC.
 ```
 Technically, this should also work with Biocontainers.
 
-**Usage (UMCU HPC)**
+***Usage (UMCU HPC)***
 
-Replace test-run-config with your own configuration. For local execution, simply remove the -profile argument.
+Replace test-run-config with your own configuration.
 ```
 module load Java/1.8.0_60
 nextflow run RNAseq-NF/main.nf -c RNAseq-NF/test/test-run.config -profile {sge,slurm}
 ```
-
+For local execution, simply remove the -profile argument.
 
 
