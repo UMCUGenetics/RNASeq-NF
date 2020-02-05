@@ -21,10 +21,11 @@ Clone the GitHub repository
 ```
 git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
-Make sure you have access to the singulairy containers. Technically, this should also work with Biocontainers.
+Make sure you have access to the singulairy containers on the HPC. 
 ```
 /hpc/local/CentOS7/cog_bioinf/nextflow_containers/
 ```
+Technically, this should also work with Biocontainers.
 
 **Usage (UMCU HPC)**
 
@@ -32,4 +33,6 @@ Make sure you have access to the singulairy containers. Technically, this should
 module load Java/1.8.0_60
 nextflow run RNAseq-NF/main.nf -c RNAseq-NF/test/test-run.config -profile sge
 ```
+
+
 
