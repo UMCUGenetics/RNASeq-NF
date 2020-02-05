@@ -23,11 +23,11 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
 Make sure you have access to the Singularity containers on the HPC. 
 ```
-/hpc/local/CentOS7/cog_bioinf/nextflow_containers/
+/hpc/local/CentOS7/cog_bioinf/nextflow_containers
 ```
 Technically, this should also work with Biocontainers.
 
-***Usage (UMCU HPC)***
+***Usage instructions***
 
 Replace test-run-config with your own configuration.
 ```
