@@ -1,6 +1,6 @@
 # RNASeq-NF
 
-RNASeq-NF is an NGS analysis pipeline that performs expression quantification on RNASeq data.
+RNASeq-NF is an NGS analysis pipeline for RNA expression quantification.
 
 The pipeline performs the following tasks.
 
