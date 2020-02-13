@@ -4,7 +4,7 @@ nextflow.preview.dsl=2
 
 include './NextflowModules/Utils/fastq.nf' params(params)
 include FastQC from './NextflowModules/FastQC/0.11.5/FastQC.nf' params(params)
-include trimming from './sub-workflows/trimming.nf' params(params)
+include TrimGalore from './NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
 include star_mapping from './sub-workflows/star_mapping.nf' params(params) 
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
@@ -19,14 +19,14 @@ workflow {
     FastQC(fastq_files) 
     if (params.singleEnd) {
         if (!params.skipTrimming) {
-	    trimmed = trimming(fastq_files)
+	    trimmed = TrimGalore(fastq_files)
 	    final_fastqs = trimmed.groupTuple(by:0).map { sample_id, rg_ids, reads, logs, fqc -> [sample_id, rg_ids[0], reads.toSorted(), []]}
  	} else {
             final_fastqs = fastq_files.groupTuple(by:0).map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), []]}
         }          
     } else {
         if (!params.skipTrimming) {
-            trimmed = trimming(fastq_files)
+            trimmed = TrimGalore(fastq_files)
             final_fastqs = trimmed.map{ sample_id, rg_ids, reads, fqc, logs -> [sample_id, rg_ids, reads[0], reads[1]] }.groupTuple(by:0).map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
         } else {
             final_fastqs = fastq_files.map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }.groupTuple(by:0).map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
@@ -40,6 +40,7 @@ workflow {
     
   publish:
     FastQC.out to: "${params.out_dir}/QC/FastQC", mode: 'copy'
+    TrimGalore.out to: "${params.out_dir}/trimming/TrimGalore", mode: 'copy'
     final_fastqs to: "${params.out_dir}/Fastqs", mode: 'copy' 
     star_mapping.out to: "${params.out_dir}/mapping/STAR", mode: 'copy'   
     post_mapping_QC.out to: "${params.out_dir}/POST-QC/RSeQC", mode: 'copy'
