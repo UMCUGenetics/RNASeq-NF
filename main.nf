@@ -3,8 +3,8 @@
 nextflow.preview.dsl=2
 
 include './NextflowModules/Utils/fastq.nf' params(params)
-include TrimGalore from './NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
 include FastQC from './NextflowModules/FastQC/0.11.5/FastQC.nf' params(params)
+include TrimGalore from './NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
 include star_mapping from './sub-workflows/star_mapping.nf' params(params) 
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
@@ -40,7 +40,8 @@ workflow {
     
   publish:
     FastQC.out to: "${params.out_dir}/QC/FastQC", mode: 'copy'
-    TrimGalore.out to: "${params.out_dir}/Trimming", mode: 'copy' 
+    TrimGalore.out to: "${params.out_dir}/trimming/TrimGalore", mode: 'copy'
+    final_fastqs to: "${params.out_dir}/Fastqs", mode: 'copy' 
     star_mapping.out to: "${params.out_dir}/mapping/STAR", mode: 'copy'   
     post_mapping_QC.out to: "${params.out_dir}/POST-QC/RSeQC", mode: 'copy'
     markdup_mapping.out to: "${params.out_dir}/mapping/MarkDup", mode: 'copy'
