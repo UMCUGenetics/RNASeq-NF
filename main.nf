@@ -38,12 +38,5 @@ workflow {
     markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id,  bams, bai] })
     Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] },genome_model.collect())
     
-  publish:
-    FastQC.out to: "${params.out_dir}/QC/FastQC", mode: 'copy'
-    TrimGalore.out to: "${params.out_dir}/trimming/TrimGalore", mode: 'copy'
-    final_fastqs to: "${params.out_dir}/Fastqs", mode: 'copy' 
-    star_mapping.out to: "${params.out_dir}/mapping/STAR", mode: 'copy'   
-    post_mapping_QC.out to: "${params.out_dir}/POST-QC/RSeQC", mode: 'copy'
-    markdup_mapping.out to: "${params.out_dir}/mapping/MarkDup", mode: 'copy'
-    Count.out to: "${params.out_dir}/HTSeq/counts", mode: 'copy'
+ 
 }
