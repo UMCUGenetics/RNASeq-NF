@@ -10,6 +10,7 @@ include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(p
 include Count from './NextflowModules/HTSeq/0.6.0/Count.nf' params(params)
 include AlignReads from './NextflowModules/STAR/2.4.2a/AlignReads.nf' params(params)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
+include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -36,6 +37,17 @@ workflow {
       genome_gtf = Channel
             .fromPath(params.genome_gtf, checkIfExists: true)
             .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
+    }
+    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
+      genome_fasta = Channel
+            .fromPath(params.genome_fasta, checkIfExists: true)
+            .ifEmpty { exit 1, "Genome fasta file not found: ${params.genome_fasta}"}
+      genome_idx = Channel
+            .fromPath(params.genome_index, checkIfExists: true)
+            .ifEmpty { exit 1, "Genome index not found: ${params.genome_index}"}
+      genome_dict = Channel
+            .fromPath(params.genome_dict, checkIfExists: true)
+            .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
     }
     if (!params.skipFastQC) {
       FastQC(fastq_files) 
@@ -78,5 +90,9 @@ workflow {
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
+    }
+    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
+          split_bam = gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
+          split_bam.view()
     }
 }
