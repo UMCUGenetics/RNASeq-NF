@@ -11,6 +11,14 @@ include Count from './NextflowModules/HTSeq/0.6.0/Count.nf' params(params)
 include AlignReads from './NextflowModules/STAR/2.4.2a/AlignReads.nf' params(params)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 
+if (!params.fastq_path) {
+   exit 1, "fastq directory does not exist. Please provide correct path!"
+}
+
+if (!params.out_dir) {
+   exit 1, "Output directory not found. Please provide the correct path!"
+}
+
 workflow {
   main :
     fastq_files = extractFastqFromDir(params.fastq_path)
