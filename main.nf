@@ -11,6 +11,8 @@ include Count from './NextflowModules/HTSeq/0.6.0/Count.nf' params(params)
 include AlignReads from './NextflowModules/STAR/2.4.2a/AlignReads.nf' params(params)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
+include Quant from './NextflowModules/Salmon/0.13.1/quant.nf' params(params)
+
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -49,6 +51,11 @@ workflow {
             .fromPath(params.genome_dict, checkIfExists: true)
             .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
     }
+    if (!params.skipSalmon && !params.skipMapping) {
+      transcriptome_fasta = Channel
+            .fromPath(params.transcriptome_fasta, checkIfExists: true)
+            .ifEmpty { exit 1, "Transcripts fasta not found: ${params.transcriptome_fasta}"}
+    }
     if (!params.skipFastQC) {
       FastQC(fastq_files) 
     }
@@ -86,13 +93,19 @@ workflow {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
     }
     if (!params.skipCount && !params.skipMapping) {
-	  Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
+      Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
+    }
+    if (!params.skipSalmon && !params.skipMapping ) {
+      Quant(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, transcriptome_fasta.collect())
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
           split_bam = gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
           split_bam.view()
     }
+
+    
+
 }
