@@ -12,7 +12,7 @@ include AlignReads from './NextflowModules/STAR/2.4.2a/AlignReads.nf' params(par
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/quant.nf' params(params)
-
+include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -58,6 +58,9 @@ workflow {
     }
     if (!params.skipFastQC) {
       FastQC(fastq_files) 
+    }
+    if (!params.skipFastp) {
+      Fastp(fastq_files) 
     }
     if (params.singleEnd) {
       if (!params.skipTrimming) {
@@ -105,7 +108,4 @@ workflow {
           split_bam = gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
           split_bam.view()
     }
-
-    
-
 }
