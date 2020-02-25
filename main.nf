@@ -87,7 +87,6 @@ workflow {
         }
     } 
     if (!params.skipMapping) {
-      final_fastqs.view()
       temp  = AlignReads(final_fastqs, genome_index.collect())
       bais = Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = temp.join(bais)
@@ -102,6 +101,7 @@ workflow {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
     if (!params.skipSalmon ) {
+      //Add helper to merge fastqs from multiple lanes before quantification
       remap = final_fastqs.map{ sample_id, rg_ids, r1, r2 -> [sample_id, [r1,r2].flatten()] }
       Quant(remap, salmon_index.collect())
     }
