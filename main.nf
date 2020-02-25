@@ -3,8 +3,6 @@
 nextflow.preview.dsl=2
 
 include './NextflowModules/Utils/fastq.nf' params(params)
-include FastQC from './NextflowModules/FastQC/0.11.5/FastQC.nf' params(params)
-include TrimGalore from './NextflowModules/TrimGalore/0.6.1/TrimGalore.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include Count from './NextflowModules/HTSeq/0.6.0/Count.nf' params(params)
@@ -24,9 +22,6 @@ if (!params.out_dir) {
 workflow {
   main :
     fastq_files = extractFastqFromDir(params.fastq_path)
-    if (!params.skipFastp) {
-      Fastp(fastq_files)      
-    }
     if (!params.skipMapping) {
       genome_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
@@ -58,14 +53,11 @@ workflow {
             .fromPath(params.salmon_index, checkIfExists: true)
             .ifEmpty { exit 1, "Transcripts fasta not found: ${params.salmon_index}"}
     }
-    if (!params.skipFastQC) {
-      FastQC(fastq_files) 
-    }
     if (params.singleEnd) {
-      if (!params.skipTrimming) {
-	    final_fastqs = TrimGalore(fastq_files)
+      if (!params.skipFastp) {
+	    final_fastqs = Fastp(fastq_files)
             .groupTuple(by:0)
-            .map { sample_id, rg_ids, reads, logs, fqc -> [sample_id, rg_ids[0], reads.toSorted(), []] }
+            .map { sample_id, rg_ids, json, reads -> [sample_id, rg_ids[0], reads.toSorted(), []] }
             
  	  } else {
         final_fastqs = fastq_files
@@ -74,9 +66,9 @@ workflow {
       }
     //Paired-end mode         
     } else {
-        if (!params.skipTrimming) {
-          final_fastqs =  TrimGalore(fastq_files)
-            .map{ sample_id, rg_ids, reads, fqc, logs -> [sample_id, rg_ids, reads[0], reads[1]] }
+        if (!params.skipFastp) {
+          final_fastqs =  Fastp(fastq_files)
+            .map{ sample_id, rg_ids, json, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
             .groupTuple(by:0)
             .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
         } else {
