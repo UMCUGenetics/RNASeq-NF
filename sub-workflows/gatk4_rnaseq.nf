@@ -18,9 +18,9 @@ workflow gatk4_rnaseq {
       GatherBaseRecalibrationTables(BaseRecalibrationTable.out.groupTuple())
       //Perform BQSR
       BaseRecalibration(
-      SplitNCigarReads.out
-        .combine(GatherBaseRecalibrationTables.out, by:0)
-        .combine(SplitIntervals.out.flatten())
+        SplitNCigarReads.out
+           .combine(GatherBaseRecalibrationTables.out, by:0)
+           .combine(SplitIntervals.out.flatten())
       )
       //Merge recalibrated bams
       MergeBams(
