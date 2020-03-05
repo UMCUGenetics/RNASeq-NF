@@ -4,6 +4,8 @@ include BaseRecalibrationTable from '../NextflowModules/GATK/4.1.3.0/BaseRecalib
 include GatherBaseRecalibrationTables from '../NextflowModules/GATK/4.1.3.0/GatherBaseRecalibrationTables.nf' params(params)
 include BaseRecalibration from '../NextflowModules/GATK/4.1.3.0/BaseRecalibration.nf' params(params)
 include MergeBams from '../NextflowModules/Sambamba/0.6.8/MergeBams.nf' params(params)
+include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params(params)
+include CombineGVCFs from '../NextflowModules/GATK/4.1.3.0/CombineGVCFs.nf' params(params)
 
 workflow gatk4_rnaseq {
     get:
@@ -28,7 +30,19 @@ workflow gatk4_rnaseq {
            .groupTuple()
            .map{ [it[0],it[2],it[3]] }
       )
+      HaplotypeCaller( MergeBams.out.combine(SplitIntervals.out.flatten()))
+      vcf_combine_per_interval = HaplotypeCaller.out
+         .groupTuple(by:[1])
+         .map{
+           sample_ids, interval, gvcfs, idxs, interval_files ->
+           [run_id, interval, gvcfs, idxs, interval_files[0]]
+         } 
+       /* Combine GVCFs per interval */
+      CombineGVCFs(
+       vcf_combine_per_interval
+      )
+
     emit:
       bams_recal = MergeBams.out
-     
+      vcf = CombineGVCFs.out
 }

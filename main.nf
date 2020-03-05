@@ -11,6 +11,7 @@ include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(params)
 include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
+include AddOrReplaceReadGroups from './NextflowModules/Picard/2.10.3/AddOrReplaceReadGroups.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -79,9 +80,11 @@ workflow {
         }
     } 
     if (!params.skipMapping) {
-      temp  = AlignReads(final_fastqs, genome_index.collect())
+      temp = AlignReads(final_fastqs, genome_index.collect())
       bais = Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = temp.join(bais)
+      //AddOrReplaceReadGroups( AlignReads.out.map { sample_id, rg_id,  bams, unmapped, log1, log2, tab -> [sample_id, rg_id, bams] } )
+
     }
     if (!params.skipPostQC && !params.skipMapping) {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
@@ -98,7 +101,7 @@ workflow {
       Quant(remap, salmon_index.collect())
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
-          split_bam = gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
-          split_bam.view()
+          gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
+         
     }
 }
