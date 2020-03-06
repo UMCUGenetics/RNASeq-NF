@@ -11,7 +11,6 @@ include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(params)
 include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
-include AddOrReplaceReadGroups from './NextflowModules/Picard/2.10.3/AddOrReplaceReadGroups.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
