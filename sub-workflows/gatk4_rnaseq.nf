@@ -6,6 +6,7 @@ include BaseRecalibration from '../NextflowModules/GATK/4.1.3.0/BaseRecalibratio
 include MergeBams from '../NextflowModules/Sambamba/0.6.8/MergeBams.nf' params(params)
 include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params(params)
 include MergeVCFs from '../NextflowModules/GATK/4.1.3.0/MergeVCFs.nf' params(params)
+include VariantFiltration from '../NextflowModules/GATK/4.1.3.0/VariantFiltration.nf' params(params)
 
 workflow gatk4_rnaseq {
     get:
@@ -37,7 +38,11 @@ workflow gatk4_rnaseq {
           [sample_id, gvcfs, idxs]
         }
       )
+      VariantFiltration( MergeVCFs.out.map{
+          sample_id, vcfs, idxs -> [sample_id, "filtered", "RNA", vcfs, idxs] }
+      )
     emit:
       bams_recal = MergeBams.out
       vcf = MergeVCFs.out
+      filter = VariantFiltration.out 
 }
