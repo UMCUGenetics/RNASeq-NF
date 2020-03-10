@@ -11,6 +11,7 @@ include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(params)
 include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
+include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -96,8 +97,13 @@ workflow {
     }
     if (!params.skipSalmon ) {
       //Add helper to merge fastqs from multiple lanes before quantification
-      remap = final_fastqs.map{ sample_id, rg_ids, r1, r2 -> [sample_id, [r1,r2].flatten()] }
-      Quant(remap, salmon_index.collect())
+      if (params.singleEnd) {
+        mergeFastqLanes (final_fastqs.map{ sample_id, rg_ids, reads -> [sample_id, reads] })
+      } else {
+        mergeFastqLanes ( final_fastqs.map{ sample_id, rg_ids, r1, r2 -> [sample_id, r1, r2] } ).view()
+        Quant(mergeFastqLanes.out, salmon_index.collect())     
+      }
+     
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
           gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
