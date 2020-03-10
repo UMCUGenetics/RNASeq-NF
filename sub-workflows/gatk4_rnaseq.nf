@@ -39,10 +39,9 @@ workflow gatk4_rnaseq {
         }
       )
       VariantFiltration( MergeVCFs.out.map{
-          sample_id, vcfs, idxs -> [sample_id, "filtered", "RNA", vcfs, idxs] }
+          sample_id, vcfs, idxs -> [sample_id, "all", "RNA", vcfs, idxs] }
       )
     emit:
       bams_recal = MergeBams.out
-      vcf = MergeVCFs.out
       filter = VariantFiltration.out 
 }
