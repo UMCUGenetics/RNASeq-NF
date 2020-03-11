@@ -96,15 +96,14 @@ workflow {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
     if (!params.skipSalmon ) {
-      //Add helper to merge fastqs from multiple lanes before quantification
-      if (params.singleEnd) {
-        mergeFastqLanes (final_fastqs.map{ sample_id, rg_ids, reads -> [sample_id, reads] })
+      if (!params.skipMergeLanes) {
+        Quant ( mergeFastqLanes (final_fastqs), salmon_index.collect() )
+      } else if (!params.singleEnd && params.skipMergeLanes) {
+          Quant ( final_fastqs.map {sample_id, rg_id, r1, r2 -> [sample_id, [r1,r2].flatten()] }, salmon_index.collect() )
       } else {
-        mergeFastqLanes ( final_fastqs.map{ sample_id, rg_ids, r1, r2 -> [sample_id, r1, r2] } ).view()
-        Quant(mergeFastqLanes.out, salmon_index.collect())     
+          Quant ( final_fastqs.map {sample_id, rg_id, reads -> [sample_id, reads] }, salmon_index.collect() ) 
       }
-     
-    }
+    } 
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
           gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
          
