@@ -5,6 +5,7 @@ nextflow.preview.dsl=2
 include './NextflowModules/Utils/fastq.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
+include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
 include Count from './NextflowModules/HTSeq/0.6.0/Count.nf' params(params)
 include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(params)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
@@ -12,6 +13,7 @@ include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(params)
 include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
+
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -22,6 +24,7 @@ if (!params.out_dir) {
 
 workflow {
   main :
+    run_id = "Test_run"
     fastq_files = extractFastqFromDir(params.fastq_path)
     if (!params.skipMapping) {
       genome_index = Channel
@@ -58,7 +61,7 @@ workflow {
       if (!params.skipFastp) {
 	    final_fastqs = Fastp(fastq_files)
             .groupTuple(by:0)
-            .map { sample_id, rg_ids, json, reads -> [sample_id, rg_ids[0], reads.toSorted(), []] }
+            .map { sample_id, rg_ids, json, reads -> [sample_id, rg_ids[0], reads.toSorted(), [], json] }
             
  	  } else {
         final_fastqs = fastq_files
@@ -69,9 +72,9 @@ workflow {
     } else {
         if (!params.skipFastp) {
           final_fastqs =  Fastp(fastq_files)
-            .map{ sample_id, rg_ids, json, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
+            .map{ sample_id, rg_ids, json, reads -> [sample_id, rg_ids, reads[0], reads[1], json] }
             .groupTuple(by:0)
-            .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
+            .map{ sample_id, rg_ids, r1, r2, json -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted(), json] }
         } else {
           final_fastqs = fastq_files
             .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
@@ -80,11 +83,9 @@ workflow {
         }
     } 
     if (!params.skipMapping) {
-      temp = AlignReads(final_fastqs, genome_index.collect())
-      bais = Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
-      mapped = temp.join(bais)
-      //AddOrReplaceReadGroups( AlignReads.out.map { sample_id, rg_id,  bams, unmapped, log1, log2, tab -> [sample_id, rg_id, bams] } )
-
+      AlignReads(final_fastqs.map { [it[0], it[1], it[2], it[3]] }, genome_index.collect())
+      Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
+      mapped = AlignReads.out.join(Index.out)
     }
     if (!params.skipPostQC && !params.skipMapping) {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
@@ -108,4 +109,10 @@ workflow {
           gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
          
     }
+    if (!params.skipMultiQC) {
+      multiqc_report( final_fastqs.map { it[-1] }, 
+		      AlignReads.out.map{ [it[3], it[4]] }, 
+                      post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] }),  
+                      Count.out.map { it[1] })
+   }
 }
