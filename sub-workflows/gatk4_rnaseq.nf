@@ -42,6 +42,7 @@ workflow gatk4_rnaseq {
           sample_id, vcfs, idxs -> [sample_id, "all", "RNA", vcfs, idxs] }
       )
     emit:
-      bams_recal = MergeBams.out
-      filter = VariantFiltration.out 
+      MergeBams.out	
+      VariantFiltration.out 
+      GatherBaseRecalibrationTables.out
 }

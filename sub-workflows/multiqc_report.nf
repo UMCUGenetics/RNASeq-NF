@@ -5,9 +5,10 @@ workflow multiqc_report {
       fastp_logs
       star_logs
       post_mapping_qc_logs
-      htseq_logs
+      htseq_logs 
+      brecal_tables
     main: 
-      qc_files = Channel.empty().mix( fastp_logs, star_logs, post_mapping_qc_logs, htseq_logs).collect()
+      qc_files = Channel.empty().mix( fastp_logs, star_logs, post_mapping_qc_logs, htseq_logs, brecal_tables).collect()
       qc_files.view()
       MultiQC(qc_files)
 }

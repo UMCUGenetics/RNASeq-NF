@@ -113,6 +113,7 @@ workflow {
       multiqc_report( final_fastqs.map { it[-1] }, 
 		      AlignReads.out.map{ [it[3], it[4]] }, 
                       post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] }),  
-                      Count.out.map { it[1] })
+                      Count.out.map { it[1] },
+		      gatk4_rnaseq.out[2].map {it[1]})
    }
 }
