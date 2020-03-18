@@ -13,7 +13,7 @@ include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(params)
 include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
-
+include merge_counts from './/NextflowModules/Utils/merge_counts.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -100,9 +100,10 @@ workflow {
       if (!params.skipMergeLanes) {
         Quant ( mergeFastqLanes (final_fastqs), salmon_index.collect() )
       } else if (!params.singleEnd && params.skipMergeLanes) {
-          Quant ( final_fastqs.map {sample_id, rg_id, r1, r2 -> [sample_id, [r1,r2].flatten()] }, salmon_index.collect() )
+	  final_fastqs.view()
+          Quant ( final_fastqs.map {sample_id, rg_id, r1, r2, json -> [sample_id, [r1,r2].flatten()] }, salmon_index.collect() )
       } else {
-          Quant ( final_fastqs.map {sample_id, rg_id, reads -> [sample_id, reads] }, salmon_index.collect() ) 
+          Quant ( final_fastqs.map {sample_id, rg_id, reads, json -> [sample_id, reads] }, salmon_index.collect() ) 
       }
     } 
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
@@ -116,4 +117,7 @@ workflow {
                       Count.out.map { it[1] },
 		      gatk4_rnaseq.out[2].map {it[1]})
    }
+   merge_counts( "Test_run", Count.out.map { it[1] })
+
+
 }
