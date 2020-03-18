@@ -117,7 +117,6 @@ workflow {
                       Count.out.map { it[1] },
 		      gatk4_rnaseq.out[2].map {it[1]})
    }
-   merge_counts( "Test_run", Count.out.map { it[1] })
-
+   merge_counts( "Test_run", Count.out.map { it[1] }.collect())
 
 }
