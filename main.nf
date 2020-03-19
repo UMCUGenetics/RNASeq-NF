@@ -6,6 +6,10 @@ include './NextflowModules/Utils/fastq.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
+include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
+include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
+include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(params)
+include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(params)
 include Count from './NextflowModules/HTSeq/0.6.0/Count.nf' params(params)
 include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(params)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
@@ -13,7 +17,8 @@ include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(params)
 include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
-include merge_counts from './/NextflowModules/Utils/merge_counts.nf' params(params)
+include mergeHtseqCounts from './NextflowModules/Utils/mergeHtseqCounts.nf' params(params)
+include edgerRpkm from './NextflowModules/Utils/edgerRpkm.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -41,17 +46,17 @@ workflow {
             .fromPath(params.genome_gtf, checkIfExists: true)
             .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
     }
-    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
-      genome_fasta = Channel
-            .fromPath(params.genome_fasta, checkIfExists: true)
-            .ifEmpty { exit 1, "Genome fasta file not found: ${params.genome_fasta}"}
-      genome_idx = Channel
-            .fromPath(params.genome_index, checkIfExists: true)
-            .ifEmpty { exit 1, "Genome index not found: ${params.genome_index}"}
-      genome_dict = Channel
-            .fromPath(params.genome_dict, checkIfExists: true)
-            .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
-    }
+//    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
+//      genome_fasta = Channel
+//            .fromPath(params.genome_fasta, checkIfExists: true)
+//            .ifEmpty { exit 1, "Genome fasta file not found: ${params.genome_fasta}"}
+//      genome_idx = Channel
+//            .fromPath(params.genome_index, checkIfExists: true)
+//            .ifEmpty { exit 1, "Genome index not found: ${params.genome_index}"}
+//      genome_dict = Channel
+//            .fromPath(params.genome_dict, checkIfExists: true)
+//            .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
+//    }
     if (!params.skipSalmon) {
       salmon_index = Channel
             .fromPath(params.salmon_index, checkIfExists: true)
@@ -92,6 +97,11 @@ workflow {
     }
     if (!params.skipCount && !params.skipMapping) {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
+      //Merge HTSeq counts
+      mergeHtseqCounts( "Test_run", Count.out.map { it[1] }.collect())
+      //RPKM counts
+      edgerRpkm("Test_run", mergeHtseqCounts.out, params.gene_len)
+
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
@@ -106,17 +116,25 @@ workflow {
           Quant ( final_fastqs.map {sample_id, rg_id, reads, json -> [sample_id, reads] }, salmon_index.collect() ) 
       }
     } 
-    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
-          gatk4_rnaseq(markdup_mapping.out, genome_fasta, genome_idx, genome_dict)
-         
+    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
+          //Split ncigar's
+          SplitNCigarReads(markdup_mapping.out)
+          SplitIntervals( 'no-break', Channel.fromPath( params.scatter_interval_list))
+          if (!params.skipGATK4_BQSR) {
+              //Perform BSQR
+             gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
+             gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten())
+          } else {
+             gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten())
+          }
+            
     }
     if (!params.skipMultiQC) {
       multiqc_report( final_fastqs.map { it[-1] }, 
 		      AlignReads.out.map{ [it[3], it[4]] }, 
                       post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] }),  
                       Count.out.map { it[1] },
-		      gatk4_rnaseq.out[2].map {it[1]})
+		      gatk4_bqsr.out[1].map {it[1]})
    }
-   merge_counts( "Test_run", Count.out.map { it[1] }.collect())
 
 }

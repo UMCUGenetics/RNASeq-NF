@@ -22,7 +22,8 @@ for (i in labs) {
 print(i)
 filepath <- file.path(path,paste(i,".txt",sep=""))
 cov[[i]] <- read.table(filepath,sep = "\t", header=F, stringsAsFactors=FALSE)
-colnames(cov[[i]]) <- c("ENSEMBL_GeneID", i)
+sample_id <- strsplit(i,"_")[[1]][1]
+colnames(cov[[i]]) <- c("ENSEMBL_GeneID", sample_id)
 }
 print(sprintf("######### file read END ######### %s", format(Sys.time(),"%b_%d_%Y_%H_%M_%S_%Z")))
  
@@ -30,7 +31,8 @@ print(sprintf("######### file read END ######### %s", format(Sys.time(),"%b_%d_%
 print(sprintf("######### merge START ######### %s", 
 format(Sys.time(),"%b_%d_%Y_%H_%M_%S_%Z")))
 df <-Reduce(function(x,y) merge(x = x, y = y, by ="ENSEMBL_GeneID"), cov)
+df <- df[-c(1,2,3,4,5),]
  
-write.table(df,paste(myoutname, "_counts_merged", ".txt",sep=""), sep="\t", quote= F, row.names = F)
+write.table(df,paste(myoutname, "_readCounts_raw", ".txt",sep=""), sep="\t", quote= F, row.names = F)
  
 print(sprintf("######### MERGE FUNCTION COMPLETE ######### %s", format(Sys.time(),"%b_%d_%Y_%H_%M_%S_%Z")))
