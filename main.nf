@@ -26,10 +26,12 @@ if (!params.fastq_path) {
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
+if (!params.run_name) {
+   exit 1, "Run name not defined. Please provide name"
+}
 
 workflow {
   main :
-    run_id = "Test_run"
     fastq_files = extractFastqFromDir(params.fastq_path)
     if (!params.skipMapping) {
       genome_index = Channel
@@ -97,11 +99,9 @@ workflow {
     }
     if (!params.skipCount && !params.skipMapping) {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
-      //Merge HTSeq counts
-      mergeHtseqCounts( "Test_run", Count.out.map { it[1] }.collect())
-      //RPKM counts
-      edgerRpkm("Test_run", mergeHtseqCounts.out, params.gene_len)
-
+      //Merge & Normalize HTSeq counts
+      mergeHtseqCounts(params.run_name, Count.out.map { it[1] }.collect())
+      edgerRpkm(params.run_name, mergeHtseqCounts.out, params.gene_len)
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
@@ -117,7 +117,6 @@ workflow {
       }
     } 
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
-          //Split ncigar's
           SplitNCigarReads(markdup_mapping.out)
           SplitIntervals( 'no-break', Channel.fromPath( params.scatter_interval_list))
           if (!params.skipGATK4_BQSR) {
