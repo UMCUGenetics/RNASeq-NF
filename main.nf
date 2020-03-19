@@ -26,12 +26,10 @@ if (!params.fastq_path) {
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
-if (!params.run_name) {
-   exit 1, "Run name not defined. Please provide name"
-}
 
 workflow {
   main :
+    run_name = "TEStRUN"
     fastq_files = extractFastqFromDir(params.fastq_path)
     if (!params.skipMapping) {
       genome_index = Channel
@@ -48,17 +46,6 @@ workflow {
             .fromPath(params.genome_gtf, checkIfExists: true)
             .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
     }
-//    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4) {
-//      genome_fasta = Channel
-//            .fromPath(params.genome_fasta, checkIfExists: true)
-//            .ifEmpty { exit 1, "Genome fasta file not found: ${params.genome_fasta}"}
-//      genome_idx = Channel
-//            .fromPath(params.genome_index, checkIfExists: true)
-//            .ifEmpty { exit 1, "Genome index not found: ${params.genome_index}"}
-//      genome_dict = Channel
-//            .fromPath(params.genome_dict, checkIfExists: true)
-//            .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
-//    }
     if (!params.skipSalmon) {
       salmon_index = Channel
             .fromPath(params.salmon_index, checkIfExists: true)
@@ -100,8 +87,8 @@ workflow {
     if (!params.skipCount && !params.skipMapping) {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       //Merge & Normalize HTSeq counts
-      mergeHtseqCounts(params.run_name, Count.out.map { it[1] }.collect())
-      edgerRpkm(params.run_name, mergeHtseqCounts.out, params.gene_len)
+      mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
+      edgerRpkm( run_name, mergeHtseqCounts.out, params.gene_len)
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
