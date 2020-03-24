@@ -8,17 +8,21 @@ include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(p
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
-include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(params)
 include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(params)
-include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(params)
-include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(params)
-include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
+include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(mem:params.count.mem, 
+								    optional:params.count.toolOptions, 
+								    singleEnd:params.singleEnd, 
+								    stranded:params.stranded, 
+								    unstranded:params.unstranded, 
+								    revstranded:params.revstranded)
+include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:false)
+include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(mem: params.sambambaindex.mem)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.15.0/Quant.nf' params(params)
-include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(params)
+include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:params.fastp.toolOptions, mem: params.fastp.mem, singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
-include edgerRpkm from './NextflowModules/Utils/edgerRpkm.nf' params(params)
+include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -88,7 +92,7 @@ workflow {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       //Merge & Normalize HTSeq counts
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-      edgerRpkm( run_name, mergeHtseqCounts.out, params.gene_len)
+      rpkm( run_name, mergeHtseqCounts.out, params.gene_len)
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
@@ -104,15 +108,17 @@ workflow {
       }
     } 
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
-          SplitNCigarReads(markdup_mapping.out)
-          SplitIntervals( 'no-break', Channel.fromPath( params.scatter_interval_list))
-          if (!params.skipGATK4_BQSR) {
-              //Perform BSQR
-             gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
-             gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten())
-          } else {
-             gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten())
-          }
+         // SplitNCigarReads(markdup_mapping.out)
+	  
+          include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional:'')
+          SplitIntervals( 'break', Channel.fromPath( params.scatter_interval_list))
+          //if (!params.skipGATK4_BQSR) {
+          //    //Perform BSQR
+          //   gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
+          //   gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten())
+         // } else {
+         //    gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten())
+         // }
             
     }
     if (!params.skipMultiQC) {
