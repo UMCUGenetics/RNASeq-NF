@@ -1,4 +1,4 @@
-include MultiQC from '../NextflowModules/MultiQC/1.8/MultiQC.nf' params(params)
+include MultiQC from '../NextflowModules/MultiQC/1.8/MultiQC.nf' params(optional:params.multiqc.optional)
 
 workflow multiqc_report {
     get:

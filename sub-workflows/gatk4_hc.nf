@@ -1,6 +1,11 @@
-include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params(params)
-include VariantFiltration from '../NextflowModules/GATK/4.1.3.0/VariantFiltration.nf' params(params)
-include MergeVCFs from '../NextflowModules/GATK/4.1.3.0/MergeVCFs.nf' params(params)
+include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params (mem:params.haplotypecaller.mem,
+                                                                                          genome_fasta:params.genome_fasta,
+                                                                                          optional:params.haplotypecaller.toolOptions )
+include VariantFiltration from '../NextflowModules/GATK/4.1.3.0/VariantFiltration.nf' params(mem:params.variantfiltration.mem,,
+                                                                                             genome_fasta:params.genome_fasta,
+                                                                                             optional: params.variantfiltration.toolOptions )
+include MergeVCFs from '../NextflowModules/GATK/4.1.3.0/MergeVCFs.nf' params( mem: params.mergevcf.mem )
+
 
 workflow gatk4_hc {
     get:
