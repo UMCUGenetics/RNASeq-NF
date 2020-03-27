@@ -17,7 +17,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(mem:params.c
 								    stranded:params.stranded, 
 								    unstranded:params.unstranded, 
 								    revstranded:params.revstranded)
-include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:false)
+include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:params.singleEnd, optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(mem: params.sambambaindex.mem)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
@@ -32,6 +32,12 @@ include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:pa
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
+include featureCounts from './NextflowModules/subread/2.0.0/featureCounts.nf' params(optional:params.fc_count.toolOptions,
+                                                                                     stranded:params.stranded,
+                                                                                     unstranded:params.unstranded,
+                                                                                     revstranded:params.revstranded,
+									             fc_group_features: "CDS",
+									             fc_count_type: "gene_id")
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -43,7 +49,8 @@ if (!params.out_dir) {
 workflow {
   main :
     run_name = "TEStRUN"
-    fastq_files = extractFastqFromDir(params.fastq_path)
+    fastq_files = extractAllFastqFromDir(params.fastq_path)
+    fastq_files.view()
     if (!params.skipMapping) {
       genome_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
@@ -98,10 +105,11 @@ workflow {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
     }
     if (!params.skipCount && !params.skipMapping) {
-      Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
+      featureCounts(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
+      //Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       //Merge & Normalize HTSeq counts
-      mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-      rpkm( run_name, mergeHtseqCounts.out, params.gene_len)
+      //mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
+      //rpkm( run_name, mergeHtseqCounts.out, params.gene_len)
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
