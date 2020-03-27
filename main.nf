@@ -20,7 +20,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(mem:params.c
 include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:false)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(mem: params.sambambaindex.mem)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
-include Quant from './NextflowModules/Salmon/0.15.0/Quant.nf' params(singleEnd: params.singleEnd,
+include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
                                                                      mem: params.salmom.mem,
                                                                      stranded: params.stranded,
                                                                      unstranded: params.unstranded,
