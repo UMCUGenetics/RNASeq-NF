@@ -32,12 +32,11 @@ include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:pa
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
-include featureCounts from './NextflowModules/subread/2.0.0/featureCounts.nf' params(optional:params.fc_count.toolOptions,
-                                                                                     stranded:params.stranded,
+include featureCounts from './NextflowModules/subread/2.0.0/featureCounts.nf' params(stranded:params.stranded,
                                                                                      unstranded:params.unstranded,
                                                                                      revstranded:params.revstranded,
-									             fc_group_features: "CDS",
-									             fc_count_type: "gene_id")
+										     fc_group_features:params.fc_group_features,
+										     fc_count_type:params.fc_count_type)
 
 if (!params.fastq_path) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
@@ -100,12 +99,13 @@ workflow {
       AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, genome_index.collect())
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
+      featureCounts(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
     }
     if (!params.skipPostQC && !params.skipMapping) {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
     }
     if (!params.skipCount && !params.skipMapping) {
-      featureCounts(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
+      //featureCounts(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       //Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       //Merge & Normalize HTSeq counts
       //mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
