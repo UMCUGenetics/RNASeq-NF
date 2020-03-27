@@ -106,7 +106,6 @@ workflow {
     if (!params.skipCount && !params.skipMapping) {
       featureCounts(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
-      Merge & Normalize HTSeq counts
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
       rpkm( run_name, mergeHtseqCounts.out, params.gene_len)
     }
