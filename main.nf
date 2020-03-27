@@ -47,7 +47,7 @@ if (!params.out_dir) {
 
 workflow {
   main :
-    run_name = "TEStRUN"
+    run_name = params.run_name
     fastq_files = extractAllFastqFromDir(params.fastq_path)
     fastq_files.view()
     if (!params.skipMapping) {
