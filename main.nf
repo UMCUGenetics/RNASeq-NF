@@ -26,7 +26,9 @@ include Quant from './NextflowModules/Salmon/0.15.0/Quant.nf' params(singleEnd: 
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
                                                                      saveUnaligned: params.saveUnaligned)
-include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:params.fastp.toolOptions, mem: params.fastp.mem, singleEnd:params.singleEnd )
+include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:params.fastp.toolOptions, 
+								     mem: params.fastp.mem, 
+								     singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
@@ -71,7 +73,7 @@ workflow {
  	  } else {
         final_fastqs = fastq_files
             .groupTuple(by:0)
-            .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), []] }
+            .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [], []] }
       }
     //Paired-end mode         
     } else {
@@ -84,11 +86,11 @@ workflow {
           final_fastqs = fastq_files
             .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
             .groupTuple(by:0)
-            .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
+            .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted(), []] }
         }
     } 
     if (!params.skipMapping) {
-      AlignReads(final_fastqs.map { [it[0], it[1], it[2], it[3]] }, genome_index.collect())
+      AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, genome_index.collect())
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
     }
@@ -106,7 +108,7 @@ workflow {
     }
     if (!params.skipSalmon ) {
       if (!params.skipMergeLanes) {
-        Quant ( mergeFastqLanes (final_fastqs), salmon_index.collect() )
+        Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect() )
       } else if (!params.singleEnd && params.skipMergeLanes) {
 	  final_fastqs.view()
           Quant ( final_fastqs.map {sample_id, rg_id, r1, r2, json -> [sample_id, [r1,r2].flatten()] }, salmon_index.collect() )
