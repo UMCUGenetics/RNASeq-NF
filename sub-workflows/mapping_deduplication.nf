@@ -1,5 +1,6 @@
-include Index from '../NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
-include MarkDup from '../NextflowModules/Sambamba/0.6.8/MarkDup.nf' params(params)
+include MarkDup from '../NextflowModules/Sambamba/0.6.8/MarkDup.nf' params(mem:params.sambambamarkdup.mem, optional:params.markdup.toolOptions)
+   
+  
 
 workflow markdup_mapping {
     get:
