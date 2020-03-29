@@ -11,7 +11,8 @@ include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
 include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(mem:params.gatksplitncigarreads.mem, 
 										          genome_fasta:params.genome_fasta)
-include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(mem:params.count.mem, 
+include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(mem:params.count.mem,
+							            hts_count_type:params.hts_count_type, 
 								    optional:params.count.toolOptions, 
 								    singleEnd:params.singleEnd, 
 								    stranded:params.stranded, 
