@@ -49,7 +49,6 @@ workflow {
   main :
     run_name = params.run_name
     fastq_files = extractAllFastqFromDir(params.fastq_path)
-    fastq_files.view()
     if (!params.skipMapping) {
       genome_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
@@ -116,7 +115,6 @@ workflow {
       if (!params.skipMergeLanes) {
         Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect() )
       } else if (!params.singleEnd && params.skipMergeLanes) {
-	  final_fastqs.view()
           Quant ( final_fastqs.map {sample_id, rg_id, r1, r2, json -> [sample_id, [r1,r2].flatten()] }, salmon_index.collect() )
       } else {
           Quant ( final_fastqs.map {sample_id, rg_id, reads, json -> [sample_id, reads] }, salmon_index.collect() ) 
