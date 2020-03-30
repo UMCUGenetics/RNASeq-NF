@@ -9,6 +9,7 @@ The pipeline performs the following tasks.
 * Alignment-QC (*RSeQC, Preseq*)
 * PCR duplicate detection (*Sambamba MarkDup*)
 * Expression quantification (*HTSeq-count, featureCounts*)
+* Variant calling (*GATK4*)
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. Several components have been adapted from the [nf-core rnaseq](https://github.com/nf-core/rnaseq) community pipeline and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup.
 
