@@ -13,14 +13,16 @@ The pipeline performs the following tasks.
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. Several components have been adapted from the [nf-core rnaseq](https://github.com/nf-core/rnaseq) community pipeline and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup.
 
-***Installation***
+## 1. Installation
 
-Install [Nextflow](https://www.nextflow.io/)
+### 1.1 Nextflow 
 
-Clone the GitHub repository
+install [Nextflow](https://www.nextflow.io/) and clone the RNASeq-NF GitHub repository.
 ```
 git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
+
+
 Make sure you have access to the Singularity containers on the HPC. 
 ```
 /hpc/local/CentOS7/cog_bioinf/nextflow_containers
