@@ -65,7 +65,7 @@ You can provide all necessary parameters either directly to nextflow on the comm
 ``
 includeConfig '../process.config'
 includeConfig '../resources/UMCU_GRCh37.config'
-\params {
+params {
   scatter_count = '100'
   unstranded = false
   .....
