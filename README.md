@@ -72,7 +72,7 @@ includeConfig '../resources/UMCU_GRCh37.config'
 
 **Process configuration**
 
-Runtime specific resource settings(memory, cpu's) for each individual tool are stored in process.config. Furthermore, advanced tool parameters can be passed to a process via params.<tool>.toolOptions.  
+Runtime specific resources (memory, cpu's) can be configured in process.config. Furthermore, advanced parameters can be set via params.<tool>.toolOptions for indivudal components. For example;  
 ```
  withLabel : HTSeq_0_11_3_Count {
       params.count.mem = '25G'
