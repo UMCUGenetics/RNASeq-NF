@@ -28,13 +28,22 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
 
 ## 2.Usage
+2.1 Parameters
 
-Run your Analysis!
+*** Genome
+```
+  --fasta /path/to/reference.fasta
+  --gtf /path/to/annotation.gtf
+```
+
+
+
+2.2 Run Analysis.
 
 ```
 ./nextflow run ./RNASeq-NF/main.nf -c ./RNASeq-NF/conf/your_config.conf --fastq_path <fastq_dir>  --out_dir<output_dir> -profile slurm
 ```
-You can provide the necessary arguments either directly to nextflow or setup a config file for convenience (See RNASeq-NF/conf/test-run.config). 
+For local execution, simply omit the -profile parameter. You can provide all necessary arguments either directly to nextflow or setup a config file for convenience (See RNASeq-NF/conf/test-run.config) for an example. 
 
 
 
