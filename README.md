@@ -89,21 +89,14 @@ Nextflow's base configuration settings (executors, containerization etc.) are st
 ## 2.2 Run Analysis.
 
 ```
-./nextflow run ./RNASeq-NF/main.nf -c ./RNASeq-NF/conf/your_config.conf --fastq_path <fastq_dir>  --out_dir<output_dir> -profile slurm
-```
-For local execution, simply omit the -profile parameter. You can provide all necessary arguments either directly to nextflow or setup a config file for convenience (See RNASeq-NF/conf/test-run.config) for an example. 
-
-
-
-
-
-
-
-Replace test-run-config with your own configuration.
-```
 module load Java/1.8.0_60
-nextflow run RNAseq-NF/main.nf -c RNAseq-NF/test/test-run.config -profile {sge,slurm}
+./nextflow run ./RNASeq-NF/main.nf -c <your_run.config>? --fastq_path <fastq_dir>  --out_dir<output_dir> -profile slurm
 ```
-For local execution, simply remove the -profile argument.
+For local execution, simply omit the -profile parameter. 
+
+
+
+
+
 
 
