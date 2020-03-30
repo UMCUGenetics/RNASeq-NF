@@ -32,8 +32,6 @@ include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:pa
 								     singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
-include mergeFeatureCounts from './utils/mergeFeatureCounts.nf' params(params)
-
 include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
 include featureCounts from './NextflowModules/subread/2.0.0/featureCounts.nf' params(stranded:params.stranded,
                                                                                      unstranded:params.unstranded,
@@ -106,9 +104,7 @@ workflow {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
     }
     if (!params.skipCount && !params.skipMapping) {
-      featureCounts(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
-      //To be implemented 
-      //mergeFeatureCounts( run_name, featureCounts.out.collect())
+      featureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect()) 
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
       rpkm( run_name, mergeHtseqCounts.out, params.gene_len)
