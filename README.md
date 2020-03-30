@@ -60,12 +60,32 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
 
 ### 2.2 Configuration files
-You can provide all necessary parameters either directly to nextflow on the command-line or setup config files for your convenience. For example, store all your genomic resource settings in a seperate config file (see /resources/UMCU_GRCh37.config) and include it in your run specific configuration (see /conf/test-run.config) along with process.config (see 2.3).
+
+**Resource configuration
+
+You can provide all necessary parameters either directly to nextflow on the command-line or setup config files for your convenience. For example, store all genomic resource settings in a single config file (see /resources/UMCU_GRCh37.config) and include it in your run specific configuration (see /conf/test-run.config) along with process.config (see 2.3).
 
 ```
 includeConfig '../process.config'
 includeConfig '../resources/UMCU_GRCh37.config'
 ```
+
+**Process configuration
+
+Runtime specific resource settings(memory, cpu's) for each individual tool are stored in process.config. Furthermore, advanced tool parameters can be passed to a process via params.<tool>.toolOptions. 
+```
+ withLabel : HTSeq_0_11_3_Count {
+      params.count.mem = '25G'
+      params.count.toolOptions = '-m union -r pos'
+      time = '24h'
+      penv = 'threaded'
+      cpus = 2
+```
+  
+**Nextflow configuration
+
+Nextflow's base configuration settings (executors, containerization etc.) are stored in nextflow.config.
+
 
  
 
