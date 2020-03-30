@@ -31,6 +31,7 @@ Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host syst
 ```
 git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
+Ensure that NextflowModules is set to the dev-ubec branch.
 
 ## 2.Usage
 
