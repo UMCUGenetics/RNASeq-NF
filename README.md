@@ -61,7 +61,7 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 
 **Resource configuration**
 
-You can provide all necessary parameters either directly to nextflow on the command-line or setup config files for your convenience. For example, store all genomic resource settings in a single config file (see /resources/UMCU_GRCh37.config) and include it in your run specific configuration (see /conf/test-run.config) along with process.config (see 2.3).
+You can provide all necessary parameters either directly to nextflow on the command-line or setup config files for your convenience. For example, store all genomic resource settings in a single config file and include it in your run specific configuratio along with process.config (see 2.3). You can find example of genome and run config file in the resources (<em>/resources</em>) and conf (<em>/conf/test-run.config</em>) folders.
 
 ```
 includeConfig '../process.config'
