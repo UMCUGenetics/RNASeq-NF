@@ -3,7 +3,7 @@ process rpkm {
     label 'biconductor_3_28_0'
     label 'biconductor_3_28_0_edger_rpkm'
     
-    //container = 'quay.io/biocontainers/bioconductor-edger:3.28.0--r36he1b5a44_0'
+    //container = 'quay.io/biocontainers/bioconductor-edger:bioconductor-edger'
     shell = ['/bin/bash', '-euo', 'pipefail']
 
     input:
