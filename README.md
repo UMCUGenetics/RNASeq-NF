@@ -90,7 +90,7 @@ Nextflow's base configuration settings (executors, containerization etc.) are st
  
 
 
-2.2 Run Analysis.
+## 2.2 Run Analysis.
 
 ```
 ./nextflow run ./RNASeq-NF/main.nf -c ./RNASeq-NF/conf/your_config.conf --fastq_path <fastq_dir>  --out_dir<output_dir> -profile slurm
