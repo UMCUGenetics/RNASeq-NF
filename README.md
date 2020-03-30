@@ -90,7 +90,7 @@ Nextflow's base configuration settings (executors, containerization etc.) are st
 
 ```
 module load Java/1.8.0_60
-./nextflow run ./RNASeq-NF/main.nf -c <your_run.config>? --fastq_path <fastq_dir>  --out_dir<output_dir> -profile slurm
+./nextflow run ./RNASeq-NF/main.nf -c <your_run.config>? --fastq_path <fastq_dir>  --out_dir <output_dir> -profile slurm
 ```
 For local execution, simply omit the -profile parameter. 
 
