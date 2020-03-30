@@ -32,13 +32,13 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ### 2.1 Parameters
 
 **Pipeline settings** 
- *`--singleEnd` True/False for single-end sequencing
- *`--unstranded` True/False for unstranded library prep.
- *`--stranded` True/False for forward-stranded library prep.
- *`--revstranded` True/False for reverse-stranded library prep.
- *`--hts_count_type` htseq-count annotation feature for expression quantification (e.x gene_id)
- *`--fc_group_features` subread featureCount group (e.x gene_id)
- *`--fc_count_type subread` featureCount type (e.x CDS, five_prime_UTR etc.)
+ *`--singleEnd` True/False for single-end sequencing\
+ *`--unstranded` True/False for unstranded library prep\
+ *`--stranded` True/False for forward-stranded library prep\
+ *`--revstranded` True/False for reverse-stranded library prep\
+ *`--hts_count_type` htseq-count annotation feature for expression quantification (e.x gene_id)\
+ *`--fc_group_features` subread featureCount group (e.x gene_id)\
+ *`--fc_count_type subread` featureCount type (e.x CDS, five_prime_UTR etc.)\
  *`--skipMergeLanes` True/False skip merging for fastq files from multiple lanes (Salmon)
 **Genome settings**
 ```
