@@ -29,9 +29,9 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 
 ## 2.Usage
 
-2.1 Parameters
+### 2.1 Parameters
 
-***Pipeline settings 
+**Pipeline settings** 
 ```
   --singleEnd True/False if single-end sequencing
   --unstranded True/False if library is unstranded
@@ -42,7 +42,7 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
   --fc_count_type subread featureCount type (e.x CDS, five_prime_UTR etc.)
   --skipMergeLanes True/False skip merging for fastq files from multiple lanes (Salmon)
 ```
-***Genome settings
+**Genome settings**
 ```
   --genome_fasta  /path/to/reference.fasta
   --genome_dict /path/to/reference.dict
@@ -52,7 +52,7 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
   --genome_known_sites /path/to/snp_sites.vcf (list)
   --scatter_interval_list /path/to/scatter.intervals (GATK4)
 ```
-***Transcriptome settings
+**Transcriptome settings**
 ```
   --star_index /path/to/star transcriptome index
   --salmon_index /path/to/salmon index
