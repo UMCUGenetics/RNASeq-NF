@@ -40,7 +40,16 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 * `--hts_count_type` htseq-count annotation feature for expression quantification (<em> gene_id, transcript_id etc.</em>)
 * `--fc_group_features` subread featureCount group (e.x gene_id)
 * `--fc_count_type subread` featureCount type (<em> CDS, five_prime_UTR etc.</em>)
-* `--skipMergeLanes` True/False skip merging for fastq files from multiple lanes (Salmon)
+* `--skipMergeLanes` Skip merging Fastq files from multiple lanes (Salmon)
+* `--skipPostQC` Skip post alignment QC (RSeQC, Preseq)
+* `--skipMarkDup` Skip Sambamba markdup
+* `--skipCount` Skip HTSeq/featureCounts read quantification.
+* `--skipMapping` Skip STAR alignment
+* `--skipSalmon`Skip Salmon transcript quantification
+* `--skipFastp` Skip trimming with fastp
+* `--skipMultiQC` Skip MultiQC quality report
+* `--skipGATK4_HC` Skip GATK4 variant calling
+* `--skipGATK4_BQSR` Skip GATK4 base quality recalibration
 **Genome settings**
 
 * `--genome_fasta`  /path/to/reference.fasta
