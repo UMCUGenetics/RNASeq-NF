@@ -70,7 +70,7 @@ includeConfig '../resources/UMCU_GRCh37.config'
 
 **Process configuration**
 
-Runtime specific resources (memory, cpu's) can be configured in process.config. Furthermore, advanced parameters can be set via params.<tool>.toolOptions for indivudal components. For example;  
+Runtime specific resources (memory, cpu's) can be configured in process.config. Furthermore, advanced parameters can be set via params.<tool>.toolOptions for individual components.  
 ```
  withLabel : HTSeq_0_11_3_Count {
       params.count.mem = '25G'
