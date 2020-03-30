@@ -48,7 +48,7 @@ if (!params.out_dir) {
 
 workflow {
   main :
-    run_name = params.run_name
+    run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path)
     if (!params.skipMapping) {
       genome_index = Channel
