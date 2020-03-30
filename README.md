@@ -23,17 +23,24 @@ Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host syst
 
 ### 1.3 Clone this repository and submodules
 
+```
 git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
 
+## 2.Usage
 
-Make sure you have access to the Singularity containers on the HPC. 
-```
-/hpc/local/CentOS7/cog_bioinf/nextflow_containers
-```
-Technically, this should also work with Biocontainers.
+Run your Analysis!
 
-***Usage instructions***
+```
+./nextflow run ./RNASeq-NF/main.nf -c ./RNASeq-NF/conf/your_config.conf --fastq_path <fastq_dir>  --out_dir<output_dir> -profile slurm
+```
+You can provide the necessary arguments either directly to nextflow or setup a config file for convenience (See RNASeq-NF/conf/test-run.config). 
+
+
+
+
+
+
 
 Replace test-run-config with your own configuration.
 ```
