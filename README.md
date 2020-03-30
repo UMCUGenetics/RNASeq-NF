@@ -33,8 +33,8 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 
 **Pipeline settings** 
 ```
-  --singleEnd True/False if single-end sequencing
-  --unstranded True/False if library is unstranded
+  --singleEnd True/False for single-end sequencing
+  --unstranded True/False for unstranded library
   --stranded True/False if library is forward-stranded 
   --revstranded True/False
   --hts_count_type htseq-count annotation feature for expression quantification (e.x gene_id)
