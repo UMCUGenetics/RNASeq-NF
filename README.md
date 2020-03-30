@@ -45,10 +45,10 @@ Ensure that NextflowModules is set to the dev-ubec branch.
 * `--hts_count_type` htseq-count annotation feature for expression quantification (<em> gene_id, transcript_id etc.</em>)
 * `--fc_group_features` subread featureCount group (e.x gene_id)
 * `--fc_count_type subread` featureCount type (<em> CDS, five_prime_UTR etc.</em>)
-* `--skipMergeLanes` Skip merging Fastq files from multiple lanes (Salmon)
+* `--skipMergeLanes` Skip merging fastq files from multiple lanes (Salmon).
 * `--skipPostQC` Skip post alignment QC (RSeQC, Preseq)
 * `--skipMarkDup` Skip Sambamba markdup
-* `--skipCount` Skip HTSeq/featureCounts read quantification.
+* `--skipCount` Skip HTSeq/featureCounts expression quantification.
 * `--skipMapping` Skip STAR alignment
 * `--skipSalmon`Skip Salmon transcript quantification
 * `--skipFastp` Skip trimming with fastp
@@ -76,19 +76,17 @@ Ensure that NextflowModules is set to the dev-ubec branch.
 
 **Resource configuration**
 
-You can provide all necessary parameters either directly to nextflow on the command-line or setup config files for your convenience. For example, store all genomic resource settings in a single config file and include it in your run specific configuration along with process.config (see 2.3). 
+All necessary parameters can either be provided directly to nextflow on the command-line or setup config files for your convenience. For example, define all genomic resource settings in a single config file and include it in a run specific configuration along with process.config (see 2.3). 
 ```
 includeConfig '../process.config'
 includeConfig '../resources/UMCU_GRCh37.config'
 ```
 
-You can find example of genomic resource and run specific configuration files in the resources (<em>/resources</em>) and conf (<em>/conf/test-run.config</em>) folders.
-
-
+You can find an example of genomic resource and run specific configuration files in the resources (<em>/resources</em>) and conf (<em>/conf/test-run.config</em>) folders.
 
 **Process configuration**
 
-Runtime specific resources (memory, cpu's) can be configured in process.config. Furthermore, advanced parameters can be set via params.<tool>.toolOptions for individual components.  
+Runtime specific resources (memory, cpu's) can be configured in the process.config file. Furthermore, advanced parameters can be set via params.<tool>.toolOptions for individual processes. 
 ```
  withLabel : HTSeq_0_11_3_Count {
       params.count.mem = '25G'
@@ -100,15 +98,16 @@ Runtime specific resources (memory, cpu's) can be configured in process.config. 
   
 **Nextflow configuration**
 
-Nextflow's base configuration settings (executors, containerization etc.) are stored in nextflow.config.
+Nextflow's base configuration settings (executors, containerization etc.) are stored in nextflow.config. Ensure that nextflow.config and process.config are always findable by the nextflow runner.
 
-## 2.2 Run Analysis.
+## 2.2 Analysis.
+
+Run the pipeline. For local execution, simply omit the -profile parameter. 
 
 ```
 module load Java/1.8.0_60
 ./nextflow run ./RNASeq-NF/main.nf -c <your_run.config>? --fastq_path <fastq_dir>  --out_dir <output_dir> -profile slurm
 ```
-For local execution, simply omit the -profile parameter. 
 
 
 
