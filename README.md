@@ -59,13 +59,13 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
   --gene_len /path/to/feature lengths (required for HTSeq RPKM normalization)
 ```
 
-### 2.1 Configuration files
-You can provide all necessary parameters either directly to nextflow on the command-line or setup config files for your convenience. For example, store all your genomic resource settings in a seperate config file (see /resources/UMCU_GRCh37.config) and include it in your run specific configuration (see /conf/test-run.config).
+### 2.2 Configuration files
+You can provide all necessary parameters either directly to nextflow on the command-line or setup config files for your convenience. For example, store all your genomic resource settings in a seperate config file (see /resources/UMCU_GRCh37.config) and include it in your run specific configuration (see /conf/test-run.config) along with process.config (see 2.3).
 
-``
-includeConfig '../process.config'\
+```
+includeConfig '../process.config'
 includeConfig '../resources/UMCU_GRCh37.config'
-``
+```
 
  
 
