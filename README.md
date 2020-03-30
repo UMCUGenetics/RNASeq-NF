@@ -32,30 +32,30 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ### 2.1 Parameters
 
 **Pipeline settings** 
-* `--singleEnd` True/False for single-end sequencing\
-* `--unstranded` True/False for unstranded library prep\
-* `--stranded` True/False for forward-stranded library prep\
-* `--revstranded` True/False for reverse-stranded library prep\
-* `--hts_count_type` htseq-count annotation feature for expression quantification (e.x gene_id)\
-* `--fc_group_features` subread featureCount group (e.x gene_id)\
-* `--fc_count_type subread` featureCount type (e.x CDS, five_prime_UTR etc.)\
+* `--singleEnd` True/False for single-end sequencing
+* `--unstranded` True/False for unstranded library prep
+* `--stranded` True/False for forward-stranded library prep
+* `--revstranded` True/False for reverse-stranded library prep
+* `--hts_count_type` htseq-count annotation feature for expression quantification (e.x gene_id)
+* `--fc_group_features` subread featureCount group (e.x gene_id)
+* `--fc_count_type subread` featureCount type (e.x CDS, five_prime_UTR etc.)
 * `--skipMergeLanes` True/False skip merging for fastq files from multiple lanes (Salmon)
 **Genome settings**
-```
-  --genome_fasta  /path/to/reference.fasta
-  --genome_dict /path/to/reference.dict
-  --genome_index  /path/to/reference.fai
-  --genome_gtf /path/to/annotation.gtf
-  --genome_bed12 /path/to/annotation.bed12 (required for RSeQC)
-  --genome_known_sites /path/to/snp_sites.vcf (list)
-  --scatter_interval_list /path/to/scatter.intervals (GATK4)
-```
+
+* `--genome_fasta`  /path/to/reference.fasta
+* `--genome_dict` /path/to/reference.dict
+* `--genome_index`  /path/to/reference.fai
+* `--genome_gtf` /path/to/annotation.gtf
+* `--genome_bed12` /path/to/annotation.bed12 (required for RSeQC)
+* `--genome_known_sites` /path/to/snp_sites.vcf (list)
+* `--scatter_interval_list` /path/to/scatter.intervals (GATK4)
+
 **Transcriptome settings**
-```
-  --star_index /path/to/star transcriptome index
-  --salmon_index /path/to/salmon index
-  --gene_len /path/to/feature lengths (required for HTSeq RPKM normalization)
-```
+
+* `--star_index` /path/to/star transcriptome index
+*  `--salmon_index` /path/to/salmon index
+*  `--gene_len` /path/to/gene lengths for RPKM normalization (htseq-count)
+
 
 ### 2.2 Configuration files
 
