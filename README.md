@@ -32,7 +32,7 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 ### 2.1 Parameters
 
 **Pipeline settings** 
-*```--singleEnd``` True/False for single-end sequencing
+*``--singleEnd`` True/False for single-end sequencing
 *```--unstranded``` True/False for unstranded library prep.
 *```--stranded``` True/False for forward-stranded library prep.
 *```--revstranded``` True/False for reverse-stranded library prep.
