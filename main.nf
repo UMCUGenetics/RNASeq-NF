@@ -33,7 +33,9 @@ include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:pa
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
-include featureCounts from './NextflowModules/subread/2.0.0/featureCounts.nf' params(stranded:params.stranded,
+include featureCounts from './NextflowModules/subread/2.0.0/featureCounts.nf' params(optional:params.fc.toolOptions,
+										     extraAttributes:params.fc.extraAttributes,
+										     stranded:params.stranded,
                                                                                      unstranded:params.unstranded,
                                                                                      revstranded:params.revstranded,
 										     fc_group_features:params.fc_group_features,
