@@ -16,7 +16,8 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
 								    stranded:params.stranded, 
 								    unstranded:params.unstranded, 
 								    revstranded:params.revstranded)
-include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:params.singleEnd, optional:params.star.toolOptions)
+include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:params.singleEnd, 
+									     optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
@@ -102,7 +103,7 @@ workflow {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
     }
     if (!params.skipCount && !params.skipMapping) {
-      featureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect()) 
+      FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect()) 
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
       rpkm( run_name, mergeHtseqCounts.out, params.gene_len)
