@@ -9,31 +9,27 @@ include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
 include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
-include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(mem:params.gatksplitncigarreads.mem, 
-										          genome_fasta:params.genome_fasta)
-include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(mem:params.count.mem,
-							            hts_count_type:params.hts_count_type, 
+include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
+include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_type:params.hts_count_type, 
 								    optional:params.count.toolOptions, 
 								    singleEnd:params.singleEnd, 
 								    stranded:params.stranded, 
 								    unstranded:params.unstranded, 
 								    revstranded:params.revstranded)
 include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:params.singleEnd, optional:params.star.toolOptions)
-include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(mem: params.sambambaindex.mem)
+include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
-                                                                     mem: params.salmom.mem,
                                                                      stranded: params.stranded,
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
                                                                      saveUnaligned: params.saveUnaligned)
-include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params( optional:params.fastp.toolOptions, 
-								     mem: params.fastp.mem, 
-								     singleEnd:params.singleEnd )
+include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(optional:params.fastp.toolOptions, 
+								    singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
-include featureCounts from './NextflowModules/subread/2.0.0/featureCounts.nf' params(optional:params.fc.toolOptions,
+include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(optional:params.fc.toolOptions,
 										     extraAttributes:params.fc.extraAttributes,
 										     stranded:params.stranded,
                                                                                      unstranded:params.unstranded,
