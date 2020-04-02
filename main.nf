@@ -3,6 +3,7 @@
 nextflow.preview.dsl=2
 
 include './NextflowModules/Utils/fastq.nf' params(params)
+include prep_genome from './sub-workflows/prep_genome.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
@@ -46,9 +47,21 @@ if (!params.out_dir) {
 }
 
 workflow {
-  main :
+  main :   
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path)
+    if ( !params.skipBuildReference ) {
+        genome_gtf = Channel
+            .fromPath(params.genome_gtf, checkIfExists: true)
+            .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
+        genome_fasta = Channel
+            .fromPath(params.genome_fasta, checkIfExists: true)
+            .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
+        transcripts_fasta = Channel
+            .fromPath(params.transcripts_fasta, checkIfExists: true)
+            .ifEmpty { exit 1, "Fasta file not found: ${params.transcripts_fasta}"}
+        prep_genome ( genome_fasta, genome_gtf, transcripts_fasta)
+    }
     if (!params.skipMapping) {
       genome_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
