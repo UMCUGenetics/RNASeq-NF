@@ -1,6 +1,6 @@
-include GenomeGenerate from './NextflowModules/STAR/2.6.0c/GenomeGenerate.nf' params(params)
-include Index from './NextflowModules/Salmon/0.13.1/Index.nf' params(params)
-include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
+include GenomeGenerate from '../NextflowModules/STAR/2.6.0c/GenomeGenerate.nf' params(params)
+include Index from '../NextflowModules/Salmon/0.13.1/Index.nf' params(params)
+include GtfToGenePred from '../NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from '../NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
 
 workflow prep_genome {
