@@ -39,17 +39,17 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
 										     fc_group_features:params.fc_group_features,
 										     fc_count_type:params.fc_count_type)
 
-if (!params.fastq_path ) {
-   exit 1, "fastq directory does not exist. Please provide correct path!"
-}
+
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
 
 workflow {
-  main :   
-    run_name = params.fastq_path.split('/')[-1]
-    fastq_files = extractAllFastqFromDir(params.fastq_path)
+  main :  
+    if ( params.fastq_path && params.skipBuildReference ) {
+        run_name = params.fastq_path.split('/')[-1]
+        fastq_files = extractAllFastqFromDir(params.fastq_path)
+    } 
     if ( !params.skipBuildReference ) {
         genome_gtf = Channel
             .fromPath(params.genome_gtf, checkIfExists: true)
@@ -82,18 +82,18 @@ workflow {
             .fromPath(params.salmon_index, checkIfExists: true)
             .ifEmpty { exit 1, "Transcripts fasta not found: ${params.salmon_index}"}
     }
-    if (params.singleEnd) {
-      if (!params.skipFastp) {
-	    final_fastqs = Fastp(fastq_files)
-            .groupTuple(by:0)
-            .map { sample_id, rg_ids, json, reads -> [sample_id, rg_ids[0], reads.toSorted(), [], json] }
+    if ( params.skipBuildReference) {
+      if (params.singleEnd) {
+        if (!params.skipFastp) {
+	      final_fastqs = Fastp(fastq_files)
+              .groupTuple(by:0)
+              .map { sample_id, rg_ids, json, reads -> [sample_id, rg_ids[0], reads.toSorted(), [], json] }
             
- 	  } else {
-        final_fastqs = fastq_files
-            .groupTuple(by:0)
-            .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [], []] }
+ 	 } else {
+             final_fastqs = fastq_files
+             .groupTuple(by:0)
+             .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [], []] }
       }
-    //Paired-end mode         
     } else {
         if (!params.skipFastp) {
           final_fastqs =  Fastp(fastq_files)
@@ -106,6 +106,7 @@ workflow {
             .groupTuple(by:0)
             .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted(), []] }
         }
+      }
     } 
     if (!params.skipMapping) {
       AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, genome_index.collect())
