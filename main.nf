@@ -38,7 +38,7 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
 										     fc_group_features:params.fc_group_features,
 										     fc_count_type:params.fc_count_type)
 
-if (!params.fastq_path) {
+if (!params.fastq_path ) {
    exit 1, "fastq directory does not exist. Please provide correct path!"
 }
 if (!params.out_dir) {
