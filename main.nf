@@ -61,7 +61,7 @@ workflow {
         prep_genome ( genome_fasta, genome_gtf, transcripts_fasta)
     }
     if (!params.skipMapping) {
-      genome_index = Channel
+      star_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
             .ifEmpty { exit 1, "STAR index not found: ${params.star_index}"}
     }
@@ -107,7 +107,7 @@ workflow {
       }
     } 
     if (!params.skipMapping && params.skipBuildReference) {
-      AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, genome_index.collect())
+      AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, star_index.collect())
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
     }
