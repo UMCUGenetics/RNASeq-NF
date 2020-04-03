@@ -5,8 +5,8 @@ include GenePredToBed from '../NextflowModules/ucsc/377/genePredToBed/GenePredTo
 
 workflow prep_genome {
     get:
-      genome_gtf
       genome_fasta
+      genome_gtf
       transcript_fasta
     main:
       GenomeGenerate( genome_fasta, genome_gtf )
