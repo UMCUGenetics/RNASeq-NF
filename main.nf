@@ -108,24 +108,24 @@ workflow {
         }
       }
     } 
-    if (!params.skipMapping) {
+    if (!params.skipMapping && params.skipBuildReference) {
       AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, genome_index.collect())
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
     }
-    if (!params.skipPostQC && !params.skipMapping) {
+    if (!params.skipPostQC && !params.skipMapping && params.skipBuildReference) {
       post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
     }
-    if (!params.skipCount && !params.skipMapping) {
+    if (!params.skipCount && !params.skipMapping && params.skipBuildReference) {
       FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect()) 
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
       rpkm( run_name, mergeHtseqCounts.out, params.gene_len)
     }
-    if (!params.skipMarkDup && !params.skipMapping) {
+    if (!params.skipMarkDup && !params.skipMapping && params.skipBuildReference) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
-    if (!params.skipSalmon ) {
+    if (!params.skipSalmon && params.skipBuildReference) {
       if (!params.skipMergeLanes) {
         Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect() )
       } else if (!params.singleEnd && params.skipMergeLanes) {
@@ -134,7 +134,7 @@ workflow {
           Quant ( final_fastqs.map {sample_id, rg_id, reads, json -> [sample_id, reads] }, salmon_index.collect() ) 
       }
     } 
-    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
+    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC && params.skipBuildReference) {
           SplitIntervals( 'no-break', Channel.fromPath( params.scatter_interval_list))
           SplitNCigarReads(markdup_mapping.out)
           if (!params.skipGATK4_BQSR) {
@@ -145,7 +145,7 @@ workflow {
               gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten())
           }      
     }
-    if (!params.skipMultiQC) {
+    if (!params.skipMultiQC && params.skipBuildReference) {
       multiqc_report( final_fastqs.map { it[-1] }, 
 		      AlignReads.out.map{ [it[3], it[4]] }, 
                       post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] }),  
