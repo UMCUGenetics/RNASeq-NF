@@ -38,8 +38,6 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
                                                                                      revstranded:params.revstranded,
 										     fc_group_features:params.fc_group_features,
 										     fc_count_type:params.fc_count_type)
-
-
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
@@ -149,8 +147,7 @@ workflow {
       multiqc_report( final_fastqs.map { it[-1] }, 
 		      AlignReads.out.map{ [it[3], it[4]] }, 
                       post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] }),  
-                      Count.out.map { it[1] },
-		      gatk4_bqsr.out[1].map {it[1]})
+                      Count.out.map { it[1] } )
    }
 
 }
