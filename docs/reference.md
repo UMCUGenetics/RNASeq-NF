@@ -1,7 +1,7 @@
 
 **Genome configuration**
 
-Custom genome settings should be included as a separate configuration file via the the `--genome_config` parameter, either directly or within a configuration file as described above.  For example;
+Custom genome settings should *always* be included as a separate configuration file via the the `--genome_config` parameter, either directly or within a configuration file as described above. For example;
 
 ```
 includeConfig '../process.config
