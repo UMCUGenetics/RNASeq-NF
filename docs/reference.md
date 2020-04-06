@@ -1,7 +1,7 @@
 
 **Genome configuration**
 
-Custom genome settings should *always* be included as a separate configuration file via the the `--genome_config` parameter, either directly or within a configuration file as described above. For example;
+Genome resources should *always* be included as a separate configuration file via the the `--genome_config` parameter, either directly or within a configuration file as described above. For example;
 
 
 ```
@@ -20,7 +20,6 @@ params {
   scatter_interval_list = '/hpc/cog_bioinf/ubec/tools/Homo_sapiens.GRCh37.GATK.illumina.chromosomes.interval_list'
   gene_len = '
 ```
-
 
 In it's most basic form, the pipeline requires the following resource parameters.
 
