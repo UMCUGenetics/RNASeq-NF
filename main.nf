@@ -25,7 +25,6 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
 include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:params.singleEnd, 
 									     optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
-include gatk4_rnaseq from './sub-workflows/gatk4_rnaseq.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
                                                                      stranded: params.stranded,
                                                                      unstranded: params.unstranded,
@@ -46,6 +45,11 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
+
+if (!params.fastq_path) {
+  exit 1, "fastq files not found. Please provide the correct path!"
+}
+
 
 workflow {
   main :  
@@ -68,7 +72,6 @@ workflow {
       getExonLenghts( genome_gtf)
       exon_lengths = getExonLenghts.out
     } 
-
     if (params.star_index && !params.skipMapping) {
       star_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
@@ -165,11 +168,37 @@ workflow {
               gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten())
           }      
     }
-    if (!params.skipMultiQC) {
-      multiqc_report( final_fastqs.map { it[-1] }, 
-		      AlignReads.out.map{ [it[3], it[4]] }, 
-                      post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] }),  
-                      Count.out.map { it[1] } )
-   }
+    if ( !params.skipMultiQC ) {
+      //Create empty Channels for optional steps
+      fastq_logs = Channel.empty()
+      star_logs = Channel.empty()
+      post_qc_logs = Channel.empty()
+      hts_logs = Channel.empty()
+      fc_logs = Channel.empty()
+      salmon_logs = Channel.empty()
+      //Get options
+      if ( !params.skipFastp) {
+        fastq_logs = final_fastqs.map { it[-1] }
+      }
+      if ( !params.skipMapping) {
+        star_logs =  AlignReads.out.map{ [it[3], it[4]] }
+      }
+      if ( !params.skipCount) {
+        hts_logs = Count.out.map { it[1] }
+        fc_logs = FeatureCounts.out.map { it[0]}
+      }
+      if ( !params.skipPostQC ) {
+        post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
+      }
+      if ( !params.skipSalmon) {
+        salmon_logs = Quant.out.map { it[1] }
+      }
+      multiqc_report( fastq_logs,
+                      star_logs,
+                      post_qc_logs,
+                      hts_logs,
+                      fc_logs,
+                      salmon_logs ) 		      
+    }
 
 }
