@@ -7,7 +7,7 @@
 * `--fc_group_features` subread featureCount group (e.x gene_id)
 * `--fc_count_type subread` featureCount type (<em> CDS, five_prime_UTR etc.</em>)
 
-**Skip individual analysis steps**
+**Pipeline steps**
 
 * `--skipPostQC` Skip post alignment QC (RSeQC, Preseq)
 * `--skipMarkDup` Skip Sambamba markdup
