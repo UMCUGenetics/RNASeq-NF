@@ -63,7 +63,7 @@ workflow {
         .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
 
     if (params.gene_len && !params.skipCount && !params.skipMapping) {
-      gene_len = params.gene_len
+      exon_lengths = params.gene_len
     } else if (!params.gene_len && !params.skipCount && !params.skipMapping) {
       getExonLenghts( genome_gtf)
       exon_lengths = getExonLenghts.out
