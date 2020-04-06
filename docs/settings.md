@@ -21,9 +21,9 @@
 
 **Reference resources**
 
-* `--genome_fasta` /path/to/reference/genome.fa
+* `--genome_fasta` /path/to/reference/genome.fasta
 * `--genome_gtf` /path/to/reference/annotation.gtf
-* `--transcripts_fasta` /path/to/reference/transcripts.fa (required for Salmon)
+* `--transcripts_fasta` /path/to/reference/transcripts.fasta (required for Salmon)
 * `--genome_bed` path/to/reference/annotation.bed12 
 * `--star_index` path/to/star_index 
 * `--salmon_index` path/to/salmon_index  
