@@ -26,7 +26,7 @@ This implementation is a work in progress and aims to reach feature parity with 
 1. [Installation](./docs/installation.md) 
 2. [Configuration](./docs/config.md) \
 2.1 [Settings](./docs/settings.md) \
-2.2 [Genomes](./docs/reference.md) 
+2.2 [Resources](./docs/reference.md) 
 3. [Run RNASeq-NF](./docs/running.md) 
 
 
