@@ -50,6 +50,9 @@ if (!params.fastq_path) {
   exit 1, "fastq files not found. Please provide the correct path!"
 }
 
+if (!params.genome_config) {
+  exit 1, "Genome config not found. Please provide the correct path!"
+}
 
 workflow {
   main :  
