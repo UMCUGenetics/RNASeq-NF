@@ -185,7 +185,7 @@ workflow {
       }
       if ( !params.skipCount) {
         hts_logs = Count.out.map { it[1] }
-        fc_logs = FeatureCounts.out.map { it[0]}
+        fc_logs = FeatureCounts.out.map { it[1]}
       }
       if ( !params.skipPostQC ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
