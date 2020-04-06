@@ -3,6 +3,7 @@
 
 Custom genome settings should *always* be included as a separate configuration file via the the `--genome_config` parameter, either directly or within a configuration file as described above. For example;
 
+
 ```
 includeConfig '../process.config
 
@@ -20,10 +21,12 @@ params {
   gene_len = '
 ```
 
+
 In it's most basic form, the pipeline requires the following resource parameters.
 
 * `--genome_fasta` - path to genome sequence (.fasta). The index (.fai) should be stored in the same directory.
 * `--genome_gtf` - path to genome annotation (.gtf)
 * `--transcripts_fasta` - path to transcript sequences (.fasta) when skipSalmon is set to false.
+
 
 All other files will be created at run-time and stored in the output folder (reference_genome). Since buidling the STAR index requires a significant amount of memory, ensure that sufficient memory is available on the host system and allocated in process.config. 
