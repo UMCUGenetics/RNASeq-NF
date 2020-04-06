@@ -8,7 +8,8 @@ The pipeline performs the following tasks.
 * Mapping and read-group annotation (*STAR*)
 * Alignment-QC (*RSeQC, Preseq*)
 * PCR duplicate detection (*Sambamba MarkDup*)
-* Expression quantification (*HTSeq-count, featureCounts*)
+* Gene-expression quantification (*HTSeq-count, featureCounts*)
+* Transcript expression-quantification (*Salmon)
 * Variant calling (*GATK4*)
 * QC report (*MultiQC*)
 
