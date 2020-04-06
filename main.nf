@@ -152,14 +152,8 @@ workflow {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
     if (!params.skipSalmon) {
-      if (!params.skipMergeLanes) {
-        Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect() )
-      } else if (!params.singleEnd && params.skipMergeLanes) {
-          Quant ( final_fastqs.map {sample_id, rg_id, r1, r2, json -> [sample_id, [r1,r2].flatten()] }, salmon_index.collect() )
-      } else {
-          Quant ( final_fastqs.map {sample_id, rg_id, reads, json -> [sample_id, reads] }, salmon_index.collect() ) 
-      }
-    } 
+      Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect())
+    }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
           SplitIntervals( 'no-break', scatter_interval_list)
           SplitNCigarReads(markdup_mapping.out)
