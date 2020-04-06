@@ -2,7 +2,7 @@
 
 **Analysis configuration**
 
-Default settings are stored in `./conf/base.config` and will be automatically set upon execution the pipeline. You can overwrite the default settings by either appending the setting of interest directly on command-line or storing them in a seperate configuration file (see `./conf/tet_run.config`) and appending them with `-c my_run.config`. 
+Default settings are stored in `./conf/base.config` and will be automatically set upon execution the pipeline. These defaults can be overwriten by either appending the setting of interest directly to the command-line or storing them in a seperate configuration file (see `./conf/tet_run.config`) and appending them with `-c my_run.config`. 
 
 For example:
 
@@ -11,7 +11,8 @@ For example:
 
 **Genome configuration**
 
-Custom genome settings should be provided as a separate configuration file.
+Custom genome settings should be included as a separate configuration file via the the `--genome_config` parameter, either directly or within a configuration file as described above.  For example;
+
 ```
 includeConfig '../process.config
 
@@ -29,11 +30,11 @@ params {
   gene_len = '
 ```
 
-In it's most basic form, the pipeline requires the following resource files.
+In it's most basic form, the pipeline requires the following resource parameters.
 
-* Path to genome sequence (.fasta). The index (.fai) should be stored in the same directory.
-* Path to genome annotation (.gtf)
-* Path to transcript sequences (.fasta) when skipSalmon is set to false.
+* `--genome_fasta` - path to genome sequence (.fasta). The index (.fai) should be stored in the same directory.
+* `--genome_gtf` - path to genome annotation (.gtf)
+* `--transcripts_fasta` - path to transcript sequences (.fasta) when skipSalmon is set to false.
 
 All other files will be created at run-time and stored in the output folder (reference_genome). Since buidling the STAR index requires a significant amount of memory, ensure that sufficient memory is available on the host system and allocated in process.config. 
 
@@ -41,6 +42,7 @@ All other files will be created at run-time and stored in the output folder (ref
 
 Runtime specific resources (memory, cpu's) can be configured in the process.config file. These settings should be sufficent for most jobs but can be always be altered if equired.
 
+```
  withLabel : HTSeq_0_11_3_Count {
       time = '24h'
       penv = 'threaded'
