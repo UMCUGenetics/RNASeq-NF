@@ -17,7 +17,7 @@ This implementation is a work in progress and aims to reach feature parity with 
 
 ## Documentation
 
-### Setup
+### 1.Setup
 ### Nextflow
 Install [Nextflow](https://www.nextflow.io/)
 
@@ -34,6 +34,7 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 
 Ensure that the NextflowModules git branch points to dev-ubec.
 
+### 2.Configuration
 2. [Configuration](./docs/config.md) \
 2.1 [Settings](./docs/settings.md) \
 2.2 [Resources](./docs/reference.md) 
