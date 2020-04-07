@@ -44,13 +44,13 @@ Ensure that the NextflowModules git branch points to dev-ubec.
 Run the pipeline with default setting and genome config 
 ```
 export NXF_VER=19.10.0
-./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config -profile slurm
+./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config -profile <slurm,sge>
 ```
 
 Run the pipeline with custom settings file (`-c`) option.
 ```
 export NXF_VER=19.10.0
-./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config -c </path/to/myrun.config> -profile slurm
+./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config -c </path/to/myrun.config> -profile <slurm,sge>
 ```
 
 For local execution, simply omit the -profile parameter.
