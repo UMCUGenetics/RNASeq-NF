@@ -15,11 +15,11 @@ The pipeline performs the following tasks.
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. Several components have been adapted from the [nf-core rnaseq](https://github.com/nf-core/rnaseq) community pipeline and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup.
 
-## Documentation
+## Getting started
 
 ### 1. Setup
 ### Nextflow
-Install [Nextflow](https://www.nextflow.io/)
+Install [Nextflow](https://www.nextflow.io/).
 
 ### Singularity
 Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host system. Required for biocontainers.
