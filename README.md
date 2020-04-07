@@ -17,7 +17,23 @@ This implementation is a work in progress and aims to reach feature parity with 
 
 ## Documentation
 
-1. [Installation](./docs/installation.md) 
+### Setup
+### Nextflow
+Install [Nextflow](https://www.nextflow.io/)
+
+### Singularity
+Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host system. Required for biocontainers.
+
+### Get RNASeq-NF
+
+Clone this repository and submodules. Check out the master branch.
+
+```
+git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
+```
+
+Ensure that the NextflowModules git branch points to dev-ubec.
+
 2. [Configuration](./docs/config.md) \
 2.1 [Settings](./docs/settings.md) \
 2.2 [Resources](./docs/reference.md) 
