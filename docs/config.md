@@ -33,7 +33,7 @@ Runtime specific resources (memory, cpu's) can be configured in the process.conf
 ```
 **Nextflow configuration**
 
-Nextflow's base configuration (executors, containerization etc.) are stored in nextflow.config. Specify the Singularity chache dir on the host system. All images will be stored at that location.
+Nextflow's base configuration (executors, containerization etc.) are stored in nextflow.config. Specify the Singularity cache dir on the host system. All images will be stored at that location.
 
 `cacheDir = '/path/to/my/cache/dir`
 
