@@ -4,6 +4,12 @@ Download your prefered reference genome from [Ensembl](https://www.ensembl.org/i
 ### 2. Reference transcript sequence (optional)
 In case you intend to run transcript quantification with Salmon, download the cDNA sequences of interest from [Ensembl](https://www.ensembl.org/index.html). Alternatively, the transcript fasta can be generated with [RSEM](http://deweylab.biostat.wisc.edu/rsem/rsem-prepare-reference.html) directly from genomic .fasta or .gtf inputs. 
 
+```
+rsem-prepare-reference --gtf Homo_sapiens.GRCh37.74.gtf \
+                       --star \ 
+                        Homo_sapiens.GRCh37.fasta /Homo_sapiens_GRCh37.transcripts
+```
+
 ### 3. GATK resource bundle (optional)  
 
 Download the [GATK resource bundle](https://gatk.broadinstitute.org/hc/en-us/articles/360036212652-Resource-Bundle) for your genome build of interest if you intend to perform SNP/Indel calling on RNASeq data. For example, the GRCh37 resource files can be obtained as shown below.
