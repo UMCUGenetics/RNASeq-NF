@@ -17,7 +17,7 @@ This implementation is a work in progress and aims to reach feature parity with 
 
 ## Documentation
 
-### 1.Setup
+### 1. Setup
 ### Nextflow
 Install [Nextflow](https://www.nextflow.io/)
 
