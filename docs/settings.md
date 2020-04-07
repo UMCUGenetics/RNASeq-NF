@@ -1,23 +1,23 @@
 **General pipeline settings**
-* `--singleEnd` true/false for single-end sequencing (Default:False)
-* `--unstranded` true/false for unstranded library prep (Default:False)
-* `--stranded` true/false for forward-stranded library prep (Default:False)
-* `--revstranded` true/false for reverse-stranded library prep (Default:True)
+* `--singleEnd` true/false for single-end sequencing (Default: false)
+* `--unstranded` true/false for unstranded library prep (Default: false)
+* `--stranded` true/false for forward-stranded library prep (Default: false)
+* `--revstranded` true/false for reverse-stranded library prep (Default: true)
 * `--hts_count_type` htseq-count annotation feature for expression quantification (Default: exon)
 * `--fc_group_features` subread featureCount group (Default: gene_id)
 * `--fc_count_type subread` featureCount type (Default: gene_id)
 
 **Pipeline steps**
 
-* `--skipPostQC` Skip post alignment QC (Default:false)
-* `--skipMarkDup` Skip Sambamba markdup (Default:false)
-* `--skipCount` Skip HTSeq/featureCounts expression quantification (Default:false)
-* `--skipMapping` Skip STAR alignment (Default:false)
-* `--skipSalmon`Skip Salmon transcript quantification (Default:false)
-* `--skipFastp` Skip trimming with fastp (Default:false)
-* `--skipMultiQC` Skip MultiQC quality report (Default:false)
-* `--skipGATK4_HC` Skip GATK4 variant calling (Default:true)
-* `--skipGATK4_BQSR` Skip GATK4 base quality recalibration (Default:true)
+* `--skipPostQC` Skip post alignment QC (Default: false)
+* `--skipMarkDup` Skip Sambamba markdup (Default: false)
+* `--skipCount` Skip HTSeq/featureCounts expression quantification (Default: false)
+* `--skipMapping` Skip STAR alignment (Default: false)
+* `--skipSalmon`Skip Salmon transcript quantification (Default: false)
+* `--skipFastp` Skip trimming with fastp (Default: false)
+* `--skipMultiQC` Skip MultiQC quality report (Default: false)
+* `--skipGATK4_HC` Skip GATK4 variant calling (Default: true)
+* `--skipGATK4_BQSR` Skip GATK4 base quality recalibration (Default: true)
 
 **Reference resources**
 
