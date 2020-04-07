@@ -35,8 +35,9 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 Ensure that the NextflowModules git branch points to dev-ubec.
 
 ### 3. Configuration
-3.1 [Settings overview](./docs/settings.md) \
-3.2 [Analysis](./docs/config.md) 
+3.1 [Obtain resource files](./docs/resources.md) \
+3.2 [Settings overview](./docs/settings.md) \
+3.3 [Analysis](./docs/config.md) 
 
 ## 4. Run RNASeq analysis
 
