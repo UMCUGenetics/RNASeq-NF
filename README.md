@@ -37,7 +37,7 @@ Ensure that the NextflowModules git branch points to dev-ubec.
 ### 3. Configuration
 3.1 [Settings overview](./docs/settings.md) \
 3.2 [Analysis](./docs/config.md) \
-3.3 [Resources](./docs/reference.md) \
+3.3 [Resources](./docs/reference.md) 
 
 ## 4. Run RNASeq analysis
 
