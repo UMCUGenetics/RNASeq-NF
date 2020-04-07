@@ -24,7 +24,7 @@ Install [Nextflow](https://www.nextflow.io/)
 ### Singularity
 Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host system. Required for biocontainers.
 
-### Get RNASeq-NF
+### 2. Get RNASeq-NF
 
 Clone this repository and submodules. Check out the master branch.
 
@@ -34,11 +34,27 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 
 Ensure that the NextflowModules git branch points to dev-ubec.
 
-### 2. Configuration
-2.1 [Settings overview](./docs/settings.md) \
-2.2 [Analysis](./docs/config.md) \
-2.2 [Resources](./docs/reference.md) \
-3. [Run RNASeq-NF](./docs/running.md) 
+### 3. Configuration
+3.1 [Settings overview](./docs/settings.md) \
+3.2 [Analysis](./docs/config.md) \
+3.3 [Resources](./docs/reference.md) \
+
+## 4. Run RNASeq analysis
+
+Run the pipeline with default setting and genome config 
+```
+export NXF_VER=19.10.0
+./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config -profile slurm
+```
+
+Run the pipeline with custom settings file (`-c`) option.
+```
+export NXF_VER=19.10.0
+./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config -c </path/to/myrun.config> -profile slurm
+```
+
+For local execution, simply omit the -profile parameter.
+
 
 
 
