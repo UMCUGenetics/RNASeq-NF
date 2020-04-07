@@ -1,23 +1,23 @@
 **General pipeline settings**
-* `--singleEnd` True/False for single-end sequencing
-* `--unstranded` True/False for unstranded library prep
-* `--stranded` True/False for forward-stranded library prep
-* `--revstranded` True/False for reverse-stranded library prep
-* `--hts_count_type` htseq-count annotation feature for expression quantification (<em> gene_id, transcript_id etc.</em>)
-* `--fc_group_features` subread featureCount group (e.x gene_id)
-* `--fc_count_type subread` featureCount type (<em> CDS, five_prime_UTR etc.</em>)
+* `--singleEnd` true/false for single-end sequencing (Default:False)
+* `--unstranded` true/false for unstranded library prep (Default:False)
+* `--stranded` true/false for forward-stranded library prep (Default:False)
+* `--revstranded` true/false for reverse-stranded library prep (Default:True)
+* `--hts_count_type` htseq-count annotation feature for expression quantification (Default: exon)
+* `--fc_group_features` subread featureCount group (Default: gene_id)
+* `--fc_count_type subread` featureCount type (Default: gene_id)
 
 **Pipeline steps**
 
-* `--skipPostQC` Skip post alignment QC (RSeQC, Preseq)
-* `--skipMarkDup` Skip Sambamba markdup
-* `--skipCount` Skip HTSeq/featureCounts expression quantification.
-* `--skipMapping` Skip STAR alignment
-* `--skipSalmon`Skip Salmon transcript quantification
-* `--skipFastp` Skip trimming with fastp
-* `--skipMultiQC` Skip MultiQC quality report
-* `--skipGATK4_HC` Skip GATK4 variant calling
-* `--skipGATK4_BQSR` Skip GATK4 base quality recalibration
+* `--skipPostQC` Skip post alignment QC (Default:false)
+* `--skipMarkDup` Skip Sambamba markdup (Default:false)
+* `--skipCount` Skip HTSeq/featureCounts expression quantification (Default:false)
+* `--skipMapping` Skip STAR alignment (Default:false)
+* `--skipSalmon`Skip Salmon transcript quantification (Default:false)
+* `--skipFastp` Skip trimming with fastp (Default:false)
+* `--skipMultiQC` Skip MultiQC quality report (Default:false)
+* `--skipGATK4_HC` Skip GATK4 variant calling (Default:true)
+* `--skipGATK4_BQSR` Skip GATK4 base quality recalibration (Default:true)
 
 **Reference resources**
 
