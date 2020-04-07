@@ -21,9 +21,6 @@ All other files will be created at run-time and stored in the output folder (ref
 
 Example genome configuration files can be found `./resources/test_run`.
 
-All other files will be created at run-time and stored in the output folder (reference_genome). Since buidling the STAR index requires a significant amount of memory, ensure that sufficient memory is available on the host system and allocated in process.config. 
-
-
 **Process configuration**
 
 Runtime specific resources (memory, cpu's) can be configured in the process.config file. These settings should be sufficent for most jobs but can be always be altered if equired. The new configuration can be appended with the  `-c` option.
