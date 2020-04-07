@@ -2,7 +2,7 @@
 
 **Analysis configuration**
 
-Default settings are stored in `./conf/base.config` and will be automatically set upon execution of the pipeline. These defaults can be overwriten by either appending the setting of interest directly as command-line arguments or storing them in a seperate configuration file (see `./conf/tet_run.config`) and appending them with `-c my_run.config`. 
+Default [settings](./settings.md) are stored in `./conf/base.config` and will be automatically set upon execution of the pipeline. These defaults can be overwriten by either appending the setting of interest directly as command-line arguments or storing them in a seperate configuration file (see `./conf/tet_run.config`) and appending them with `-c my_run.config`. 
 
 For example;
 
