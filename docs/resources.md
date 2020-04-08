@@ -2,13 +2,14 @@
 Download your prefered reference genome from [Ensembl](https://www.ensembl.org/index.html), [Illumina iGenomes](https://emea.support.illumina.com/sequencing/sequencing_software/igenome.html) etc. and stored them in a dedicated resource folder. This should include at least the reference sequence (.fasta) and genome annotation (.gtf). 
 
 ### 2. Reference transcript sequence (optional)
-In case you intend to run transcript quantification with Salmon, download the cDNA sequences of interest from [Ensembl](https://www.ensembl.org/index.html). Alternatively, the transcript fasta can be generated with [RSEM](http://deweylab.biostat.wisc.edu/rsem/rsem-prepare-reference.html) directly from genomic .fasta or .gtf inputs. 
+For transcript quantificaton with Salmon, download the cDNA sequences of interest from [Ensembl](https://www.ensembl.org/index.html).
 
+For example;          
 ```
-rsem-prepare-reference --gtf Homo_sapiens.GRCh37.74.gtf \
-                       --star \ 
-                        Homo_sapiens.GRCh37.fasta /Homo_sapiens_GRCh37.transcripts
+wget ftp://ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.cdna.all.fa.gz
 ```
+The fasta will be used to buid the Salmon index for alignment-free quantification.
+
 
 ### 3. GATK resource bundle (optional)  
 
