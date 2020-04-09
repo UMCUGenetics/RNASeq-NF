@@ -34,7 +34,8 @@ include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(optional:par
 								    singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
-include rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(params)
+include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
+include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(optional:params.fc.toolOptions,
 										     singleEnd: params.singleEnd,
 										     extraAttributes:params.fc.extraAttributes,
@@ -66,9 +67,9 @@ workflow {
         .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
         .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
 
-    if (params.gene_len && !params.skipCount && !params.skipMapping) {
+    if (params.gene_len && !params.skipMapping) {
       exon_lengths = params.gene_len
-    } else if (!params.gene_len && !params.skipCount && !params.skipMapping) {
+    } else if (!params.gene_len && !params.skipHTSeqCount && !params.skipMapping) {
       getExonLenghts( genome_gtf)
       exon_lengths = getExonLenghts.out
     } 
@@ -148,15 +149,12 @@ workflow {
     if (!params.skipHTSeqCount && !params.skipMapping) {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-      if ( params.rpkm) {
-        rpkm( run_name, mergeHtseqCounts.out, exon_lengths)
-      }
+      hts_rpkm( run_name, mergeHtseqCounts.out, exon_lengths)
     }
     if (!params.skipFeatureCounts && !params.skipMapping) {
       FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      if ( params.rpkm)	{
-        rpkm( run_name, FeatureCounts.out[1], exon_lengths)
-      }
+      fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
+
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
@@ -190,9 +188,11 @@ workflow {
       if ( !params.skipMapping) {
         star_logs =  AlignReads.out.map{ [it[3], it[4]] }
       }
-      if ( !params.skipCount) {
+      if ( !params.skipHTSeqCount) {
         hts_logs = Count.out.map { it[1] }
-        fc_logs = FeatureCounts.out.map { it[1]}
+      }
+      if ( !params.skipFeatureCounts) {
+        fc_logs = FeatureCounts.out.map { it[2]}
       }
       if ( !params.skipPostQC ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
