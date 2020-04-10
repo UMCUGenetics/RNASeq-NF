@@ -67,9 +67,9 @@ workflow {
         .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
         .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
 
-    if (params.gene_len && !params.skipMapping) {
+    if (params.gene_len && params.norm_rpkm) {
       exon_lengths = params.gene_len
-    } else if (!params.gene_len && !params.skipHTSeqCount && !params.skipMapping) {
+    } else if (!params.gene_len && params.norm_rpkm ) {
       getExonLenghts( genome_gtf)
       exon_lengths = getExonLenghts.out
     } 
@@ -149,12 +149,15 @@ workflow {
     if (!params.skipHTSeqCount && !params.skipMapping) {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-      hts_rpkm( run_name, mergeHtseqCounts.out, exon_lengths)
+      if ( params.norm_rpkm) {
+        hts_rpkm( run_name, mergeHtseqCounts.out, exon_lengths)
+      }
     }
     if (!params.skipFeatureCounts && !params.skipMapping) {
       FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
-
+      if ( params.norm_rpkm ) {
+        fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
+      }
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
