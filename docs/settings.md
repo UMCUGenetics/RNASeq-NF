@@ -6,12 +6,14 @@
 * `--hts_count_type` htseq-count annotation feature for expression quantification (Default: exon)
 * `--fc_group_features` subread featureCount group (Default: gene_id)
 * `--fc_count_type subread` featureCount type (Default: gene_id)
+* `--norm_rpkm` enable edgeR RPKM normalization for htseq-count/featureCounts (Default: true)
 
 **Pipeline steps**
 
 * `--skipPostQC` Skip post alignment QC (Default: false)
 * `--skipMarkDup` Skip Sambamba markdup (Default: false)
-* `--skipCount` Skip HTSeq/featureCounts expression quantification (Default: false)
+* `--skipHTSeqCount` Skip htseq-count expression quantification (Default: false)
+* `--skipFeatureCounts` Skip featureCounts expression quantification (Default: false)
 * `--skipMapping` Skip STAR alignment (Default: false)
 * `--skipSalmon`Skip Salmon transcript quantification (Default: false)
 * `--skipFastp` Skip trimming with fastp (Default: false)
