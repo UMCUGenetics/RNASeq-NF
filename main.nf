@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 nextflow.preview.dsl=2
-include GenomeGenerate from './NextflowModules/STAR/2.6.0c/GenomeGenerate.nf' params(params)
+include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
 include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( optional:params.salmonindex.toolOptions )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
@@ -22,7 +22,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
 								    stranded:params.stranded, 
 								    unstranded:params.unstranded, 
 								    revstranded:params.revstranded)
-include AlignReads from './NextflowModules/STAR/2.6.0c/AlignReads.nf' params(singleEnd:params.singleEnd, 
+include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
 									     optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
