@@ -193,13 +193,13 @@ workflow {
       if ( !params.skipMapping) {
         star_logs =  AlignReads.out.map{ [it[3], it[4]] }
       }
-      if ( !params.skipHTSeqCount) {
+      if ( !params.skipHTSeqCount && !params.skipMapping) {
         hts_logs = Count.out.map { it[1] }
       }
-      if ( !params.skipFeatureCounts) {
+      if ( !params.skipFeatureCounts && !params.skipMapping) {
         fc_logs = FeatureCounts.out.map { it[2]}
       }
-      if ( !params.skipPostQC ) {
+      if ( !params.skipPostQC && !params.skipMapping ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       }
       if ( !params.skipSalmon) {
