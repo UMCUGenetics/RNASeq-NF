@@ -34,6 +34,7 @@ include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(optional:par
 								    singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
+include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
 include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
 include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(optional:params.fc.toolOptions,
@@ -164,6 +165,7 @@ workflow {
     }
     if (!params.skipSalmon) {
       Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect())
+      mergeSalmonCounts ( run_name, Quant.out.map { it[1] }.collect())
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
           SplitIntervals( 'no-break', scatter_interval_list)
