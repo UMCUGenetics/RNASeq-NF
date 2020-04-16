@@ -30,7 +30,7 @@ include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: 
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
                                                                      saveUnaligned: params.saveUnaligned)
-include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(optional:params.fastp.toolOptions, 
+include Fastp from './NextflowModules/fastp/0.20.1/Fastp.nf' params(optional:params.fastp.toolOptions, 
 								    singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
