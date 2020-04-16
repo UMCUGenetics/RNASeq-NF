@@ -113,7 +113,28 @@ workflow {
         CreateIntervalList(genome_index, CreateSequenceDictionary.out )
         scatter_interval_list = CreateIntervalList.out
     }
-   
+    params.version = "Beta"
+    log.info """=======================================================
+    RNASeq-NF ${params.version}"
+    ======================================================="""
+    def summary = [:]
+    summary['Pipeline Name']  = 'RNASeq-NF'
+    summary['Pipeline Version'] = params.version
+    summary['Run Name']     = run_name
+    summary['Fastq dir']   = params.fastq_path
+    summary['Genome config']   = params.genome_config
+    summary['Mode']   = params.singleEnd ? 'Single-end' : 'Paired-end'
+    summary['Output dir']   = params.out_dir
+    summary['Working dir']  = workflow.workDir
+    summary['Container Engine'] = workflow.containerEngine
+    summary['Current home']   = "$HOME"
+    summary['Current user']   = "$USER"
+    summary['Current path']   = "$PWD"
+    summary['Script dir']     = workflow.projectDir
+    summary['Config Profile'] = workflow.profile
+    log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
+    log.info "========================================="
+    //Start pipeline execution
     if (params.singleEnd) {
       if (!params.skipFastp) {
         final_fastqs = Fastp(fastq_files)
