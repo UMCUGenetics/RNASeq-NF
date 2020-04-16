@@ -8,7 +8,7 @@ include MergeVCFs from '../NextflowModules/GATK/4.1.3.0/MergeVCFs.nf' params( me
 
 
 workflow gatk4_hc {
-    get:
+    take:
       bam
       scatter_intervals
     main:

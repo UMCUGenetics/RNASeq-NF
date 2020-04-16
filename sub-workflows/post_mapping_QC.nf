@@ -2,7 +2,7 @@ include RSeQC from '../NextflowModules/RSeQC/3.0.1/RSeQC.nf' params( singleEnd:p
 include Lc_extrap from '../NextflowModules/Preseq/2.0.3/Lc_extrap.nf' params( optional:params.preseq.toolOptions)
 
 workflow post_mapping_QC {
-    get:
+    take:
       bams_in
       bed_file
     main:

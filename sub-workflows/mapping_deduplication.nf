@@ -3,7 +3,7 @@ include MarkDup from '../NextflowModules/Sambamba/0.6.8/MarkDup.nf' params(mem:p
   
 
 workflow markdup_mapping {
-    get:
+    take:
       bams_in
     main:
       /* Run mapping on a per sample per lane basis */

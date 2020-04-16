@@ -9,7 +9,7 @@ include MergeBams from '../NextflowModules/Sambamba/0.6.8/MergeBams.nf' params(m
                                                                                optional:params.mergebams.toolOptions)
 
 workflow gatk4_bqsr {
-    get:
+    take:
       bam
       scatter_intervals
     main:

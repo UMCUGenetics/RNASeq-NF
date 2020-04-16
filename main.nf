@@ -8,7 +8,7 @@ include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToB
 include CreateSequenceDictionary from './NextflowModules/Picard/2.22.0/CreateSequenceDictionary.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include getExonLenghts from './utils/getExonLengths.nf' params(params)
-include './NextflowModules/Utils/fastq.nf' params(params)
+include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
