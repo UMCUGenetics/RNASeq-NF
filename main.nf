@@ -8,7 +8,7 @@ include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToB
 include CreateSequenceDictionary from './NextflowModules/Picard/2.22.0/CreateSequenceDictionary.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include getExonLenghts from './utils/getExonLengths.nf' params(params)
-include './NextflowModules/Utils/fastq.nf' params(params)
+include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
@@ -34,6 +34,7 @@ include Fastp from './NextflowModules/fastp/0.14.1/Fastp.nf' params(optional:par
 								    singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
+include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
 include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
 include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(optional:params.fc.toolOptions,
@@ -112,7 +113,28 @@ workflow {
         CreateIntervalList(genome_index, CreateSequenceDictionary.out )
         scatter_interval_list = CreateIntervalList.out
     }
-   
+    params.version = "Beta"
+    log.info """=======================================================
+    RNASeq-NF ${params.version}"
+    ======================================================="""
+    def summary = [:]
+    summary['Pipeline Name']  = 'RNASeq-NF'
+    summary['Pipeline Version'] = params.version
+    summary['Run Name']     = run_name
+    summary['Fastq dir']   = params.fastq_path
+    summary['Genome config']   = params.genome_config
+    summary['Mode']   = params.singleEnd ? 'Single-end' : 'Paired-end'
+    summary['Output dir']   = params.out_dir
+    summary['Working dir']  = workflow.workDir
+    summary['Container Engine'] = workflow.containerEngine
+    summary['Current home']   = "$HOME"
+    summary['Current user']   = "$USER"
+    summary['Current path']   = "$PWD"
+    summary['Script dir']     = workflow.projectDir
+    summary['Config Profile'] = workflow.profile
+    log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
+    log.info "========================================="
+    //Start pipeline execution
     if (params.singleEnd) {
       if (!params.skipFastp) {
         final_fastqs = Fastp(fastq_files)
@@ -164,6 +186,7 @@ workflow {
     }
     if (!params.skipSalmon) {
       Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect())
+      mergeSalmonCounts ( run_name, Quant.out.map { it[1] }.collect())
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
           SplitIntervals( 'no-break', scatter_interval_list)
@@ -191,13 +214,13 @@ workflow {
       if ( !params.skipMapping) {
         star_logs =  AlignReads.out.map{ [it[3], it[4]] }
       }
-      if ( !params.skipHTSeqCount) {
+      if ( !params.skipHTSeqCount && !params.skipMapping) {
         hts_logs = Count.out.map { it[1] }
       }
-      if ( !params.skipFeatureCounts) {
+      if ( !params.skipFeatureCounts && !params.skipMapping) {
         fc_logs = FeatureCounts.out.map { it[2]}
       }
-      if ( !params.skipPostQC ) {
+      if ( !params.skipPostQC && !params.skipMapping ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       }
       if ( !params.skipSalmon) {
