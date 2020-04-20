@@ -60,7 +60,7 @@ if (!params.fastq_path) {
 workflow {
   main :  
     run_name = params.fastq_path.split('/')[-1]
-    fastq_files = extractAllFastqFromDir(params.fastq_path)
+    fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
     //Get necessary files
     genome_gtf = Channel
         .fromPath(params.genome_gtf, checkIfExists: true)
@@ -148,10 +148,10 @@ workflow {
     //Log channels
     fastp_logs = Channel.empty()
     sortmerna_logs = Channel.empty()
+    fastq_files.view()
     // Determine final fastqs files
     if ( !params.skipFastp && !params.skipSortMeRna ) {
       Fastp(fastq_files)
-      //IndexDb(sortmerna_fasta)
       SortMeRna(Fastp.out[0], 
                 sortmerna_fasta)
       fastp_logs = Fastp.out[1]
@@ -164,10 +164,8 @@ workflow {
         final_fastqs = Fastp.out[0]
 
     } else if ( params.skipFastp &&  !params.skipSortMeRna ) {
-        fastq_files.view()
-        //IndexDb(sortmerna_fasta)
         SortMeRna(fastq_files, 
-                  sortmerna_fasta)
+                  sortmerna_fasta.collect())
         sortmerna_logs = SortMeRna.out[1]
         final_fastqs = SortMeRna.out[0]
 
