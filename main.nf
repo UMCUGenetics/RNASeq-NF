@@ -118,6 +118,23 @@ workflow {
         CreateIntervalList(genome_index, CreateSequenceDictionary.out )
         scatter_interval_list = CreateIntervalList.out
     }
+    if (! params.skipSortMeRna) {
+        rRNA_database = file(params.rRNA_database_manifest)
+        if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
+
+
+
+
+    }
+    rRNA_database = file(params.rRNA_database_manifest)
+    if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
+Channel
+    .from( rRNA_database.readLines() )
+    .map { row -> file(row) }
+    .set { sortmerna_fasta }
+
+
+
     params.version = "Beta"
     log.info """=======================================================
     RNASeq-NF ${params.version}"
