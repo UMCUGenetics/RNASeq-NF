@@ -45,6 +45,11 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
                                                                                      revstranded:params.revstranded,
 										     fc_group_features:params.fc_group_features,
 										     fc_count_type:params.fc_count_type)
+
+include IndexDb from './NextflowModules/SortMeRNA/2.1b/IndexDb.nf' params(params)
+include SortMeRna from './NextflowModules/SortMeRNA/2.1b/SortMeRna.nf' params(singleEnd:params.singleEnd)
+
+
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
@@ -134,32 +139,46 @@ workflow {
     summary['Config Profile'] = workflow.profile
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
-    //Start pipeline execution
-    if (params.singleEnd) {
-      if (!params.skipFastp) {
-        final_fastqs = Fastp(fastq_files)
-              .groupTuple(by:0)
-              .map { sample_id, rg_ids, json, reads -> [sample_id, rg_ids[0], reads.toSorted(), [], json] }
-              
-      } else {
-          final_fastqs = fastq_files
-          .groupTuple(by:0)
-          .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [], []] }
-          }
+    //Log channels
+    fastp_logs = Channel.empty()
+    sortmerna_logs = Channel.empty()
+    // Determine final fastqs files
+    if ( !params.skipFastp && !params.skipSortMeRna ) {
+      Fastp(fastq_files)
+      SortMeRna(Fastp.out[0], 
+          IndexDb.out[0].collect(), 
+          IndexDb.out[1].collect(), 
+          IndexDb.out[2].collect())
+      fastp_logs = Fastp.out[1]
+      sortmerna_logs = SortMeRNA.out[1] 
+      final_fastqs = SortMeRNna.out[0]
+
+    } else if ( !params.skipFastp &&  params.skipSortMeRna ) {
+      Fastp(fastq_files)
+      fastp_logs = Fastp.out[1]
+      final_fastqs = Fastp.out[0]
+
+    } else if ( params.skipFastp &&  !params.skipSortMeRna ) {
+      SortMeRna(fastq_files, 
+                IndexDb.out[0].collect(), 
+                IndexDb.out[1].collect(), 
+                IndexDb.out[2].collect())
+      sortmerna_logs = SortMeRNA.out[1] 
+
     } else {
-          if (!params.skipFastp) {
-            final_fastqs =  Fastp(fastq_files)
-              .map{ sample_id, rg_ids, json, reads -> [sample_id, rg_ids, reads[0], reads[1], json] }
-              .groupTuple(by:0)
-              .map{ sample_id, rg_ids, r1, r2, json -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted(), json] }
-          } else {
-            final_fastqs = fastq_files
+        final_fastqs = fastq_files
+    }
+    //Transform output channels
+    if (params.singleEnd) {
+        final_fastqs = fastq_files
+             .groupTuple(by:0)
+             .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [], []] }
+    } else {
+         final_fastqs = fastq_files
               .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
               .groupTuple(by:0)
               .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted(), []] }
-          }
     }
-
     if (!params.skipMapping) {
       AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, star_index.collect())
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
