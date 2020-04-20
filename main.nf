@@ -121,20 +121,10 @@ workflow {
     if (! params.skipSortMeRna) {
         rRNA_database = file(params.rRNA_database_manifest)
         if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
-
-
-
-
+        sortmerna_fasta = Channel
+            .from( rRNA_database.readLines() )
+            .map { row -> file(row) }
     }
-    rRNA_database = file(params.rRNA_database_manifest)
-    if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
-Channel
-    .from( rRNA_database.readLines() )
-    .map { row -> file(row) }
-    .set { sortmerna_fasta }
-
-
-
     params.version = "Beta"
     log.info """=======================================================
     RNASeq-NF ${params.version}"
@@ -162,6 +152,7 @@ Channel
     // Determine final fastqs files
     if ( !params.skipFastp && !params.skipSortMeRna ) {
       Fastp(fastq_files)
+      IndexDb(sortmerna_fasta)
       SortMeRna(Fastp.out[0], 
           IndexDb.out[0].collect(), 
           IndexDb.out[1].collect(), 
@@ -176,6 +167,7 @@ Channel
       final_fastqs = Fastp.out[0]
 
     } else if ( params.skipFastp &&  !params.skipSortMeRna ) {
+      IndexDb(sortmerna_fasta)
       SortMeRna(fastq_files, 
                 IndexDb.out[0].collect(), 
                 IndexDb.out[1].collect(), 
@@ -187,15 +179,17 @@ Channel
     }
     //Transform output channels
     if (params.singleEnd) {
-        final_fastqs = fastq_files
+        final_fastqs
              .groupTuple(by:0)
-             .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [], []] }
+             .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [] }
     } else {
-         final_fastqs = fastq_files
+         final_fastqs
               .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
               .groupTuple(by:0)
-              .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted(), []] }
+              .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted() }
     }
+    final_fastqs.view()
+
     if (!params.skipMapping) {
       AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, star_index.collect())
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
