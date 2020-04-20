@@ -46,8 +46,7 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
 										     fc_group_features:params.fc_group_features,
 										     fc_count_type:params.fc_count_type)
 
-include IndexDb from './NextflowModules/SortMeRNA/2.1b/IndexDb.nf' params(params)
-include SortMeRna from './NextflowModules/SortMeRNA/2.1b/SortMeRna.nf' params(singleEnd:params.singleEnd)
+include SortMeRna from './NextflowModules/SortMeRNA/4.2.0/SortMeRna.nf' params(singleEnd:params.singleEnd)
 
 
 if (!params.out_dir) {
@@ -118,9 +117,9 @@ workflow {
         CreateIntervalList(genome_index, CreateSequenceDictionary.out )
         scatter_interval_list = CreateIntervalList.out
     }
-    if (! params.skipSortMeRna) {
+    if ( !params.skipSortMeRna) {
         rRNA_database = file(params.rRNA_database_manifest)
-        if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
+        //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
         sortmerna_fasta = Channel
             .from( rRNA_database.readLines() )
             .map { row -> file(row) }
@@ -152,27 +151,25 @@ workflow {
     // Determine final fastqs files
     if ( !params.skipFastp && !params.skipSortMeRna ) {
       Fastp(fastq_files)
-      IndexDb(sortmerna_fasta)
+      //IndexDb(sortmerna_fasta)
       SortMeRna(Fastp.out[0], 
-          IndexDb.out[0].collect(), 
-          IndexDb.out[1].collect(), 
-          IndexDb.out[2].collect())
+                sortmerna_fasta)
       fastp_logs = Fastp.out[1]
-      sortmerna_logs = SortMeRNA.out[1] 
-      final_fastqs = SortMeRNna.out[0]
+      sortmerna_logs = SortMeRna.out[1] 
+      final_fastqs = SortMeRna.out[0]
 
     } else if ( !params.skipFastp &&  params.skipSortMeRna ) {
-      Fastp(fastq_files)
-      fastp_logs = Fastp.out[1]
-      final_fastqs = Fastp.out[0]
+        Fastp(fastq_files)
+        fastp_logs = Fastp.out[1]
+        final_fastqs = Fastp.out[0]
 
     } else if ( params.skipFastp &&  !params.skipSortMeRna ) {
-      IndexDb(sortmerna_fasta)
-      SortMeRna(fastq_files, 
-                IndexDb.out[0].collect(), 
-                IndexDb.out[1].collect(), 
-                IndexDb.out[2].collect())
-      sortmerna_logs = SortMeRNA.out[1] 
+        fastq_files.view()
+        //IndexDb(sortmerna_fasta)
+        SortMeRna(fastq_files, 
+                  sortmerna_fasta)
+        sortmerna_logs = SortMeRna.out[1]
+        final_fastqs = SortMeRna.out[0]
 
     } else {
         final_fastqs = fastq_files
@@ -181,15 +178,13 @@ workflow {
     if (params.singleEnd) {
         final_fastqs
              .groupTuple(by:0)
-             .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), [] }
+             .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), []] }
     } else {
          final_fastqs
               .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
               .groupTuple(by:0)
-              .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted() }
+              .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }.view()
     }
-    final_fastqs.view()
-
     if (!params.skipMapping) {
       AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, star_index.collect())
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
