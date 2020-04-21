@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 nextflow.preview.dsl=2
-include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params(optional: '--fastqc', singleEnd: params.singleEnd)
+include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, singleEnd: params.singleEnd )
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
 include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( optional:params.salmonindex.toolOptions )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
@@ -31,8 +31,6 @@ include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: 
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
                                                                      saveUnaligned: params.saveUnaligned)
-include Fastp from './NextflowModules/fastp/0.20.1/Fastp.nf' params(optional:params.fastp.toolOptions, 
-								    singleEnd:params.singleEnd )
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
