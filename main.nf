@@ -178,7 +178,7 @@ workflow {
          fastqs_transformed = final_fastqs
               .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
               .groupTuple(by:0)
-              .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }.view()
+              .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
     }
     if (!params.skipMapping) {
       AlignReads( fastqs_transformed, star_index.collect() )
