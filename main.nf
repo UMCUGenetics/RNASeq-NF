@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 nextflow.preview.dsl=2
+include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params(optional: '--fastqc', singleEnd: params.singleEnd)
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
 include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( optional:params.salmonindex.toolOptions )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
@@ -146,45 +147,41 @@ workflow {
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
     //Log channels
-    fastp_logs = Channel.empty()
+    trim_logs = Channel.empty()
+    fastqc_logs = Channel.empty()
     sortmerna_logs = Channel.empty()
-    fastq_files.view()
     // Determine final fastqs files
-    if ( !params.skipFastp && !params.skipSortMeRna ) {
-      Fastp(fastq_files)
-      SortMeRna(Fastp.out[0], 
-                sortmerna_fasta)
-      fastp_logs = Fastp.out[1]
-      sortmerna_logs = SortMeRna.out[1] 
-      final_fastqs = SortMeRna.out[0]
+    if ( !params.skipTrimGalore && !params.skipSortMeRna ) {
+      TrimGalore(fastq_files) 
+      SortMeRna(TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }, 
+                sortmerna_fasta.collect() )
+      final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
 
-    } else if ( !params.skipFastp &&  params.skipSortMeRna ) {
-        Fastp(fastq_files)
-        fastp_logs = Fastp.out[1]
-        final_fastqs = Fastp.out[0]
+    } else if ( !params.skipTrimGalore && params.skipSortMeRna ) {
+        TrimGalore(fastq_files)
+        final_fastqs = TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }
 
-    } else if ( params.skipFastp &&  !params.skipSortMeRna ) {
+    } else if ( params.skipTrimGalore &&  !params.skipSortMeRna ) {
         SortMeRna(fastq_files, 
-                  sortmerna_fasta.collect())
-        sortmerna_logs = SortMeRna.out[1]
-        final_fastqs = SortMeRna.out[0]
+                  sortmerna_fasta.collect() )
+        final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
 
     } else {
         final_fastqs = fastq_files
     }
     //Transform output channels
     if (params.singleEnd) {
-        final_fastqs
+        fastqs_transformed = final_fastqs
              .groupTuple(by:0)
              .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), []] }
     } else {
-         final_fastqs
+         fastqs_transformed = final_fastqs
               .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
               .groupTuple(by:0)
               .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }.view()
     }
     if (!params.skipMapping) {
-      AlignReads(final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }, star_index.collect())
+      AlignReads( fastqs_transformed, star_index.collect() )
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
     }
@@ -208,7 +205,7 @@ workflow {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
     if (!params.skipSalmon) {
-      Quant ( mergeFastqLanes (final_fastqs.map { sample_id, rg_id, r1, r2, json -> [sample_id, rg_id, r1, r2] }), salmon_index.collect())
+      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() ) 
       mergeSalmonCounts ( run_name, Quant.out.map { it[1] }.collect())
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
@@ -224,15 +221,22 @@ workflow {
     }
     if ( !params.skipMultiQC ) {
       //Create empty Channels for optional steps
-      fastq_logs = Channel.empty()
+      trim_logs = Channel.empty()
+      fastqc_logs = Channel.empty()
+      sortmerna_logs = Channel.empty()
       star_logs = Channel.empty()
       post_qc_logs = Channel.empty()
       hts_logs = Channel.empty()
       fc_logs = Channel.empty()
       salmon_logs = Channel.empty()
       //Get options
-      if ( !params.skipFastp) {
-        fastq_logs = final_fastqs.map { it[-1] }
+      if ( !params.skipTrimGalore) {
+        trim_logs = TrimGalore.out.map { it[3] }
+        fastqc_logs = TrimGalore.out.map { it[4] }
+      }
+      if ( !params.skipSortMeRna ) {
+        //Currently not working with MultiQc 1.8
+        //sortmerna_logs = SortMeRna.out.map { it[3] }
       }
       if ( !params.skipMapping) {
         star_logs =  AlignReads.out.map{ [it[3], it[4]] }
@@ -249,7 +253,9 @@ workflow {
       if ( !params.skipSalmon) {
         salmon_logs = Quant.out.map { it[1] }
       }
-      multiqc_report( fastq_logs,
+      multiqc_report( fastqc_logs,
+                      trim_logs,
+                      sortmerna_logs,
                       star_logs,
                       post_qc_logs,
                       hts_logs,
