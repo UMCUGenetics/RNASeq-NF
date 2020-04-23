@@ -37,7 +37,8 @@ include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
 include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
 include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
-include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(optional:params.fc.toolOptions,
+include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(
+                         optional:params.fc.toolOptions,
 										     singleEnd: params.singleEnd,
 										     stranded: params.stranded,
                          unstranded: params.unstranded,
