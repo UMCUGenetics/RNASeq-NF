@@ -25,22 +25,21 @@ Download the [Nextflow](https://www.nextflow.io/) binary.
 ### Singularity
 Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host system. For UMCU users, please follow the instructions on the [HPC wiki](https://wiki.bioinformatics.umcutrecht.nl/bin/view/HPC/SlurmScheduler) on how to use Slurm & Singularity.  
 
-1. Start an interactive session on the HPC cluster.
+- ## Start an interactive session on the HPC cluster.
 ```
 srun -n 2 --mem 5G --time 12:00:00 --gres=tmpspace:10G --pty bash
 ```
 The nextflow execution process needs to run until the analysis is finished and all jobs have been scheduled. It is therefore wise to execute the above command within a terminal multiplexer, such as screen or Tmux.
 
-2. Export singulariy environment
+- ## Singulariy environment
 
-Though this should be done by default, ensure that the singularity environment variables point to your $TMPDIR location.
+Though this should be done by default, ensure that the singularity environment variables point to your $TMPDIR location. In the srun command abouve, we passed 10G to our session.
 
 ```
 SINGULARITY_LOCALCACHEDIR=${TMPDIR}
 SINGULARITY_TMPDIR=${TMPDIR}
 ```
 
-Sufficent disk space should be available to pull the required singularity images .
 
 
 
