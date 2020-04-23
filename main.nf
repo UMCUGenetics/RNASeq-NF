@@ -179,7 +179,7 @@ workflow {
               .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
     }
     if (!params.skipMapping) {
-      AlignReads( fastqs_transformed, star_index.collect() )
+      AlignReads( fastqs_transformed, star_index.collect(), genome_gtf.collect() )
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
     }
