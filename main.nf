@@ -3,7 +3,7 @@
 nextflow.preview.dsl=2
 include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, singleEnd: params.singleEnd )
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
-include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( optional:params.salmonindex.toolOptions, gencode: params.gencode )
+include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( gencode: params.gencode )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
 include CreateSequenceDictionary from './NextflowModules/Picard/2.22.0/CreateSequenceDictionary.nf' params(params)
