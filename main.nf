@@ -1,7 +1,8 @@
 #!/usr/bin/env nextflow
 
 nextflow.preview.dsl=2
-include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, singleEnd: params.singleEnd )
+include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, 
+                                                                                   singleEnd: params.singleEnd )
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
 include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( gencode: params.gencode )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
@@ -13,6 +14,7 @@ include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(pa
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
+include SortMeRna from './NextflowModules/SortMeRNA/4.2.0/SortMeRna.nf' params(singleEnd:params.singleEnd)
 include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
@@ -38,19 +40,17 @@ include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
 include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
 include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
-include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(
-                         optional:params.fc.toolOptions,
-										     singleEnd: params.singleEnd,
-										     stranded: params.stranded,
-                         unstranded: params.unstranded,
-                         revstranded: params.revstranded,
-										     fc_group_features: params.fc_group_features,
-										     fc_count_type: params.fc_count_type,
-                         fc_group_features_type: params.fc_group_features_type,
-                         fc_extra_attributes : params.fc_extra_attributes, 
-                         gencode: params.gencode)
+include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
+                                                                                      singleEnd: params.singleEnd,
+                                                                                      stranded: params.stranded,
+                                                                                      unstranded: params.unstranded,
+                                                                                      revstranded: params.revstranded,
+                                                                                      fc_group_features: params.fc_group_features,
+                                                                                      fc_count_type: params.fc_count_type,
+                                                                                      fc_group_features_type: params.fc_group_features_type,
+                                                                                      fc_extra_attributes : params.fc_extra_attributes, 
+                                                                                      gencode: params.gencode)
 
-include SortMeRna from './NextflowModules/SortMeRNA/4.2.0/SortMeRna.nf' params(singleEnd:params.singleEnd)
 
 
 if (!params.out_dir) {
