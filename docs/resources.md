@@ -23,5 +23,7 @@ wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.v
 wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz
 wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.idx.gz
 ```
-
 These files are not required if BQSR recalibration is disabled.
+
+### 4. SortMeRNA ribosomal reference files
+The locations of the rRNA databases are stored in the /resources/sortmerna-db-default.txt. These files are download from GitHub and staged in the pipeline working directory. Use the offline version in case of connection problems or unavailability.
