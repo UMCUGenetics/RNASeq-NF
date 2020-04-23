@@ -29,7 +29,7 @@ Start an interactive Slurm session on the HPC cluster.
 ```
 srun -n 2 --mem 5G --time 12:00:00 --gres=tmpspace:10G --pty bash
 ```
-The nextflow process needs to run until the analysis (see 4) is finished and all jobs have been scheduled. It is therefore wise to execute the above command within a terminal multiplexer, such as screen or Tmux. Alternatively, the nextflow 
+The nextflow process needs to run until the analysis (see 4) is finished and all jobs have been scheduled. It is therefore wise to execute the above command within a terminal multiplexer, such as ***screen*** or ***Tmux***. Alternatively, the command can be embedded within an **sbatch** script.
 
 Singulariy environment
 
