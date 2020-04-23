@@ -19,21 +19,17 @@ This implementation is a work in progress and aims to reach feature parity with 
 ## Getting started
 
 ### 1. Pipeline setup
-# Nextflow
+### Nextflow
 Download the [Nextflow](https://www.nextflow.io/) binary.
 
-# Singularity
+### Singularity
 Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host system. For UMCU users, please follow the instructions on the [HPC wiki](https://wiki.bioinformatics.umcutrecht.nl/bin/view/HPC/SlurmScheduler) on how to use Slurm & Singularity.  
 
 Start an interactive Slurm session on the HPC cluster.
 ```
 srun -n 2 --mem 5G --time 12:00:00 --gres=tmpspace:10G --pty bash
 ```
-The nextflow process needs to run until the analysis (see 4) is finished and all jobs have been scheduled. It is therefore wise to execute the above command within a terminal multiplexer, such as **screen** or **Tmux**. Alternatively, the command can be embedded within an **sbatch** script.
-
-Singulariy environment
-
-Though this should be done by default, ensure that the singularity environment variables point to your $TMPDIR location. In the srun command abouve, we passed 10G to our session.
+The nextflow process needs to run until the analysis (see 4) is finished and all jobs have been scheduled. It is therefore wise to execute the above command within a terminal multiplexer, such as **screen** or **Tmux**. Alternatively, the command can be embedded within an **sbatch** script. Though this should be done by default, ensure that the singularity environment variables point to the $TMPDIR location. In the srun command abouve, we passed 10G to our session.
 
 ```
 SINGULARITY_LOCALCACHEDIR=${TMPDIR}
