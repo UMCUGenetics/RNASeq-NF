@@ -25,7 +25,7 @@ Download the [Nextflow](https://www.nextflow.io/) binary.
 # Singularity
 Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host system. For UMCU users, please follow the instructions on the [HPC wiki](https://wiki.bioinformatics.umcutrecht.nl/bin/view/HPC/SlurmScheduler) on how to use Slurm & Singularity.  
 
-Start an interactive session on the HPC cluster.
+Start an interactive Slurm session on the HPC cluster.
 ```
 srun -n 2 --mem 5G --time 12:00:00 --gres=tmpspace:10G --pty bash
 ```
