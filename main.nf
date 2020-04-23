@@ -31,6 +31,7 @@ include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: 
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
                                                                      saveUnaligned: params.saveUnaligned)
+
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
@@ -38,12 +39,14 @@ include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params
 include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params(optional:params.fc.toolOptions,
 										     singleEnd: params.singleEnd,
-										     extraAttributes:params.fc.extraAttributes,
-										     stranded:params.stranded,
-                                                                                     unstranded:params.unstranded,
-                                                                                     revstranded:params.revstranded,
-										     fc_group_features:params.fc_group_features,
-										     fc_count_type:params.fc_count_type)
+										     stranded: params.stranded,
+                         unstranded: params.unstranded,
+                         revstranded: params.revstranded,
+										     fc_group_features: params.fc_group_features,
+										     fc_count_type: params.fc_count_type,
+                         fc_group_features_type: params.fc_group_features_type,
+                         fc_extra_attributes : params.fc_extra_attributes, 
+                         gencode: params.gencode)
 
 include SortMeRna from './NextflowModules/SortMeRNA/4.2.0/SortMeRna.nf' params(singleEnd:params.singleEnd)
 
