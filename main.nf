@@ -17,12 +17,13 @@ include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' p
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
 include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
-include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_type:params.hts_count_type, 
-								    optional:params.count.toolOptions, 
-								    singleEnd:params.singleEnd, 
-								    stranded:params.stranded, 
-								    unstranded:params.unstranded, 
-								    revstranded:params.revstranded)
+include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_type:params.hts_count_type,
+                                                                    hts_group_features:params.hts_group_features,
+                                                                    optional:params.count.toolOptions, 
+                                                                    singleEnd:params.singleEnd, 
+                                                                    stranded:params.stranded, 
+                                                                    unstranded:params.unstranded, 
+                                                                    revstranded:params.revstranded)
 include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
 									     optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
