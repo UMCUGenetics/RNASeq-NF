@@ -39,7 +39,6 @@ include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: p
 
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
-include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
 include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
 include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
@@ -212,8 +211,6 @@ workflow {
     if (!params.skipSalmon) {
       Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect(), genome_gtf.collect() )
       QuantMerge ( Quant.out.map { it[1] }.collect(), run_name )
-
-      //mergeSalmonCounts ( run_name, Quant.out.map { it[1] }.collect())
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
           SplitIntervals( 'no-break', scatter_interval_list)
