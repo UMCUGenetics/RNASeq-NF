@@ -4,7 +4,7 @@ nextflow.preview.dsl=2
 include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, 
                                                                                    singleEnd: params.singleEnd )
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
-include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( gencode: params.gencode )
+include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
 include CreateSequenceDictionary from './NextflowModules/Picard/2.22.0/CreateSequenceDictionary.nf' params(params)
@@ -29,11 +29,13 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
 include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
 									     optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
-include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
+include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
+include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
                                                                      stranded: params.stranded,
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
                                                                      saveUnaligned: params.saveUnaligned)
+                                                                  
 
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
@@ -208,8 +210,10 @@ workflow {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
     if (!params.skipSalmon) {
-      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() ) 
-      mergeSalmonCounts ( run_name, Quant.out.map { it[1] }.collect())
+      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect(), genome_gtf.collect() )
+      QuantMerge ( Quant.out.map { it[1] }.collect(), run_name )
+
+      //mergeSalmonCounts ( run_name, Quant.out.map { it[1] }.collect())
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
           SplitIntervals( 'no-break', scatter_interval_list)
