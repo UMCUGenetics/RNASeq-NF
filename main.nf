@@ -217,9 +217,9 @@ workflow {
           if (!params.skipGATK4_BQSR) {
             //Perform BSQR
             gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
-            gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten())
+            gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten(), run_name)
           } else {
-              gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten())
+              gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten(), run_name)
           }      
     }
     if ( !params.skipMultiQC ) {
