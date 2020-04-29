@@ -158,7 +158,7 @@ workflow {
     if ( !params.skipTrimGalore && !params.skipSortMeRna ) {
       TrimGalore(fastq_files) 
       SortMeRna(TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }, 
-                sortmerna_fasta.collect() )
+                                    sortmerna_fasta.collect() )
       final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
 
     } else if ( !params.skipTrimGalore && params.skipSortMeRna ) {
@@ -201,9 +201,9 @@ workflow {
     }
     if (!params.skipFeatureCounts && !params.skipMapping) {
       FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      //if ( params.norm_rpkm ) {
-      //  fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
-      //}
+      if ( params.norm_rpkm ) {
+        fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
+      }
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
