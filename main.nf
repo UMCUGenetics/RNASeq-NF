@@ -7,7 +7,6 @@ include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' pa
 include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
-include CreateSequenceDictionary from './NextflowModules/Picard/2.22.0/CreateSequenceDictionary.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include getExonLenghts from './utils/getExonLengths.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
@@ -27,7 +26,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
                                                                     unstranded:params.unstranded, 
                                                                     revstranded:params.revstranded)
 include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
-									     optional:params.star.toolOptions)
+									                                                    optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
 include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
@@ -35,7 +34,7 @@ include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: p
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
                                                                      saveUnaligned: params.saveUnaligned,
-								     optional: params.salmon_quant.toolOptions )
+								                                                     optional: params.salmon_quant.toolOptions )
                                                                   
 
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
@@ -52,8 +51,6 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
                                                                                       fc_group_features_type: params.fc_group_features_type,
                                                                                       fc_extra_attributes : params.fc_extra_attributes, 
                                                                                       gencode: params.gencode)
-
-
 
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
@@ -77,10 +74,10 @@ workflow {
     genome_index = Channel
         .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
         .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
-
+      
     if (params.gene_len && params.norm_rpkm) {
       exon_lengths = params.gene_len
-    } else if (!params.gene_len && params.norm_rpkm ) {
+    } else if (!params.gene_len && params.norm_rpkm && (!params.skipFeatureCounts || !params.skipCount )) {
       getExonLenghts( genome_gtf)
       exon_lengths = getExonLenghts.out
     } 
@@ -119,8 +116,10 @@ workflow {
         .fromPath( params.scatter_interval_list, checkIfExists: true)
         .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
     } else if ( !params.scatter_interval_list && !params.skipGATK4_HC) {
-        CreateSequenceDictionary (genome_fasta)
-        CreateIntervalList(genome_index, CreateSequenceDictionary.out )
+        genome_dict = Channel
+              .fromPath(params.genome_dict, checkIfExists: true)
+              .ifEmpty { exit 1, "Genome dictionary not found": ${params.genome_dict}
+        CreateIntervalList( genome_index, genome_dict )
         scatter_interval_list = CreateIntervalList.out
     }
     if ( !params.skipSortMeRna) {

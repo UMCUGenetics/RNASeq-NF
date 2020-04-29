@@ -14,13 +14,14 @@ workflow gatk4_hc {
       run_id
     main:
       HaplotypeCaller(bam.combine(scatter_intervals))
+      //Merge scattered vcf chunks/sample
       MergeVCF(
         HaplotypeCaller.out.groupTuple(by:[0]).map{
           sample_id, intervals, gvcfs, idxs, interval_files ->
           [sample_id, gvcfs, idxs]
         }
       )
-      //Filter raw vcf files
+      //Filter raw vcf files/sample
       VariantFiltration( MergeVCF.out.map{
         sample_id, vcfs, idxs -> [sample_id, run_id, "RNA", vcfs, idxs] }
       )
