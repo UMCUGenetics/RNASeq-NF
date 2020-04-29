@@ -34,7 +34,8 @@ include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: p
                                                                      stranded: params.stranded,
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
-                                                                     saveUnaligned: params.saveUnaligned)
+                                                                     saveUnaligned: params.saveUnaligned,
+								     optional: params.salmon_quant.toolOptions )
                                                                   
 
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
