@@ -201,9 +201,9 @@ workflow {
     }
     if (!params.skipFeatureCounts && !params.skipMapping) {
       FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      if ( params.norm_rpkm ) {
-        fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
-      }
+      //if ( params.norm_rpkm ) {
+      //  fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
+     // }
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
@@ -249,7 +249,7 @@ workflow {
         hts_logs = Count.out.map { it[1] }
       }
       if ( !params.skipFeatureCounts && !params.skipMapping) {
-        fc_logs = FeatureCounts.out.map { it[4]}
+        fc_logs = FeatureCounts.out.map { it[2]}
       }
       if ( !params.skipPostQC && !params.skipMapping ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
