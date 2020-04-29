@@ -8,7 +8,6 @@ include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' para
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
-include getExonLenghts from './utils/getExonLengths.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
@@ -39,8 +38,7 @@ include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: p
 
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
-include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
-include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
+include EdgerNormalize as fc_norm from './utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
                                                                                       singleEnd: params.singleEnd,
                                                                                       stranded: params.stranded,
@@ -74,13 +72,7 @@ workflow {
     genome_index = Channel
         .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
         .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
-      
-    if (params.gene_len && params.norm_rpkm) {
-      exon_lengths = params.gene_len
-    } else if (!params.gene_len && params.norm_rpkm && (!params.skipFeatureCounts || !params.skipCount )) {
-      getExonLenghts( genome_gtf)
-      exon_lengths = getExonLenghts.out
-    } 
+
     if (params.star_index && !params.skipMapping) {
       star_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
@@ -195,15 +187,12 @@ workflow {
     if (!params.skipHTSeqCount && !params.skipMapping) {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-      if ( params.norm_rpkm) {
-        hts_rpkm( run_name, mergeHtseqCounts.out, exon_lengths)
-      }
     }
     if (!params.skipFeatureCounts && !params.skipMapping) {
       FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      //if ( params.norm_rpkm ) {
-      //  fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
-     // }
+      if ( params.normalize_counts ) {
+        fc_norm( run_name, FeatureCounts.out.map { it[1] } )
+      }
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
