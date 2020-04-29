@@ -117,8 +117,8 @@ workflow {
         .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
     } else if ( !params.scatter_interval_list && !params.skipGATK4_HC) {
         genome_dict = Channel
-              .fromPath(params.genome_dict, checkIfExists: true)
-              .ifEmpty { exit 1, "Genome dictionary not found": ${params.genome_dict}
+              .fromPath( params.genome_dict, checkIfExists: true)
+              .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
         CreateIntervalList( genome_index, genome_dict )
         scatter_interval_list = CreateIntervalList.out
     }
@@ -209,7 +209,7 @@ workflow {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
     if (!params.skipSalmon) {
-      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect(), genome_gtf.collect() )
+      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
       QuantMerge ( Quant.out.map { it[1] }.collect(), run_name )
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
