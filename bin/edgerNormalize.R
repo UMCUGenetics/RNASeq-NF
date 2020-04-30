@@ -5,8 +5,8 @@ library(edgeR)
 # Specifies the output file name (second argument)
 
 args = commandArgs(trailingOnly=TRUE)
-args[1] = "TEst"
-fc.df <- read.delim("~/Project_code/R/normalize/HCLE124_exon_featureCounts.txt", comment.char="#")
+
+fc.df <- read.delim(args[1], comment.char="#")
 # Normalize 
 counts <- fc.df[,8:ncol(fc.df)]
 rownames(counts) <- fc.df$Geneid
@@ -15,6 +15,6 @@ x <- DGEList(counts=counts, genes=fc.df[,c("Geneid","Length")] )
 df.rpkm <- rpkm(x,x$genes$Length, normalized.lib.sizes=F)
 df.cpm <- cpm(x)
 
-write.table(df.rpkm, file=paste0(args[1],"_readCounts_RPKM.txt"), row.names=T, quote=F,sep="   ")
-write.table(df.cpm, file=paste0(args[1],"_readCounts_CPM.txt"), row.names=T, quote=F,sep="   ")
+write.table(df.rpkm, file=paste0(args[2],"_readCounts_RPKM.txt"), row.names=T, quote=F,sep="   ")
+write.table(df.cpm, file=paste0(args[2],"_readCounts_CPM.txt"), row.names=T, quote=F,sep="   ")
 
