@@ -54,5 +54,4 @@ Set the cacheDir to a location with enough space to store the singularity images
 
 `cacheDir = '/path/to/my/cache/dir`
 
-Ensure that nextflow.config and process.config are always findable by the nextflow runner.
 
