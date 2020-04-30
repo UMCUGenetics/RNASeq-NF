@@ -25,7 +25,7 @@ Transcript quantification with Salmon requires transcript sequences in .fasta fo
 I
 GATK requires a sequence dictionary (.dict) and fasta index (.fai) to be present in the same directionary as the reference sequence. Please prepare them before running the pipeline if applicable as described in step 2 and 3 of the [GATK reference preparation guide](https://gatkforums.broadinstitute.org/gatk/discussion/2798/howto-prepare-a-reference-for-use-with-bwa-and-gatk)
 
-Resource files (optional) should be included in the genome config as shown below.
+Known variants in vcf format (optional) should be included in the genome config as shown below.
 
 ```
  genome_known_sites = ['/hpc/cog_bioinf/common_dbs/GATK_bundle/1000G_phase1.indels.b37.vcf',
@@ -33,7 +33,7 @@ Resource files (optional) should be included in the genome config as shown below
   '/hpc/cog_bioinf/common_dbs/GATK_bundle/Mills_and_1000G_gold_standard.indels.b37.vcf']
 ```
 
-All remaining files will be created at run-time and stored in the output folder (reference_genome). Since buidling the STAR index requires a significant amount of memory, ensure that sufficient memory is available on the host system and allocated in process.config. 
+All remaining files will be created at run-time and stored in the output folder (reference_resources). Since buidling the STAR index requires a significant amount of memory, ensure that sufficient memory is available on the host system and allocated in process.config. 
 
 Example genome configuration files can be found `./resources/test_run`.
 
