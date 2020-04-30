@@ -23,7 +23,7 @@ This implementation is a work in progress and aims to reach feature parity with 
 Download the [Nextflow](https://www.nextflow.io/) binary.
 
 ### Singularity
-Install [Singulariy](https://sylabs.io/guides/3.5/admin-guide/) on the host system. For UMCU users, please follow the instructions on the [HPC wiki](https://wiki.bioinformatics.umcutrecht.nl/bin/view/HPC/SlurmScheduler) on how to use Slurm & Singularity.  
+Install [Singularity](https://sylabs.io/guides/3.5/admin-guide/) on the host system. For UMCU users, please follow the instructions on the [HPC wiki](https://wiki.bioinformatics.umcutrecht.nl/bin/view/HPC/SlurmScheduler) on how to use Slurm & Singularity.  
 
 Start an interactive Slurm session on the HPC cluster.
 ```
