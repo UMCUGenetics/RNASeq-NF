@@ -7,8 +7,9 @@
 * `--hts_count_type` htseq-count annotation feature for expression quantification (Default: exon)
 * `--fc_group_features` subread featureCounts group (Default: gene_id)
 * `--fc_count_type subread` subread featureCounts type (Default: exon)
-* `--norm_rpkm` enable edgeR RPKM normalization for htseq-count (Default: true)
-* `--gencode` gencode reference files (Default: false)
+* `--fc_group_features_type` GTF biotype field for subread featureCounts (Default: gene_biotype)
+* `--normalize_counts` enable edgeR RPKM/CPM normalization for featureCounts (Default: true)
+* `--gencode` gencode reference (Default: false).
 
 **Pipeline steps**
 
@@ -27,6 +28,8 @@
 **Reference resources**
 
 * `--genome_fasta` /path/to/reference/genome.fasta
+* `--genome_index` /path/to/reference/genome.fasta.fai
+* `--genome_dict` /path/to/reference/genome.dict
 * `--genome_gtf` /path/to/reference/annotation.gtf
 * `--transcripts_fasta` /path/to/reference/transcripts.fasta (required for Salmon)
 * `--genome_bed` path/to/reference/annotation.bed12 
@@ -34,6 +37,5 @@
 * `--salmon_index` path/to/salmon_index  
 * `--genome_known_sites` path/to/snp_sites.vcf (optional, GATK4 BQSR) 
 * `--scatter_interval_list` path/to/scatter.interval_list (required for GATK4) 
-* `--gene_len` path/to/exon_lengths (required for htseq-count RPKM normalization) 
 * `--rRNA_database_manifest` path/to/rRNA database file (required for SortMeRNA) 
 

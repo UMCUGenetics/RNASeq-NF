@@ -49,13 +49,27 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
                                                                                       fc_group_features_type: params.fc_group_features_type,
                                                                                       fc_extra_attributes : params.fc_extra_attributes, 
                                                                                       gencode: params.gencode)
-
+//Check minimal resource parameters
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
-
 if (!params.fastq_path) {
   exit 1, "fastq files not found. Please provide the correct path!"
+}
+if (!params.genome_fasta) {
+  exit 1, "Genome fasta not found. Please provide the correct path!"
+}
+if (!params.genome_gtf) {
+  exit 1, "Genome GTF not found. Please provide the correct path!"
+}
+if (!params.transcripts_fasta && !params.skipSalmon) {
+  exit 1, "Transcript fasta not found. Please provide the correct path!"
+}
+if (!params.genome_dict && !params.skipGATK4_HC) {
+    exit 1, "Genome dictionary not found. Please provide the correct path!"
+}
+if (!params.genome_index && !params.skipGATK4_HC) {
+    exit 1, "Genome index not found. Please provide the correct path!"
 }
 
 workflow {
@@ -69,10 +83,6 @@ workflow {
     genome_fasta = Channel
         .fromPath(params.genome_fasta, checkIfExists: true)
         .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
-    genome_index = Channel
-        .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
-        .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
-
     if (params.star_index && !params.skipMapping) {
       star_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
@@ -107,10 +117,13 @@ workflow {
       scatter_interval_list = Channel
         .fromPath( params.scatter_interval_list, checkIfExists: true)
         .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
-    } else if ( !params.scatter_interval_list && !params.skipGATK4_HC) {
+    } else if ( !params.scatter_interval_list && !params.skipGATK4_HC ) {
         genome_dict = Channel
               .fromPath( params.genome_dict, checkIfExists: true)
               .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
+        genome_index = Channel
+              .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
+              .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
         CreateIntervalList( genome_index, genome_dict )
         scatter_interval_list = CreateIntervalList.out
     }
