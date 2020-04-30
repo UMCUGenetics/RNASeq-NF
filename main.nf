@@ -4,12 +4,10 @@ nextflow.preview.dsl=2
 include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, 
                                                                                    singleEnd: params.singleEnd )
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
-include Index as SalmonIndex from './NextflowModules/Salmon/0.13.1/Index.nf' params( gencode: params.gencode )
+include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode )
 include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
-include CreateSequenceDictionary from './NextflowModules/Picard/2.22.0/CreateSequenceDictionary.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
-include getExonLenghts from './utils/getExonLengths.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
@@ -27,19 +25,20 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
                                                                     unstranded:params.unstranded, 
                                                                     revstranded:params.revstranded)
 include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
-									     optional:params.star.toolOptions)
+									                                                    optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
-include Quant from './NextflowModules/Salmon/0.13.1/Quant.nf' params(singleEnd: params.singleEnd,
+include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
+include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
                                                                      stranded: params.stranded,
                                                                      unstranded: params.unstranded,
                                                                      revstranded: params.revstranded,
-                                                                     saveUnaligned: params.saveUnaligned)
+                                                                     saveUnaligned: params.saveUnaligned,
+								                                                     optional: params.salmon_quant.toolOptions )
+                                                                  
 
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
-include mergeSalmonCounts from './utils/mergeSalmonCounts.nf' params(params)
-include rpkm as hts_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"hts")
-include rpkm as fc_rpkm from './utils/bioconductor/edger/3.28.0/rpkm.nf' params(tool:"fc")
+include EdgerNormalize as fc_norm from './utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
                                                                                       singleEnd: params.singleEnd,
                                                                                       stranded: params.stranded,
@@ -50,8 +49,6 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
                                                                                       fc_group_features_type: params.fc_group_features_type,
                                                                                       fc_extra_attributes : params.fc_extra_attributes, 
                                                                                       gencode: params.gencode)
-
-
 
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
@@ -76,12 +73,6 @@ workflow {
         .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
         .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
 
-    if (params.gene_len && params.norm_rpkm) {
-      exon_lengths = params.gene_len
-    } else if (!params.gene_len && params.norm_rpkm ) {
-      getExonLenghts( genome_gtf)
-      exon_lengths = getExonLenghts.out
-    } 
     if (params.star_index && !params.skipMapping) {
       star_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
@@ -117,8 +108,10 @@ workflow {
         .fromPath( params.scatter_interval_list, checkIfExists: true)
         .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
     } else if ( !params.scatter_interval_list && !params.skipGATK4_HC) {
-        CreateSequenceDictionary (genome_fasta)
-        CreateIntervalList(genome_index, CreateSequenceDictionary.out )
+        genome_dict = Channel
+              .fromPath( params.genome_dict, checkIfExists: true)
+              .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
+        CreateIntervalList( genome_index, genome_dict )
         scatter_interval_list = CreateIntervalList.out
     }
     if ( !params.skipSortMeRna) {
@@ -157,7 +150,7 @@ workflow {
     if ( !params.skipTrimGalore && !params.skipSortMeRna ) {
       TrimGalore(fastq_files) 
       SortMeRna(TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }, 
-                sortmerna_fasta.collect() )
+                                    sortmerna_fasta.collect() )
       final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
 
     } else if ( !params.skipTrimGalore && params.skipSortMeRna ) {
@@ -194,22 +187,19 @@ workflow {
     if (!params.skipHTSeqCount && !params.skipMapping) {
       Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
       mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-      if ( params.norm_rpkm) {
-        hts_rpkm( run_name, mergeHtseqCounts.out, exon_lengths)
-      }
     }
     if (!params.skipFeatureCounts && !params.skipMapping) {
       FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      //if ( params.norm_rpkm ) {
-      //  fc_rpkm( run_name, FeatureCounts.out.map { it[1] }, exon_lengths)
-      //}
+      if ( params.normalize_counts ) {
+        fc_norm( run_name, FeatureCounts.out.map { it[1] } )
+      }
     }
     if (!params.skipMarkDup && !params.skipMapping) {
       markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
     }
     if (!params.skipSalmon) {
-      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() ) 
-      mergeSalmonCounts ( run_name, Quant.out.map { it[1] }.collect())
+      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
+      QuantMerge ( Quant.out.map { it[1] }.collect(), run_name )
     }
     if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
           SplitIntervals( 'no-break', scatter_interval_list)
@@ -217,9 +207,9 @@ workflow {
           if (!params.skipGATK4_BQSR) {
             //Perform BSQR
             gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
-            gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten())
+            gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten(), run_name)
           } else {
-              gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten())
+              gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten(), run_name)
           }      
     }
     if ( !params.skipMultiQC ) {
@@ -248,7 +238,7 @@ workflow {
         hts_logs = Count.out.map { it[1] }
       }
       if ( !params.skipFeatureCounts && !params.skipMapping) {
-        fc_logs = FeatureCounts.out.map { it[2]}
+        fc_logs = FeatureCounts.out.map { it[3]}
       }
       if ( !params.skipPostQC && !params.skipMapping ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
