@@ -49,11 +49,10 @@ include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' pa
                                                                                       fc_group_features_type: params.fc_group_features_type,
                                                                                       fc_extra_attributes : params.fc_extra_attributes, 
                                                                                       gencode: params.gencode)
-
+//Check minimal resource parameters
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
 }
-
 if (!params.fastq_path) {
   exit 1, "fastq files not found. Please provide the correct path!"
 }
@@ -69,7 +68,6 @@ if (!params.transcripts_fasta && !params.skipSalmon) {
 if (!params.genome_dict && !params.skipGATK4_HC) {
     exit 1, "Genome dictionary not found. Please provide the correct path!"
 }
-
 
 workflow {
   main :  
