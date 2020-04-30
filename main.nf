@@ -57,6 +57,19 @@ if (!params.out_dir) {
 if (!params.fastq_path) {
   exit 1, "fastq files not found. Please provide the correct path!"
 }
+if (!params.genome_fasta) {
+  exit 1, "Genome fasta not found. Please provide the correct path!"
+}
+if (!params.genome_gtf) {
+  exit 1, "Genome GTF not found. Please provide the correct path!"
+}
+if (!params.transcripts_fasta && !params.skipSalmon) {
+  exit 1, "Transcript fasta not found. Please provide the correct path!"
+}
+if (!params.genome_dict && !params.skipGATK4_HC) {
+    exit 1, "Genome dictionary not found. Please provide the correct path!"
+}
+
 
 workflow {
   main :  
@@ -107,7 +120,7 @@ workflow {
       scatter_interval_list = Channel
         .fromPath( params.scatter_interval_list, checkIfExists: true)
         .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
-    } else if ( !params.scatter_interval_list && !params.skipGATK4_HC) {
+    } else if ( !params.scatter_interval_list && !params.skipGATK4_HC ) {
         genome_dict = Channel
               .fromPath( params.genome_dict, checkIfExists: true)
               .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
