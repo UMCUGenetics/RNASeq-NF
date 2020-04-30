@@ -8,7 +8,7 @@
 * `--fc_group_features` subread featureCounts group (Default: gene_id)
 * `--fc_count_type subread` subread featureCounts type (Default: exon)
 * `--norm_rpkm` enable edgeR RPKM normalization for htseq-count (Default: true)
-* `--gencode` gencode reference files (Default: true)
+* `--gencode` gencode reference files (Default: false)
 
 **Pipeline steps**
 
