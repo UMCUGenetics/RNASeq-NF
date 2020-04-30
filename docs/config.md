@@ -17,9 +17,15 @@ In it's most basic form, the pipeline requires the following resource parameters
 
 * `--genome_fasta` - path to genome sequence (.fasta). The index (.fai) should be stored in the same directory.
 * `--genome_gtf` - path to genome annotation (.gtf)
+
+Transcript quantification with Salmon requires transcript sequences in .fasta format (In case no Salmon index is provided)
 * `--transcripts_fasta` - path to transcript sequences (.fasta) when skipSalmon is set to false.
 
-GATK resource files (optional) should be included in the genome config as shown below.
+
+I
+GATK requires a sequence dictionary (.dict) and fasta index (.fai) to be present in the same directionary as the reference sequence. Please prepare them before running the pipeline if applicable as described in step 2 and 3 of the (GATK reference preparation guide)[https://gatkforums.broadinstitute.org/gatk/discussion/2798/howto-prepare-a-reference-for-use-with-bwa-and-gatk]
+
+Resource files (optional) should be included in the genome config as shown below.
 
 ```
  genome_known_sites = ['/hpc/cog_bioinf/common_dbs/GATK_bundle/1000G_phase1.indels.b37.vcf',
