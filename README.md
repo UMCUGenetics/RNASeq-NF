@@ -51,9 +51,11 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 
 ## 4. Run RNASeq analysis
 
-Before starting the pipeline, ensure that the input fastq files follow the [Illumina Naming Convention][https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/NamingConvention_FASTQ-files-swBS.htm]. 
+Before starting the pipeline, ensure that the input fastq files follow the [Illumina Naming Convention](https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/NamingConvention_FASTQ-files-swBS.html). 
 
-For example; SampleName_S1_L001_R1_001.fastq.gz
+For example; 
+
+SampleName_S1_L001_R1_001.fastq.gz
 
 Run the pipeline with default setting and genome config 
 ```
