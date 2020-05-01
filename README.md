@@ -51,6 +51,8 @@ git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
 
 ## 4. Run RNASeq analysis
 
+Before starting the pipeline, ensure that the input fastq files follow the (Illumina Naming Convention)[https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/NamingConvention_FASTQ-files-swBS.htm]. For example; SampleName_S1_L001_R1_001.fastq.gz
+
 Run the pipeline with default setting and genome config 
 ```
 ./nextflow run ./RNASeq-NF/main.nf NXF_VER=19.10.0 --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config -profile slurm
