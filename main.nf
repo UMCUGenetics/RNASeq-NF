@@ -62,13 +62,13 @@ if (!params.genome_fasta) {
 if (!params.genome_gtf) {
   exit 1, "Genome GTF not found. Please provide the correct path!"
 }
-if (!params.transcripts_fasta && !params.skipSalmon) {
+if (!params.transcripts_fasta && params.runSalmon) {
   exit 1, "Transcript fasta not found. Please provide the correct path!"
 }
-if (!params.genome_dict && !params.skipGATK4_HC) {
+if (!params.genome_dict && params.runGATK4_HC) {
     exit 1, "Genome dictionary not found. Please provide the correct path!"
 }
-if (!params.genome_index && !params.skipGATK4_HC) {
+if (!params.genome_index && params.runGATK4_HC) {
     exit 1, "Genome index not found. Please provide the correct path!"
 }
 
@@ -130,7 +130,7 @@ workflow {
     }
     if ( params.runSortMeRna) {
         rRNA_database = file(params.rRNA_database_manifest)
-        if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
+        //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
         sortmerna_fasta = Channel
             .from( rRNA_database.readLines() )
             .map { row -> file(row) }
@@ -195,37 +195,57 @@ workflow {
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
     }
-    if ( params.runPostQC && params.runMapping) {
-      post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
-    }
-    if ( params.runHTSeqCount && params.runMapping) {
-      Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
-      mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-    }
-    if ( params.runFeatureCounts && params.runMapping) {
-      FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      if ( params.normalize_counts ) {
-        fc_norm( run_name, FeatureCounts.out.map { it[1] } )
+    if ( params.runPostQC) {
+      if (params.runMapping) {
+        post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
+      } else {
+          exit 1, "PostQC requires alignment step. Please enable runMapping!"
+      } 
+    } 
+    if ( params.runHTSeqCount) {
+      if ( params.runMapping) {
+        Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
+        mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
+      } else {
+          exit 1, "htseq-count requires alignment step. Please enable runMapping!"
       }
-    }
-    if ( params.runMarkDup && params.runMapping ) {
-      markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
-    }
+    } 
+    if ( params.runFeatureCounts) {
+      if (params.runMapping) {
+        FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
+        if ( params.normalize_counts ) {
+          fc_norm( run_name, FeatureCounts.out.map { it[1] } )
+        }
+      } else {
+          exit 1, "featureCounts requires alignment step. Please enable runMapping!"
+      } 
+    } 
+    if ( params.runMarkDup) {
+      if (params.runMapping) {
+        markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
+      } else {
+          exit 1, "Markdup requires alignment step. Please enable runMapping!"
+      } 
+    }         
     if ( params.runSalmon ) {
       Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
       QuantMerge ( Quant.out.map { it[1] }.collect(), run_name )
     }
-    if ( params.runMapping && params.runMarkDup && params.runGATK4_HC ) {
-          SplitIntervals( 'no-break', scatter_interval_list)
-          SplitNCigarReads(markdup_mapping.out)
-          if ( params.runGATK4_BQSR) {
-            //Perform BSQR
-            gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
-            gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten(), run_name)
-          } else {
-              gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten(), run_name)
-          }      
-    }
+    if ( params.runGATK4_HC ) {
+      if (params.runMapping && params.runMarkDup) {
+        SplitIntervals( 'no-break', scatter_interval_list)
+        SplitNCigarReads(markdup_mapping.out)
+        if ( params.runGATK4_BQSR) {
+          //Perform BSQR
+          gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
+          gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten(), run_name)
+        } else {
+            gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten(), run_name)
+        }      
+      }  else {
+       exit 1, "GATK4 requires alignment, markdup step. Please enable runMapping and runMarkDup!"
+      }     
+    }  
     if ( params.runMultiQC ) {
       //Create empty Channels for optional steps
       trim_logs = Channel.empty()
