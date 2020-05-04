@@ -1,8 +1,9 @@
 **General pipeline settings**
+
 * `--singleEnd` true/false for single-end sequencing (Default: false)
-* `--unstranded` true/false for unstranded library prep (Default: false)
+* `--unstranded` true/false for unstranded library prep (Default: true)
 * `--stranded` true/false for forward-stranded library prep (Default: false)
-* `--revstranded` true/false for reverse-stranded library prep (Default: true)
+* `--revstranded` true/false for reverse-stranded library prep (Default: false)
 * `--hts_group_features` htseq-count annotation feature for expression quantification (Default: gene_id)
 * `--hts_count_type` htseq-count annotation feature for expression quantification (Default: exon)
 * `--fc_group_features` subread featureCounts group (Default: gene_id)
@@ -13,17 +14,17 @@
 
 **Pipeline steps**
 
-* `--skipTrimGalore` Skip trimming with TrimGalore (Default: false)
-* `--skipSortMeRna` Skip rRNA filtering with SortMeRNA (Default: false)
-* `--skipPostQC` Skip post alignment QC (Default: false)
-* `--skipMarkDup` Skip Sambamba markdup (Default: false)
-* `--skipHTSeqCount` Skip htseq-count expression quantification (Default: false)
-* `--skipFeatureCounts` Skip featureCounts expression quantification (Default: false)
-* `--skipMapping` Skip STAR alignment (Default: false)
-* `--skipSalmon`Skip Salmon transcript quantification (Default: false)
-* `--skipMultiQC` Skip MultiQC quality report (Default: false)
-* `--skipGATK4_HC` Skip GATK4 variant calling (Default: true)
-* `--skipGATK4_BQSR` Skip GATK4 base quality recalibration (Default: true)
+* `--runTrimGalore` Read trimming with TrimGalore (Default: true)
+* `--runSortMeRna` rRNA filtering with SortMeRNA (Default: true)
+* `--runPostQC` Alignment QC with RSeQC,Preseq (Default: true)
+* `--runMarkDup` Sambamba markdup (Default: true)
+* `--runHTSeqCount` Expression quantification with htseq-count (Default: false)
+* `--runFeatureCounts` Expression quantification with featureCounts (Default: true)
+* `--runMapping` Read alignment with STAR (Default: true)
+* `--runSalmon` Alignment-free transcript quantification with Salmon (Default: true)
+* `--runMultiQC` MultiQC report (Default: true)
+* `--runGATK4_HC` GATK4 germline variant calling (Default: false)
+* `--runGATK4_BQSR` GATK4 base quality score recalibration (Default: false)
 
 **Reference resources**
 
