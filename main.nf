@@ -62,13 +62,13 @@ if (!params.genome_fasta) {
 if (!params.genome_gtf) {
   exit 1, "Genome GTF not found. Please provide the correct path!"
 }
-if (!params.transcripts_fasta && !params.skipSalmon) {
+if (!params.transcripts_fasta && params.runSalmon) {
   exit 1, "Transcript fasta not found. Please provide the correct path!"
 }
-if (!params.genome_dict && !params.skipGATK4_HC) {
+if (!params.genome_dict && params.runGATK4_HC) {
     exit 1, "Genome dictionary not found. Please provide the correct path!"
 }
-if (!params.genome_index && !params.skipGATK4_HC) {
+if (!params.genome_index && params.runGATK4_HC) {
     exit 1, "Genome index not found. Please provide the correct path!"
 }
 
@@ -83,41 +83,42 @@ workflow {
     genome_fasta = Channel
         .fromPath(params.genome_fasta, checkIfExists: true)
         .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
-    if (params.star_index && !params.skipMapping) {
+    //Determine required inputs
+    if (params.star_index && params.runMapping) {
       star_index = Channel
             .fromPath(params.star_index, checkIfExists: true)
             .ifEmpty { exit 1, "STAR index not found: ${params.star_index}"}
-    } else if (!params.star_index && !params.skipMapping) {
+    } else if (!params.star_index && params.runMapping) {
       //Create STAR Index
       GenomeGenerate ( genome_fasta, genome_gtf )
       star_index = GenomeGenerate.out
     }
-    if (params.genome_bed && !params.skipPostQC && !params.skipMapping) {
+    if (params.genome_bed && params.runPostQC && params.runMapping) {
       //Create bed12 index file
       genome_bed = Channel
             .fromPath(params.genome_bed, checkIfExists: true)
             .ifEmpty { exit 1, "Bed12 file not found: ${params.genome_bed}"}
-    } else if ( !params.genome_bed && !params.skipPostQC && !params.skipMapping) {
+    } else if ( !params.genome_bed && params.runPostQC && params.runMapping) {
         GtfToGenePred ( genome_gtf)
         GenePredToBed ( GtfToGenePred.out )
         genome_bed = GenePredToBed.out
     }
-    if ( params.salmon_index && !params.skipSalmon) {
+    if ( params.salmon_index && params.runSalmon) {
        salmon_index = Channel
             .fromPath(params.salmon_index, checkIfExists: true)
             .ifEmpty { exit 1, "Transcripts fasta not found: ${params.salmon_index}"}
-    } else if ( !params.salmon_index && !params.skipSalmon ) {
+    } else if ( !params.salmon_index && params.runSalmon ) {
         transcripts_fasta = Channel
             .fromPath(params.transcripts_fasta, checkIfExists: true)
             .ifEmpty { exit 1, "Fasta file not found: ${params.transcripts_fasta}"}
-      SalmonIndex ( transcripts_fasta )
-      salmon_index = SalmonIndex.out
+        SalmonIndex ( transcripts_fasta )
+        salmon_index = SalmonIndex.out
     }
-    if (params.scatter_interval_list && !params.skipGATK4_HC ) {
+    if (params.scatter_interval_list && params.runGATK4_HC ) {
       scatter_interval_list = Channel
         .fromPath( params.scatter_interval_list, checkIfExists: true)
         .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
-    } else if ( !params.scatter_interval_list && !params.skipGATK4_HC ) {
+    } else if ( !params.scatter_interval_list && params.runGATK4_HC ) {
         genome_dict = Channel
               .fromPath( params.genome_dict, checkIfExists: true)
               .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
@@ -127,7 +128,7 @@ workflow {
         CreateIntervalList( genome_index, genome_dict )
         scatter_interval_list = CreateIntervalList.out
     }
-    if ( !params.skipSortMeRna) {
+    if ( params.runSortMeRna) {
         rRNA_database = file(params.rRNA_database_manifest)
         //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
         sortmerna_fasta = Channel
@@ -160,17 +161,17 @@ workflow {
     fastqc_logs = Channel.empty()
     sortmerna_logs = Channel.empty()
     // Determine final fastqs files
-    if ( !params.skipTrimGalore && !params.skipSortMeRna ) {
+    if ( params.runTrimGalore && params.runSortMeRna ) {
       TrimGalore(fastq_files) 
       SortMeRna(TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }, 
                                     sortmerna_fasta.collect() )
       final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
 
-    } else if ( !params.skipTrimGalore && params.skipSortMeRna ) {
+    } else if ( params.runTrimGalore && params.runSortMeRna ) {
         TrimGalore(fastq_files)
         final_fastqs = TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }
 
-    } else if ( params.skipTrimGalore &&  !params.skipSortMeRna ) {
+    } else if ( params.runTrimGalore &&  params.runSortMeRna ) {
         SortMeRna(fastq_files, 
                   sortmerna_fasta.collect() )
         final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
@@ -189,43 +190,63 @@ workflow {
               .groupTuple(by:0)
               .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
     }
-    if (!params.skipMapping) {
+    if ( params.runMapping ) {
       AlignReads( fastqs_transformed, star_index.collect(), genome_gtf.collect() )
       Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
       mapped = AlignReads.out.join(Index.out)
     }
-    if (!params.skipPostQC && !params.skipMapping) {
-      post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
-    }
-    if (!params.skipHTSeqCount && !params.skipMapping) {
-      Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
-      mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
-    }
-    if (!params.skipFeatureCounts && !params.skipMapping) {
-      FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
-      if ( params.normalize_counts ) {
-        fc_norm( run_name, FeatureCounts.out.map { it[1] } )
+    if ( params.runPostQC) {
+      if (params.runMapping) {
+        post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
+      } else {
+          exit 1, "PostQC requires alignment step. Please enable runMapping!"
+      } 
+    } 
+    if ( params.runHTSeqCount) {
+      if ( params.runMapping) {
+        Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
+        mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
+      } else {
+          exit 1, "htseq-count requires alignment step. Please enable runMapping!"
       }
-    }
-    if (!params.skipMarkDup && !params.skipMapping) {
-      markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
-    }
-    if (!params.skipSalmon) {
+    } 
+    if ( params.runFeatureCounts) {
+      if (params.runMapping) {
+        FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
+        if ( params.normalize_counts ) {
+          fc_norm( run_name, FeatureCounts.out.map { it[1] } )
+        }
+      } else {
+          exit 1, "featureCounts requires alignment step. Please enable runMapping!"
+      } 
+    } 
+    if ( params.runMarkDup) {
+      if (params.runMapping) {
+        markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
+      } else {
+          exit 1, "Markdup requires alignment step. Please enable runMapping!"
+      } 
+    }         
+    if ( params.runSalmon ) {
       Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
       QuantMerge ( Quant.out.map { it[1] }.collect(), run_name )
     }
-    if (!params.skipMapping && !params.skipMarkDup && !params.skipGATK4_HC) {
-          SplitIntervals( 'no-break', scatter_interval_list)
-          SplitNCigarReads(markdup_mapping.out)
-          if (!params.skipGATK4_BQSR) {
-            //Perform BSQR
-            gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
-            gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten(), run_name)
-          } else {
-              gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten(), run_name)
-          }      
-    }
-    if ( !params.skipMultiQC ) {
+    if ( params.runGATK4_HC ) {
+      if (params.runMapping && params.runMarkDup) {
+        SplitIntervals( 'no-break', scatter_interval_list)
+        SplitNCigarReads(markdup_mapping.out)
+        if ( params.runGATK4_BQSR) {
+          //Perform BSQR
+          gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
+          gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten(), run_name)
+        } else {
+            gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten(), run_name)
+        }      
+      }  else {
+       exit 1, "GATK4 requires alignment, markdup step. Please enable runMapping and runMarkDup!"
+      }     
+    }  
+    if ( params.runMultiQC ) {
       //Create empty Channels for optional steps
       trim_logs = Channel.empty()
       fastqc_logs = Channel.empty()
@@ -236,27 +257,27 @@ workflow {
       fc_logs = Channel.empty()
       salmon_logs = Channel.empty()
       //Get options
-      if ( !params.skipTrimGalore) {
+      if (  params.runTrimGalore) {
         trim_logs = TrimGalore.out.map { it[3] }
         fastqc_logs = TrimGalore.out.map { it[4] }
       }
-      if ( !params.skipSortMeRna ) {
+      if (  params.runSortMeRna ) {
         //Currently not working with MultiQc 1.8
         //sortmerna_logs = SortMeRna.out.map { it[3] }
       }
-      if ( !params.skipMapping) {
+      if (  params.runMapping ) {
         star_logs =  AlignReads.out.map{ [it[3], it[4]] }
       }
-      if ( !params.skipHTSeqCount && !params.skipMapping) {
+      if ( params.runHTSeqCount &&  params.runMapping) {
         hts_logs = Count.out.map { it[1] }
       }
-      if ( !params.skipFeatureCounts && !params.skipMapping) {
+      if (  params.runFeatureCounts &&  params.runMapping ) {
         fc_logs = FeatureCounts.out.map { it[3]}
       }
-      if ( !params.skipPostQC && !params.skipMapping ) {
+      if ( params.runPostQC && params.runMapping ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       }
-      if ( !params.skipSalmon) {
+      if ( params.runSalmon) {
         salmon_logs = Quant.out.map { it[1] }
       }
       multiqc_report( fastqc_logs,
