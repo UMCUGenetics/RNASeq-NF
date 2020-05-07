@@ -26,7 +26,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
                                                                     revstranded:params.revstranded)
 include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
 									                                                    optional:params.star.toolOptions)
-include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
+include Index from './NextflowModules/Sambamba/0.7.0/Index.nf' params(params)
 include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
 include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
                                                                      stranded: params.stranded,
