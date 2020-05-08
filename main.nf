@@ -276,7 +276,8 @@ workflow {
       if ( params.runSalmon) {
         salmon_logs = Quant.out.map { it[1] }
       }
-      multiqc_report( fastqc_logs,
+      multiqc_report( run_name,
+		      fastqc_logs,
                       trim_logs,
                       sortmerna_logs,
                       star_logs,
