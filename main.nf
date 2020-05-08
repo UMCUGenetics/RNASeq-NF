@@ -94,18 +94,20 @@ ${c_yellow}        --transcripts_fasta [path] ${c_reset}      Path to transcript
 
 ${c_blue}    GATK (v4) - Germline variant calling: ${c_reset}
       Performs germline variant calling using the RNA-Seq best-practices as established by GATK.
-${c_green}        --runGermlineCallingGATK [bool] ${c_reset}  Run GATK4 for (germline) variant calling. (Default: false)
+${c_green}        --runGermlineCallingGATK [bool] ${c_reset} Run GATK4 for (germline) variant calling. (Default: false)
 ${c_yellow}        --scatter_interval_list [path] ${c_reset}  Path to scatter.interval_list (required for GATK4)
         --genome_known_sites [path]      Path to snp_sites.vcf (optional for use in GATK4 BQSR)
-        --options.GATKGermline [str]             Additional custom options given to GATK4.
+        --options.GATKGermline [str]     Additional custom options given to GATK4.
 
 ${c_blue}    GATK (v4) - Base quality score recalibration (BQSR): ${c_reset}
       Performs BQSR.
 ${c_green}        --runBQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: false)
+        --options.BQRS [str]              Additional custom options given to BQRS.
 
 ${c_blue}    MultiQC: ${c_reset}
       Generate a MultiQC report which combined various QC reports into a single report.
 ${c_green}        --runMultiQC [bool] ${c_reset}             Perform MultiQC to generate a single report containing various QC logs.
+        --options.MultiQC [str]          Additional custom options given to MultiQC.
 
 ${c_blue}    Other options: ${c_reset}
       --email [email]                     Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits.
@@ -166,11 +168,6 @@ workflow {
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
 
-    //Determine required inputs.
-
-
-
-
     // Output general information of run.
     params.version = "Beta"
     log.info """=======================================================
@@ -194,6 +191,7 @@ workflow {
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
 
+    // Used in determining which fastq files to process.
     final_fastqs = fastq_files
 
     // ToDo - Make separate NF module.
@@ -356,6 +354,7 @@ workflow {
 
     }
 
+    // ToDo - Make separate NF modules for each step.
     // Generate post-QC plots.
     if ( params.runPostQC) {
       // Input validation.
