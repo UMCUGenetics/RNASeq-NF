@@ -156,10 +156,6 @@ workflow {
     summary['Config Profile'] = workflow.profile
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
-    //Log channels
-    trim_logs = Channel.empty()
-    fastqc_logs = Channel.empty()
-    sortmerna_logs = Channel.empty()
     // Determine final fastqs files
     if ( params.runTrimGalore && params.runSortMeRna ) {
       TrimGalore(fastq_files) 
@@ -167,11 +163,11 @@ workflow {
                                     sortmerna_fasta.collect() )
       final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
 
-    } else if ( params.runTrimGalore && params.runSortMeRna ) {
+    } else if ( params.runTrimGalore && !params.runSortMeRna ) {
         TrimGalore(fastq_files)
         final_fastqs = TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }
 
-    } else if ( params.runTrimGalore &&  params.runSortMeRna ) {
+    } else if ( !params.runTrimGalore &&  params.runSortMeRna ) {
         SortMeRna(fastq_files, 
                   sortmerna_fasta.collect() )
         final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
@@ -263,7 +259,7 @@ workflow {
       }
       if (  params.runSortMeRna ) {
         //Currently not working with MultiQc 1.8
-        //sortmerna_logs = SortMeRna.out.map { it[3] }
+        sortmerna_logs = SortMeRna.out.map { it[3] }
       }
       if (  params.runMapping ) {
         star_logs =  AlignReads.out.map{ [it[3], it[4]] }
