@@ -40,6 +40,7 @@ include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include EdgerNormalize as fc_norm from './utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
+										      biotypeQC:params.biotypeQC,
                                                                                       singleEnd: params.singleEnd,
                                                                                       stranded: params.stranded,
                                                                                       unstranded: params.unstranded,
@@ -210,7 +211,7 @@ workflow {
       if (params.runMapping) {
         FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
         if ( params.normalize_counts ) {
-          fc_norm( run_name, FeatureCounts.out.map { it[1] } )
+          fc_norm( run_name, FeatureCounts.out[0] )
         }
       } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
@@ -268,7 +269,7 @@ workflow {
         hts_logs = Count.out.map { it[1] }
       }
       if (  params.runFeatureCounts &&  params.runMapping ) {
-        fc_logs = FeatureCounts.out.map { it[3]}
+        fc_logs = FeatureCounts.out[1]
       }
       if ( params.runPostQC && params.runMapping ) {
         post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
