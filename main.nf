@@ -275,13 +275,13 @@ workflow {
         fc_logs = FeatureCounts.out.fc_summary
       }
       if ( params.runPostQC && params.runMapping ) {
-        post_qc_logs =  post_mapping_QC.out
+        post_qc_logs = post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       }
       if ( params.runSalmon) {
         salmon_logs = Quant.out.salmon_quants
       }
       multiqc_report( run_name,
-		      fastqc_logs,
+		                  fastqc_logs,
                       trim_logs,
                       sortmerna_logs,
                       star_logs,
@@ -289,6 +289,6 @@ workflow {
                       hts_logs,
                       fc_logs,
                       salmon_logs ) 		      
-    }
+     }
 
 }
