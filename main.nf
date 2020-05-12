@@ -4,15 +4,15 @@ nextflow.preview.dsl=2
 include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, 
                                                                                    singleEnd: params.singleEnd )
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
-include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode )
-include GtfToGenePred from './NextflowModules/ucsc/377/gtfToGenePred/GtfToGenePred.nf' params(params)
-include GenePredToBed from './NextflowModules/ucsc/377/genePredToBed/GenePredToBed.nf' params(params)
+include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode, optional: '' )
+include GtfToGenePred from './NextflowModules/UCSC/377/GtfToGenePred/GtfToGenePred.nf' params(params)
+include GenePredToBed from './NextflowModules/UCSC/377/GenePredToBed/GenePredToBed.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
-include SortMeRna from './NextflowModules/SortMeRNA/4.2.0/SortMeRna.nf' params(singleEnd:params.singleEnd)
+include SortMeRNA from './NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params(singleEnd:params.singleEnd)
 include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
@@ -25,7 +25,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
                                                                     unstranded:params.unstranded, 
                                                                     revstranded:params.revstranded)
 include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
-									                                                    optional:params.star.toolOptions)
+									                                                           optional:params.star.toolOptions)
 include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
 include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
 include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
@@ -40,7 +40,7 @@ include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include EdgerNormalize as fc_norm from './utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
 include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
-										      biotypeQC:params.biotypeQC,
+										                                                                  biotypeQC:params.biotypeQC,
                                                                                       singleEnd: params.singleEnd,
                                                                                       stranded: params.stranded,
                                                                                       unstranded: params.unstranded,
@@ -92,7 +92,7 @@ workflow {
     } else if (!params.star_index && params.runMapping) {
       //Create STAR Index
       GenomeGenerate ( genome_fasta, genome_gtf )
-      star_index = GenomeGenerate.out
+      star_index = GenomeGenerate.out.star_index
     }
     if (params.genome_bed && params.runPostQC && params.runMapping) {
       //Create bed12 index file
@@ -101,8 +101,8 @@ workflow {
             .ifEmpty { exit 1, "Bed12 file not found: ${params.genome_bed}"}
     } else if ( !params.genome_bed && params.runPostQC && params.runMapping) {
         GtfToGenePred ( genome_gtf)
-        GenePredToBed ( GtfToGenePred.out )
-        genome_bed = GenePredToBed.out
+        GenePredToBed ( GtfToGenePred.out.genome_genepred )
+        genome_bed = GenePredToBed.out.genome_bed12
     }
     if ( params.salmon_index && params.runSalmon) {
        salmon_index = Channel
@@ -113,7 +113,7 @@ workflow {
             .fromPath(params.transcripts_fasta, checkIfExists: true)
             .ifEmpty { exit 1, "Fasta file not found: ${params.transcripts_fasta}"}
         SalmonIndex ( transcripts_fasta )
-        salmon_index = SalmonIndex.out
+        salmon_index = SalmonIndex.out.salmon_index
     }
     if (params.scatter_interval_list && params.runGATK4_HC ) {
       scatter_interval_list = Channel
@@ -127,7 +127,7 @@ workflow {
               .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
               .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
         CreateIntervalList( genome_index, genome_dict )
-        scatter_interval_list = CreateIntervalList.out
+        scatter_interval_list = CreateIntervalList.out.genome_interval_list
     }
     if ( params.runSortMeRna) {
         rRNA_database = file(params.rRNA_database_manifest)
@@ -160,18 +160,16 @@ workflow {
     // Determine final fastqs files
     if ( params.runTrimGalore && params.runSortMeRna ) {
       TrimGalore(fastq_files) 
-      SortMeRna(TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }, 
-                                    sortmerna_fasta.collect() )
-      final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
+      SortMeRNA(TrimGalore.out.trimmed_fastqs, sortmerna_fasta.collect())
+      final_fastqs = SortMeRNA.out.non_rRNA_fastqs
 
     } else if ( params.runTrimGalore && !params.runSortMeRna ) {
         TrimGalore(fastq_files)
-        final_fastqs = TrimGalore.out.map{ sample_id, rg_id, reads, log, fqc_report -> [sample_id, rg_id, reads] }
+        final_fastqs = TrimGalore.out.trimmed_fastqs 
 
     } else if ( !params.runTrimGalore &&  params.runSortMeRna ) {
-        SortMeRna(fastq_files, 
-                  sortmerna_fasta.collect() )
-        final_fastqs = SortMeRna.out.map{ [it[0],it[1],it[2]] }
+        SortMeRNA(fastq_files, sortmerna_fasta.collect() )
+        final_fastqs = SortMeRNA.out.non_rRNA_fastqs 
 
     } else {
         final_fastqs = fastq_files
@@ -189,29 +187,35 @@ workflow {
     }
     if ( params.runMapping ) {
       AlignReads( fastqs_transformed, star_index.collect(), genome_gtf.collect() )
-      Index(AlignReads.out.map { sample_id, bams, unmapped, log1, log2, tab -> [sample_id, bams] })
-      mapped = AlignReads.out.join(Index.out)
+      Index(AlignReads.out.star_aligned)
+      mapped = AlignReads.out.star_aligned.join(Index.out)
     }
     if ( params.runPostQC) {
       if (params.runMapping) {
-        post_mapping_QC(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_bed.collect())
+        post_mapping_QC(mapped.map { sample_id, rg_id, bam, bai -> 
+                                    [sample_id, bam, bai] }, 
+                                    genome_bed.collect())
       } else {
           exit 1, "PostQC requires alignment step. Please enable runMapping!"
       } 
     } 
     if ( params.runHTSeqCount) {
       if ( params.runMapping) {
-        Count(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, bams, bai] }, genome_gtf.collect())
-        mergeHtseqCounts( run_name, Count.out.map { it[1] }.collect())
+        Count(mapped.map { sample_id, rg_id, bam, bai -> 
+                          [sample_id, bam, bai] }, 
+                          genome_gtf.collect())
+        mergeHtseqCounts( run_name, Count.out.hts_counts_raw.collect() )
       } else {
           exit 1, "htseq-count requires alignment step. Please enable runMapping!"
       }
     } 
     if ( params.runFeatureCounts) {
       if (params.runMapping) {
-        FeatureCounts(run_name, AlignReads.out.map { it[1] }.collect(), genome_gtf.collect())
+        Featurecounts(run_name, mapped.map { sample_id, rg_id, bam, bai -> 
+                      [sample_id, bam, bai] }.collect() ,
+                       genome_gtf.collect())
         if ( params.normalize_counts ) {
-          fc_norm( run_name, FeatureCounts.out[0] )
+          fc_norm( run_name, Featurecounts.out.fc_raw )
         }
       } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
@@ -219,14 +223,14 @@ workflow {
     } 
     if ( params.runMarkDup) {
       if (params.runMapping) {
-        markdup_mapping(mapped.map { sample_id, bams, unmapped, log1, log2, tab, bai -> [sample_id, sample_id, bams, bai] })
+        markdup_mapping(mapped)
       } else {
           exit 1, "Markdup requires alignment step. Please enable runMapping!"
       } 
     }         
     if ( params.runSalmon ) {
       Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
-      QuantMerge ( Quant.out.map { it[1] }.collect(), run_name )
+      Quantmerge ( Quant.out.map { sample_id, quants -> quants } )
     }
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
@@ -255,30 +259,30 @@ workflow {
       salmon_logs = Channel.empty()
       //Get options
       if (  params.runTrimGalore) {
-        trim_logs = TrimGalore.out.map { it[3] }
-        fastqc_logs = TrimGalore.out.map { it[4] }
+        trim_logs = TrimGalore.out.trimming_report
+        fastqc_logs = TrimGalore.out.trimming_fastqc
       }
       if (  params.runSortMeRna ) {
         //Currently not working with MultiQc 1.8
-        sortmerna_logs = SortMeRna.out.map { it[3] }
+        sortmerna_logs = SortMeRna.out.sortmerna_report
       }
       if (  params.runMapping ) {
-        star_logs =  AlignReads.out.map{ [it[3], it[4]] }
+        star_logs =  AlignReads.out.star_log.mix(AlignReads.out.star_final_log)
       }
       if ( params.runHTSeqCount &&  params.runMapping) {
-        hts_logs = Count.out.map { it[1] }
+        hts_logs = Count.out.hts_counts_raw
       }
       if (  params.runFeatureCounts &&  params.runMapping ) {
-        fc_logs = FeatureCounts.out[1]
+        fc_logs = FeatureCounts.out.fc_summary
       }
       if ( params.runPostQC && params.runMapping ) {
-        post_qc_logs =  post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
+        post_qc_logs =  post_mapping_QC.out
       }
       if ( params.runSalmon) {
-        salmon_logs = Quant.out.map { it[1] }
+        salmon_logs = Quant.out.salmon_quants
       }
       multiqc_report( run_name,
-		      fastqc_logs,
+		                  fastqc_logs,
                       trim_logs,
                       sortmerna_logs,
                       star_logs,
