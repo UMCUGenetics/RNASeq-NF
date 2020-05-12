@@ -36,7 +36,7 @@ include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: p
 								                                                     optional: params.salmon_quant.toolOptions )
                                                                   
 
-include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
+include MergeFastqLanes from './NextflowModules/Utils/MergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include EdgerNormalize as fc_norm from './utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
 include FeatureCounts from './NextflowModules/Subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
@@ -228,7 +228,7 @@ workflow {
       } 
     }         
     if ( params.runSalmon ) {
-      Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
+      Quant ( MergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
       QuantMerge ( run_name, Quant.out.map { it[1] }.collect() )
     }
     if ( params.runGATK4_HC ) {
