@@ -39,7 +39,7 @@ include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: p
 include mergeFastqLanes from './NextflowModules/Utils/mergeFastqLanes.nf' params(params)
 include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
 include EdgerNormalize as fc_norm from './utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
-include FeatureCounts from './NextflowModules/subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
+include FeatureCounts from './NextflowModules/Subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
 										                                                                  biotypeQC:params.biotypeQC,
                                                                                       singleEnd: params.singleEnd,
                                                                                       stranded: params.stranded,
@@ -187,7 +187,8 @@ workflow {
     }
     if ( params.runMapping ) {
       AlignReads( fastqs_transformed, star_index.collect(), genome_gtf.collect() )
-      Index(AlignReads.out.star_aligned)
+      Index(AlignReads.out.star_aligned.map {sample_id, rg_id, bam ->
+                                             [sample_id, bam] })
       mapped = AlignReads.out.star_aligned.join(Index.out)
     }
     if ( params.runPostQC) {
@@ -211,11 +212,9 @@ workflow {
     } 
     if ( params.runFeatureCounts) {
       if (params.runMapping) {
-        Featurecounts(run_name, mapped.map { sample_id, rg_id, bam, bai -> 
-                      [sample_id, bam, bai] }.collect() ,
-                       genome_gtf.collect())
+        FeatureCounts(run_name, mapped.map { it[2] }.collect(), genome_gtf.collect())
         if ( params.normalize_counts ) {
-          fc_norm( run_name, Featurecounts.out.fc_raw )
+          fc_norm( run_name, FeatureCounts.out.fc_raw )
         }
       } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
@@ -230,7 +229,7 @@ workflow {
     }         
     if ( params.runSalmon ) {
       Quant ( mergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
-      Quantmerge ( Quant.out.map { sample_id, quants -> quants } )
+      QuantMerge ( run_name, Quant.out.map { it[1] }.collect() )
     }
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {

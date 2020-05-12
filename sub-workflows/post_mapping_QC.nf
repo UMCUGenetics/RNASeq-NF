@@ -9,6 +9,6 @@ workflow post_mapping_QC {
       RSeQC(bams_in, bed_file)
       LcExtrap(bams_in)
     emit:
-      RSeQC.out, emit: rseqc_out
-      LcExtrap.out, emit: preseq_out
+      RSeQC.out
+      LcExtrap.out
 }
