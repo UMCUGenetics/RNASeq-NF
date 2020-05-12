@@ -263,7 +263,7 @@ workflow {
       }
       if (  params.runSortMeRna ) {
         //Currently not working with MultiQc 1.8
-        sortmerna_logs = SortMeRna.out.sortmerna_report
+        sortmerna_logs = SortMeRNA.out.sortmerna_report
       }
       if (  params.runMapping ) {
         star_logs =  AlignReads.out.star_log.mix(AlignReads.out.star_final_log)
@@ -281,7 +281,7 @@ workflow {
         salmon_logs = Quant.out.salmon_quants
       }
       multiqc_report( run_name,
-		                  fastqc_logs,
+		      fastqc_logs,
                       trim_logs,
                       sortmerna_logs,
                       star_logs,
