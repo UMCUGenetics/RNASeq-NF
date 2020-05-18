@@ -26,7 +26,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
                                                                     revstranded:params.revstranded)
 include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
 									                                                           optional:params.star.toolOptions)
-include Index from './NextflowModules/Sambamba/0.6.8/Index.nf' params(params)
+include Index from './NextflowModules/Sambamba/0.7.0/Index.nf' params(params)
 include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
 include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
                                                                      stranded: params.stranded,
@@ -159,13 +159,13 @@ workflow {
     log.info "========================================="
     // Determine final fastqs files
     if ( params.runTrimGalore && params.runSortMeRna ) {
-      TrimGalore(fastq_files) 
-      SortMeRNA(TrimGalore.out.trimmed_fastqs, sortmerna_fasta.collect())
-      final_fastqs = SortMeRNA.out.non_rRNA_fastqs
+        TrimGalore(fastq_files) 
+        SortMeRNA(TrimGalore.out.fastqs_trimmed, sortmerna_fasta.collect())
+        final_fastqs = SortMeRNA.out.non_rRNA_fastqs
 
     } else if ( params.runTrimGalore && !params.runSortMeRna ) {
         TrimGalore(fastq_files)
-        final_fastqs = TrimGalore.out.trimmed_fastqs 
+        final_fastqs = TrimGalore.out.fastqs_trimmed 
 
     } else if ( !params.runTrimGalore &&  params.runSortMeRna ) {
         SortMeRNA(fastq_files, sortmerna_fasta.collect() )
@@ -187,15 +187,15 @@ workflow {
     }
     if ( params.runMapping ) {
       AlignReads( fastqs_transformed, star_index.collect(), genome_gtf.collect() )
-      Index(AlignReads.out.star_aligned.map {sample_id, rg_id, bam ->
+      Index(AlignReads.out.bam_file.map {sample_id, rg_id, bam ->
                                              [sample_id, bam] })
-      mapped = AlignReads.out.star_aligned.join(Index.out)
+      mapped = AlignReads.out.bam_file.join(Index.out)
     }
     if ( params.runPostQC) {
       if (params.runMapping) {
-        post_mapping_QC(mapped.map { sample_id, rg_id, bam, bai -> 
-                                    [sample_id, bam, bai] }, 
-                                    genome_bed.collect())
+          post_mapping_QC(mapped.map { sample_id, rg_id, bam, bai -> 
+                                      [sample_id, bam, bai] }, 
+                                      genome_bed.collect() )
       } else {
           exit 1, "PostQC requires alignment step. Please enable runMapping!"
       } 
@@ -205,7 +205,7 @@ workflow {
         Count(mapped.map { sample_id, rg_id, bam, bai -> 
                           [sample_id, bam, bai] }, 
                           genome_gtf.collect())
-        mergeHtseqCounts( run_name, Count.out.hts_counts_raw.collect() )
+        mergeHtseqCounts( run_name, Count.out.count_table.collect() )
       } else {
           exit 1, "htseq-count requires alignment step. Please enable runMapping!"
       }
@@ -214,7 +214,7 @@ workflow {
       if (params.runMapping) {
         FeatureCounts(run_name, mapped.map { it[2] }.collect(), genome_gtf.collect())
         if ( params.normalize_counts ) {
-          fc_norm( run_name, FeatureCounts.out.fc_raw )
+          fc_norm( run_name, FeatureCounts.out.count_table )
         }
       } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
@@ -234,7 +234,8 @@ workflow {
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
         SplitIntervals( 'no-break', scatter_interval_list)
-        SplitNCigarReads(markdup_mapping.out)
+        SplitNCigarReads(markdup_mapping.out.map {sample_id, rg_id, bam, bai -> 
+                                                 [sample_id, bam, bai] })
         if ( params.runGATK4_BQSR) {
           //Perform BSQR
           gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
@@ -259,29 +260,29 @@ workflow {
       //Get options
       if (  params.runTrimGalore) {
         trim_logs = TrimGalore.out.trimming_report
-        fastqc_logs = TrimGalore.out.trimming_fastqc
+        fastqc_logs = TrimGalore.out.fastqc_report
       }
       if (  params.runSortMeRna ) {
         //Currently not working with MultiQc 1.8
         //sortmerna_logs = SortMeRNA.out.sortmerna_report
       }
       if (  params.runMapping ) {
-        star_logs =  AlignReads.out.star_log.mix(AlignReads.out.star_final_log)
+        star_logs =  AlignReads.out.log.mix(AlignReads.out.final_log)
       }
       if ( params.runHTSeqCount &&  params.runMapping) {
-        hts_logs = Count.out.hts_counts_raw
+        hts_logs = Count.out.count_table
       }
       if (  params.runFeatureCounts &&  params.runMapping ) {
-        fc_logs = FeatureCounts.out.fc_summary
+        fc_logs = FeatureCounts.out.count_summary
       }
       if ( params.runPostQC && params.runMapping ) {
         post_qc_logs = post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       }
       if ( params.runSalmon) {
-        salmon_logs = Quant.out.salmon_quants
+        salmon_logs = Quant.out.quant_table
       }
       multiqc_report( run_name,
-		      fastqc_logs,
+		                  fastqc_logs,
                       trim_logs,
                       sortmerna_logs,
                       star_logs,
