@@ -21,7 +21,7 @@
 * `--runHTSeqCount` Expression quantification with htseq-count (Default: false)
 * `--runFeatureCounts` Expression quantification with featureCounts (Default: true)
 * `--runMapping` Read alignment with STAR (Default: true)
-* `--runSalmon` Alignment-free transcript quantification with Salmon (Default: true)
+* `--runSalmon` Alignment-free transcript quantification with Salmon (Default: false)
 * `--runMultiQC` MultiQC report (Default: true)
 * `--runGATK4_HC` GATK4 germline variant calling (Default: false)
 * `--runGATK4_BQSR` GATK4 base quality score recalibration (Default: false)
