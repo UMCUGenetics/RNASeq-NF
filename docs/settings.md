@@ -11,6 +11,7 @@
 * `--fc_group_features_type` GTF biotype field for subread featureCounts (Default: gene_biotype)
 * `--normalize_counts` enable edgeR RPKM/CPM normalization for featureCounts (Default: true)
 * `--gencode` gencode reference (Default: false).
+* `--biotypeQC` perform featureCounts biotype quantification (Default: true).
 
 **Pipeline steps**
 
