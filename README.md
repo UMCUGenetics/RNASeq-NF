@@ -62,13 +62,13 @@ SampleName_S1_L001_R1_001.fastq.gz
 
 ### Single-End
 
-Run the pipeline with default settings for reverse-stranded SE library.
+Run the pipeline with default settings for a reverse-stranded SE library.
 ```
 ./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config> --unstranded=false --revstranded --singleEnd -profile slurm -resume 
 ```
 ### Paired-End ##
 
-Run the pipeline with default settings for forward-stranded PE library.
+Run the pipeline with default settings for a forward-stranded PE library.
 ```
 ./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config> --unstranded=false --stranded -profile slurm -resume 
 ```
