@@ -12,7 +12,7 @@ include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(pa
 //Workflows
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
-include pseudo_quantification from './sub-workflows/pseudo_quantification.nf' params(params)
+include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
 //End workflows
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
 include SortMeRNA from './NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params(singleEnd:params.singleEnd)
@@ -206,7 +206,7 @@ workflow {
       } 
     }   
     if ( params.runSalmon ) {
-      pseudo_quantification( fastqs_transformed, salmon_index.collect(), run_name )
+      alignment_free_quant( fastqs_transformed, salmon_index.collect(), run_name )
     }
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
@@ -256,7 +256,7 @@ workflow {
         post_qc_logs = post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       }
       if ( params.runSalmon) {
-        salmon_logs = pseudo_quantification.out.logs
+        salmon_logs = alignment_free_quant.out.logs
       }
       multiqc_report( run_name,
 		                  fastqc_logs,
