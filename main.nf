@@ -9,35 +9,21 @@ include GtfToGenePred from './NextflowModules/UCSC/377/GtfToGenePred/GtfToGenePr
 include GenePredToBed from './NextflowModules/UCSC/377/GenePredToBed/GenePredToBed.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
+
 //Workflows
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
-//End workflows
+include alignment_based_quant from './sub-workflows/alignment_based_quant.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
+
+//End workflows
 include SortMeRNA from './NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params(singleEnd:params.singleEnd)
 include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
 include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
-
-
                                                                   
-
-include MergeFastqLanes from './NextflowModules/Utils/MergeFastqLanes.nf' params(params)
-include mergeHtseqCounts from './utils/mergeHtseqCounts.nf' params(params)
-include EdgerNormalize as fc_norm from './utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
-include FeatureCounts from './NextflowModules/Subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
-										                                                                  biotypeQC:params.biotypeQC,
-                                                                                      singleEnd: params.singleEnd,
-                                                                                      stranded: params.stranded,
-                                                                                      unstranded: params.unstranded,
-                                                                                      revstranded: params.revstranded,
-                                                                                      fc_group_features: params.fc_group_features,
-                                                                                      fc_count_type: params.fc_count_type,
-                                                                                      fc_group_features_type: params.fc_group_features_type,
-                                                                                      fc_extra_attributes : params.fc_extra_attributes, 
-                                                                                      gencode: params.gencode)
 //Check minimal resource parameters
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
@@ -173,40 +159,31 @@ workflow {
               .groupTuple(by:0)
               .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
     }
+    //STAR alignment
     if ( params.runMapping ) {
         mapped = markdup_mapping(fastqs_transformed, star_index, genome_gtf )
     }
+    //Post-mapping QC
     if ( params.runPostQC) {
       if (params.runMapping) {
-          post_mapping_QC(mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> 
+          post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> 
                                                 [sample_id, bam, bai] }, 
                                                 genome_bed.collect() )
       } else {
           exit 1, "PostQC requires alignment step. Please enable runMapping!"
       } 
     } 
-    if ( params.runHTSeqCount) {
-      if ( params.runMapping) {
-        Count(mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> 
-                                    [sample_id, bam, bai] }, 
-                                    genome_gtf.collect())
-        mergeHtseqCounts( run_name, Count.out.count_table.collect() )
-      } else {
-          exit 1, "htseq-count requires alignment step. Please enable runMapping!"
-      }
-    } 
+    //featureCounts expression quantification.
     if ( params.runFeatureCounts) {
       if (params.runMapping) {
-        FeatureCounts(run_name, mapped.bam_sorted.map { it[2] }.collect(), genome_gtf.collect())
-        if ( params.normalize_counts ) {
-          fc_norm( run_name, FeatureCounts.out.count_table )
-        }
-      } else {
+         alignment_based_quant ( run_name, mapped.bam_sorted.map { it[2] }, genome_gtf )
+        } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
       } 
-    }   
+    }
+    //Salmon alignment-free expression quantification   
     if ( params.runSalmon ) {
-      alignment_free_quant( fastqs_transformed, salmon_index.collect(), run_name )
+      alignment_free_quant( fastqs_transformed, salmon_index, run_name )
     }
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
@@ -246,11 +223,8 @@ workflow {
       if (  params.runMapping ) {
         star_logs = mapped.logs
       }
-      if ( params.runHTSeqCount &&  params.runMapping) {
-        hts_logs = Count.out.count_table
-      }
-      if (  params.runFeatureCounts &&  params.runMapping ) {
-        fc_logs = FeatureCounts.out.count_summary
+      if ( params.runFeatureCounts &&  params.runMapping ) {
+          fc_logs =  alignment_based_quant.out.fc_summary
       }
       if ( params.runPostQC && params.runMapping ) {
         post_qc_logs = post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
