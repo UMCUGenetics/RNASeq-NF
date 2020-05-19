@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
-
 nextflow.preview.dsl=2
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
-
+include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
+include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
 //Workflows
 include pre_processing from './sub-workflows/pre_processing.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
@@ -13,12 +13,7 @@ include alignment_based_quant from './sub-workflows/alignment_based_quant.nf' pa
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
-//End workflows
-
-include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
-
-include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
-                                                                  
+//End workflows                                                                  
 //Check minimal resource parameters
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
@@ -99,8 +94,12 @@ workflow {
     summary['Config Profile'] = workflow.profile
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
-    // Determine final fastqs files
+    //Pre-processing / QC
     pre_processing ( fastq_files, sortmerna_fasta )
+    trim_logs = pre_processing.out.trim_logs
+    fastqc_logs = pre_processing.out.fastqc_logs
+    sortmerna_logs = Channel.empty()
+    // Determine final fastqs files
     final_fastqs = pre_processing.out.processed_fastqs 
     //Transform output channels
     if (params.singleEnd) {
@@ -116,27 +115,38 @@ workflow {
     //STAR alignment
     if ( params.runMapping ) {
         mapped = markdup_mapping(fastqs_transformed, genome_gtf )
+        star_logs = mapped.logs
+    } else {
+        star_logs = Channel.empty()
     }
     //Post-mapping QC
     if ( params.runPostQC) {
       if (params.runMapping) {
-          post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> 
-                                                [sample_id, bam, bai] } )
+          post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> [sample_id, bam, bai] } )
+          post_qc_logs = post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       } else {
           exit 1, "PostQC requires alignment step. Please enable runMapping!"
       } 
+    } else {
+        post_qc_logs = Channel.empty()
     } 
     //featureCounts expression quantification.
     if ( params.runFeatureCounts) {
       if (params.runMapping) {
          alignment_based_quant ( run_name, mapped.bam_sorted.map { it[2] }, genome_gtf )
+         fc_logs = alignment_based_quant.out.fc_summary
         } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
       } 
+    } else {
+          fc_logs = Channel.empty()
     }
     //Salmon alignment-free expression quantification   
     if ( params.runSalmon ) {
       alignment_free_quant( fastqs_transformed, run_name )
+      salmon_logs = alignment_free_quant.out.logs
+    } else {
+        salmon_logs = Channel.empty()
     }
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
@@ -155,45 +165,14 @@ workflow {
       }     
     }  
     if ( params.runMultiQC ) {
-      //Create empty Channels for optional steps
-      trim_logs = Channel.empty()
-      fastqc_logs = Channel.empty()
-      sortmerna_logs = Channel.empty()
-      star_logs = Channel.empty()
-      post_qc_logs = Channel.empty()
-      hts_logs = Channel.empty()
-      fc_logs = Channel.empty()
-      salmon_logs = Channel.empty()
-      //Get options
-      if (  params.runTrimGalore) {
-        trim_logs = pre_processing.out.trim_logs
-        fastqc_logs = pre_processing.out.fastqc_logs
+        multiqc_report( run_name,
+                        fastqc_logs,
+                        trim_logs,
+                        sortmerna_logs,
+                        star_logs,
+                        post_qc_logs,
+                        fc_logs,
+                        salmon_logs ) 		      
       }
-      if (  params.runSortMeRna ) {
-        //Currently not working with MultiQc 1.8
-        //sortmerna_logs = SortMeRNA.out.sortmerna_report
-      }
-      if (  params.runMapping ) {
-        star_logs = mapped.logs
-      }
-      if ( params.runFeatureCounts &&  params.runMapping ) {
-          fc_logs =  alignment_based_quant.out.fc_summary
-      }
-      if ( params.runPostQC && params.runMapping ) {
-        post_qc_logs = post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
-      }
-      if ( params.runSalmon) {
-        salmon_logs = alignment_free_quant.out.logs
-      }
-      multiqc_report( run_name,
-		                  fastqc_logs,
-                      trim_logs,
-                      sortmerna_logs,
-                      star_logs,
-                      post_qc_logs,
-                      hts_logs,
-                      fc_logs,
-                      salmon_logs ) 		      
-     }
 
 }
