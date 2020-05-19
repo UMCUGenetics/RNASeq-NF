@@ -1,8 +1,6 @@
 #!/usr/bin/env nextflow
 
 nextflow.preview.dsl=2
-include TrimGalore from './NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, 
-                                                                                   singleEnd: params.singleEnd )
 include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
 include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode, optional: '' )
 include GtfToGenePred from './NextflowModules/UCSC/377/GtfToGenePred/GtfToGenePred.nf' params(params)
@@ -11,6 +9,7 @@ include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' p
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 
 //Workflows
+include pre_processing from './sub-workflows/pre_processing.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
 include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
@@ -132,22 +131,8 @@ workflow {
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
     // Determine final fastqs files
-    if ( params.runTrimGalore && params.runSortMeRna ) {
-        TrimGalore(fastq_files) 
-        SortMeRNA(TrimGalore.out.fastqs_trimmed, sortmerna_fasta.collect())
-        final_fastqs = SortMeRNA.out.non_rRNA_fastqs
-
-    } else if ( params.runTrimGalore && !params.runSortMeRna ) {
-        TrimGalore(fastq_files)
-        final_fastqs = TrimGalore.out.fastqs_trimmed 
-
-    } else if ( !params.runTrimGalore &&  params.runSortMeRna ) {
-        SortMeRNA(fastq_files, sortmerna_fasta.collect() )
-        final_fastqs = SortMeRNA.out.non_rRNA_fastqs 
-
-    } else {
-        final_fastqs = fastq_files
-    }
+    pre_processing ( fastq_files, sortmerna_fasta )
+    final_fastqs = pre_processing.out.processed_fastqs 
     //Transform output channels
     if (params.singleEnd) {
         fastqs_transformed = final_fastqs
@@ -213,8 +198,8 @@ workflow {
       salmon_logs = Channel.empty()
       //Get options
       if (  params.runTrimGalore) {
-        trim_logs = TrimGalore.out.trimming_report
-        fastqc_logs = TrimGalore.out.fastqc_report
+        trim_logs = pre_processing.out.trim_logs
+        fastqc_logs = pre_processing.out.fastqc_logs
       }
       if (  params.runSortMeRna ) {
         //Currently not working with MultiQc 1.8
