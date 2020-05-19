@@ -1,10 +1,6 @@
 #!/usr/bin/env nextflow
 
 nextflow.preview.dsl=2
-include GenomeGenerate from './NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
-include Index as SalmonIndex from './NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode, optional: '' )
-include GtfToGenePred from './NextflowModules/UCSC/377/GtfToGenePred/GtfToGenePred.nf' params(params)
-include GenePredToBed from './NextflowModules/UCSC/377/GenePredToBed/GenePredToBed.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 
@@ -15,12 +11,12 @@ include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(p
 include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
 include alignment_based_quant from './sub-workflows/alignment_based_quant.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
-
-//End workflows
-include SortMeRNA from './NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params(singleEnd:params.singleEnd)
-include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
+//End workflows
+
+include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
+
 include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
                                                                   
 //Check minimal resource parameters
@@ -47,12 +43,7 @@ if (!params.genome_gtf) {
 }
 if (!params.transcripts_fasta && params.runSalmon) {
   exit 1, "Transcript fasta not found. Please provide the correct path!"
-} else {
-    transcripts_fasta = Channel
-        .fromPath(params.transcripts_fasta, checkIfExists: true)
-        .ifEmpty { exit 1, "Fasta file not found: ${params.transcripts_fasta}"}
-}
-
+} 
 if (!params.genome_dict && params.runGATK4_HC) {
     exit 1, "Genome dictionary not found. Please provide the correct path!"
 } else {
@@ -72,35 +63,6 @@ workflow {
   main :  
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
-
-    //Determine required inputs
-    if (params.star_index && params.runMapping) {
-      star_index = Channel
-            .fromPath(params.star_index, checkIfExists: true)
-            .ifEmpty { exit 1, "STAR index not found: ${params.star_index}"}
-    } else if (!params.star_index && params.runMapping) {
-      //Create STAR Index
-      GenomeGenerate ( genome_fasta, genome_gtf )
-      star_index = GenomeGenerate.out.star_index
-    }
-    if (params.genome_bed && params.runPostQC && params.runMapping) {
-      //Create bed12 index file
-      genome_bed = Channel
-            .fromPath(params.genome_bed, checkIfExists: true)
-            .ifEmpty { exit 1, "Bed12 file not found: ${params.genome_bed}"}
-    } else if ( !params.genome_bed && params.runPostQC && params.runMapping) {
-        GtfToGenePred ( genome_gtf)
-        GenePredToBed ( GtfToGenePred.out.genome_genepred )
-        genome_bed = GenePredToBed.out.genome_bed12
-    }
-    if ( params.salmon_index && params.runSalmon) {
-       salmon_index = Channel
-            .fromPath(params.salmon_index, checkIfExists: true)
-            .ifEmpty { exit 1, "Transcripts fasta not found: ${params.salmon_index}"}
-    } else if ( !params.salmon_index && params.runSalmon ) {
-        SalmonIndex ( transcripts_fasta )
-        salmon_index = SalmonIndex.out.salmon_index
-    }
     if (params.scatter_interval_list && params.runGATK4_HC ) {
       scatter_interval_list = Channel
         .fromPath( params.scatter_interval_list, checkIfExists: true)
@@ -153,14 +115,13 @@ workflow {
     }
     //STAR alignment
     if ( params.runMapping ) {
-        mapped = markdup_mapping(fastqs_transformed, star_index, genome_gtf )
+        mapped = markdup_mapping(fastqs_transformed, genome_gtf )
     }
     //Post-mapping QC
     if ( params.runPostQC) {
       if (params.runMapping) {
           post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> 
-                                                [sample_id, bam, bai] }, 
-                                                genome_bed.collect() )
+                                                [sample_id, bam, bai] } )
       } else {
           exit 1, "PostQC requires alignment step. Please enable runMapping!"
       } 
@@ -175,7 +136,7 @@ workflow {
     }
     //Salmon alignment-free expression quantification   
     if ( params.runSalmon ) {
-      alignment_free_quant( fastqs_transformed, salmon_index, run_name )
+      alignment_free_quant( fastqs_transformed, run_name )
     }
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
