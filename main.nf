@@ -24,9 +24,7 @@ include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_ty
                                                                     stranded:params.stranded, 
                                                                     unstranded:params.unstranded, 
                                                                     revstranded:params.revstranded)
-include AlignReads from './NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, 
-									                                                           optional:params.star.toolOptions)
-include Index from './NextflowModules/Sambamba/0.7.0/Index.nf' params(params)
+
 include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
 include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
                                                                      stranded: params.stranded,
@@ -186,25 +184,22 @@ workflow {
               .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
     }
     if ( params.runMapping ) {
-      AlignReads( fastqs_transformed, star_index.collect(), genome_gtf.collect() )
-      Index(AlignReads.out.bam_file.map {sample_id, rg_id, bam ->
-                                             [sample_id, bam] })
-      mapped = AlignReads.out.bam_file.join(Index.out)
+        mapped = markdup_mapping(fastqs_transformed, star_index, genome_gtf )
     }
     if ( params.runPostQC) {
       if (params.runMapping) {
-          post_mapping_QC(mapped.map { sample_id, rg_id, bam, bai -> 
-                                      [sample_id, bam, bai] }, 
-                                      genome_bed.collect() )
+          post_mapping_QC(mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> 
+                                                [sample_id, bam, bai] }, 
+                                                genome_bed.collect() )
       } else {
           exit 1, "PostQC requires alignment step. Please enable runMapping!"
       } 
     } 
     if ( params.runHTSeqCount) {
       if ( params.runMapping) {
-        Count(mapped.map { sample_id, rg_id, bam, bai -> 
-                          [sample_id, bam, bai] }, 
-                          genome_gtf.collect())
+        Count(mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> 
+                                    [sample_id, bam, bai] }, 
+                                    genome_gtf.collect())
         mergeHtseqCounts( run_name, Count.out.count_table.collect() )
       } else {
           exit 1, "htseq-count requires alignment step. Please enable runMapping!"
@@ -212,21 +207,14 @@ workflow {
     } 
     if ( params.runFeatureCounts) {
       if (params.runMapping) {
-        FeatureCounts(run_name, mapped.map { it[2] }.collect(), genome_gtf.collect())
+        FeatureCounts(run_name, mapped.bam_sorted.map { it[2] }.collect(), genome_gtf.collect())
         if ( params.normalize_counts ) {
           fc_norm( run_name, FeatureCounts.out.count_table )
         }
       } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
       } 
-    } 
-    if ( params.runMarkDup) {
-      if (params.runMapping) {
-        markdup_mapping(mapped)
-      } else {
-          exit 1, "Markdup requires alignment step. Please enable runMapping!"
-      } 
-    }         
+    }   
     if ( params.runSalmon ) {
       Quant ( MergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
       QuantMerge ( run_name, Quant.out.map { it[1] }.collect() )
@@ -234,7 +222,7 @@ workflow {
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
         SplitIntervals( 'no-break', scatter_interval_list)
-        SplitNCigarReads(markdup_mapping.out.map {sample_id, rg_id, bam, bai -> 
+        SplitNCigarReads(mapped.bam_sorted.map {sample_id, rg_id, bam, bai -> 
                                                  [sample_id, bam, bai] })
         if ( params.runGATK4_BQSR) {
           //Perform BSQR
@@ -267,7 +255,7 @@ workflow {
         //sortmerna_logs = SortMeRNA.out.sortmerna_report
       }
       if (  params.runMapping ) {
-        star_logs =  AlignReads.out.log.mix(AlignReads.out.final_log)
+        star_logs = mapped.logs
       }
       if ( params.runHTSeqCount &&  params.runMapping) {
         hts_logs = Count.out.count_table
