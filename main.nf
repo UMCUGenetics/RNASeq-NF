@@ -9,29 +9,19 @@ include GtfToGenePred from './NextflowModules/UCSC/377/GtfToGenePred/GtfToGenePr
 include GenePredToBed from './NextflowModules/UCSC/377/GenePredToBed/GenePredToBed.nf' params(params)
 include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
+//Workflows
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
 include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
+include pseudo_quantification from './sub-workflows/pseudo_quantification.nf' params(params)
+//End workflows
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
 include SortMeRNA from './NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params(singleEnd:params.singleEnd)
 include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
 include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
 include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
 include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
-include Count from './NextflowModules/HTSeq/0.11.3/Count.nf' params(hts_count_type:params.hts_count_type,
-                                                                    hts_group_features:params.hts_group_features,
-                                                                    optional:params.count.toolOptions, 
-                                                                    singleEnd:params.singleEnd, 
-                                                                    stranded:params.stranded, 
-                                                                    unstranded:params.unstranded, 
-                                                                    revstranded:params.revstranded)
 
-include QuantMerge from './NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.salmon_quantmerge.toolOptions )
-include Quant from './NextflowModules/Salmon/1.2.1/Quant.nf' params(singleEnd: params.singleEnd,
-                                                                     stranded: params.stranded,
-                                                                     unstranded: params.unstranded,
-                                                                     revstranded: params.revstranded,
-                                                                     saveUnaligned: params.saveUnaligned,
-								                                                     optional: params.salmon_quant.toolOptions )
+
                                                                   
 
 include MergeFastqLanes from './NextflowModules/Utils/MergeFastqLanes.nf' params(params)
@@ -216,8 +206,7 @@ workflow {
       } 
     }   
     if ( params.runSalmon ) {
-      Quant ( MergeFastqLanes (fastqs_transformed ), salmon_index.collect() )
-      QuantMerge ( run_name, Quant.out.map { it[1] }.collect() )
+      pseudo_quantification( fastqs_transformed, salmon_index.collect(), run_name )
     }
     if ( params.runGATK4_HC ) {
       if (params.runMapping && params.runMarkDup) {
@@ -267,7 +256,7 @@ workflow {
         post_qc_logs = post_mapping_QC.out[1].map { it[1] }.mix(post_mapping_QC.out[0].map { it[1] })
       }
       if ( params.runSalmon) {
-        salmon_logs = Quant.out.quant_table
+        salmon_logs = pseudo_quantification.out.logs
       }
       multiqc_report( run_name,
 		                  fastqc_logs,
