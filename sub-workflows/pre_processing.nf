@@ -1,15 +1,19 @@
 include TrimGalore from '../NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.options.TrimGalore, 
                                                                                    singleEnd: params.singleEnd )
 include SortMeRNA from '../NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params( singleEnd: params.singleEnd )
+include FastQC from '../NextflowModules/FastQC/0.11.8/FastQC.nf' params( optional: params.options.FastQC) 
 
 workflow pre_processing {
     take:
       fastq_files
     main:
+      if (params.runFastQC) {
+         FastQC(fastq_files)
+      }
       if ( params.runSortMeRNA) {
-            rRNA_database = file(params.rRNA_database_manifest)
-            //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
-            sortmerna_fasta = Channel
+           rRNA_database = file(params.rRNA_database_manifest)
+           //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
+           sortmerna_fasta = Channel
                 .from( rRNA_database.readLines() )
                 .map { row -> file(row) }
       }

@@ -226,8 +226,8 @@ workflow {
     // # 6) GATK4 germline variant calling with optional BQSR
     if ( params.runGermlineCallingGATK ) {
       if ( params.runMapping ) {
-          include gatk_germline_snp_indel from './sub-workflows/gatk_germline_snp_indel.nf' params(params)
-          gatk_germline_snp_indel( run_name, mapped.bam_dedup.map {sample_id, rg_id, bam, bai -> 
+          include gatk_germline_calling from './sub-workflows/gatk_germline_calling.nf' params(params)
+          gatk_germline_calling( run_name, mapped.bam_dedup.map {sample_id, rg_id, bam, bai -> 
                                                                  [sample_id, bam, bai] }) 
       } else {
             exit 1, "GATK4 requires alignment, markdup step. Please enable runMapping and runMarkDup!"

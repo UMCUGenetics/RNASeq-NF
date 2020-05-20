@@ -1,4 +1,5 @@
 include RSeQC from '../NextflowModules/RSeQC/3.0.1/RSeQC.nf' params( singleEnd:params.singleEnd)
+include RSeQC_TIN from '../NextflowModules/RSeQC/3.0.1/RSeQC.nf' params()
 include LCExtrap from '../NextflowModules/Preseq/2.0.3/LCExtrap.nf' params( optional:params.options.Preseq )
 include GtfToGenePred from '../NextflowModules/UCSC/377/GtfToGenePred/GtfToGenePred.nf' params(params)
 include GenePredToBed from '../NextflowModules/UCSC/377/GenePredToBed/GenePredToBed.nf' params(params)
@@ -21,8 +22,12 @@ workflow post_mapping_QC {
       }
       RSeQC(bams_in, genome_bed)
       LCExtrap(bams_in)
+      if (params.runRSeQC_TIN) {
+          RSeQC_TIN(bams_in, genome_bed) 
+      }
       
     emit:
       RSeQC.out
+      RSeQC_TIN.out
       LCExtrap.out
 }
