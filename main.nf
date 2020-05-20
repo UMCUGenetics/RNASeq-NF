@@ -1,5 +1,126 @@
 #!/usr/bin/env nextflow
 nextflow.preview.dsl=2
+
+/*===========================================================
+                UMCUGenetics + EMC / RNASeq-NF
+===========================================================
+#### Homepage / Documentation
+https://github.com/UMCUGenetics/RNASeq-NF
+----------------------------------------------------------------------------------------
+*/
+def helpMessage() {
+    // Log colors ANSI codes
+    c_reset = "\033[0m";
+    c_dim = "\033[2m";
+    c_black = "\033[0;30m";
+    c_green = "\033[0;32m";
+    c_yellow = "\033[0;33m";
+    c_blue = "\033[0;34m";
+    c_purple = "\033[0;35m";
+    c_white = "\033[0;37m";
+
+    log.info"""
+    Usage:
+    The typical command for running the pipeline is as follows:
+    nextflow run UMCUGenetics/RNASeq-NF --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config
+${c_blue}    Mandatory arguments: ${c_reset}
+${c_yellow}        --fastq_path [str] ${c_reset}              Path to a directory containing fastq files.
+                                                    Files should be named in the following format: xxx_xxx_xxxx
+${c_yellow}        --out_dir [str] ${c_reset}                 The output directory where the results will be saved
+${c_blue}    Standard options: ${c_reset}
+         --profile [str]                 Configuration profile to use, leave empty to run locally.
+                                              Available: slurm, SGE, singularity.
+         --genome_config [path]          Path to genome configuration file containing options from ${c_blue}standard references${c_reset}.
+         --single_end [bool]             Specifies that the input is from single-end experiment(s). (Default: false)
+         --unstranded [bool]             Specifies that the input is from an unstranded library prep. (Default: true)
+         --stranded [bool]               Specifies that the input is from an forward-stranded library prep. (Default: false)
+         --revstranded [bool]            Specifies that the input is from an reverse-stranded library prep. (Default: false)
+${c_blue}    Standard references: ${c_reset}
+      If not specified in the configuration file or you wish to overwrite any of standard references.
+${c_yellow}        --genome_fasta [path] ${c_reset}           Path to genome sequence file (FASTA).
+${c_yellow}        --genome_gtf [path] ${c_reset}             Path to GTF file containing genomic annotations.
+${c_yellow}        --genome_bed [path] ${c_reset}             Path to BED12-format of the supplied GTF (auto-generated from supplied GTF if not given).
+        --star_index [path]              Path to STAR index (generated automatically if not given).
+        --gencode [bool]                 Specifies if the supplied GTF is from GENCODE. (Default: false)
+${c_blue}    FastQC: ${c_reset}
+      Perform FastQC on the unaligned sequencing reads before and, optionally, after trimming.
+${c_green}        --runFastQC [bool] ${c_reset}          Run FastQC. (Default: true)
+${c_green}        --runFastQCTrimmed [bool] ${c_reset}   Run FastQC after trimming (if enabled). (Default: true)
+        --options.FastQC [str]       Additional custom options given to FastQC.
+${c_blue}    TrimGalore: ${c_reset}
+      Trims sequence adapters from sequencing reads and filters low-complexity and small reads.
+${c_green}        --runTrimGalore [bool] ${c_reset}          Run TrimGalore. (Default: true)
+        --options.TrimGalore [str]       Additional custom options given to TrimGalore.
+${c_blue}    SortMeRNA: ${c_reset}
+      Removes sequencing reads from ribosomal origins.
+${c_green}        --runSortMeRNA [bool] ${c_reset}           Run SortMeRNA. (Default: true)
+${c_yellow}        --rRNA_database_manifest [path]${c_reset}  Path to rRNA database files.
+        --options.SortMeRNA [str]        Additional custom options given to SortMeRNA.
+${c_blue}    Alignment - STAR: ${c_reset}
+      Performs alignment of sequencing reads against the genome using STAR.
+${c_green}        --runSTAR [bool] ${c_reset}                Run STAR. (Default: true)
+${c_green}        --runMarkDup [bool] ${c_reset}             Runs Sambamba MarkDuplicates. (Default: true)
+        --options.STAR [str]             Additional custom options given to STAR.
+${c_blue}    Post-alignment QC: ${c_reset}
+      Various QC to perform after alignment to assess quality of alignment and sequencing read input.
+${c_green}        --runTIN [bool] ${c_reset}                 Run tin.py to assess distribution of reads over gene-body. (Default: true)
+${c_green}        --RSeQC [bool] ${c_reset}                  Run RSeQC components: inner_distance, read_distribution, infer_experiment, junction_annotation, bam_stat, junction_saturation and read_duplication. (Default: true)
+${c_green}        --runPreseq [bool] ${c_reset}              Run preseq to predict and estimate the complexity of the sequencing library. (Default: true)
+${c_blue}    Counting - SubRead / FeatureCounts: ${c_reset}
+      Read counting, per BAM file, per <fc_group_features> by counting all reads overlapping with <fc_count_type>.
+${c_green}        --runFeatureCounts [bool] ${c_reset}       Run FeatureCounts. (Default: true)
+        --fc_group_features [str]        Feature to summarize reads on. (Default: gene_id)
+        --fc_count_type [str]            Feature to count overlapping reads, and subsequently summarized by --fc_group_features. (Default: exon)
+        --fc_group_features_type [str]   GTF biotype field for subread featureCounts (Default: gene_biotype)
+        --normalize_counts [bool]        Enable edgeR RPKM/CPM normalization for featureCounts (Default: true) ????
+        --options.FeatureCounts [str]    Additional custom options given to FeatureCounts.
+${c_blue}    Salmon: ${c_reset}
+      Performs transcript alignment and quantification of the expression of transcripts, per isoform.
+${c_green}        --runSalmon [bool] ${c_reset}              Run Salmon. (Default: false)
+${c_yellow}        --transcripts_fasta [path] ${c_reset}      Path to transcripts in FASTA format.
+        --salmon_index [path]            Path to Salmon Index (auto-generated if not given).
+        --options.Salmon [str]           Additional custom options given to Salmon.
+${c_blue}    GATK (v4) - Germline variant calling: ${c_reset}
+      Performs germline variant calling using the RNA-Seq best-practices as established by GATK.
+${c_green}        --runGermlineCallingGATK [bool] ${c_reset} Run GATK4 for (germline) variant calling. (Default: false)
+${c_yellow}        --scatter_interval_list [path] ${c_reset}  Path to scatter.interval_list (required for GATK4)
+        --genome_known_sites [path]      Path to snp_sites.vcf (optional for use in GATK4 BQSR)
+        --options.GATKGermline [str]     Additional custom options given to GATK4.
+${c_blue}    GATK (v4) - Base quality score recalibration (BQSR): ${c_reset}
+      Performs BQSR.
+${c_green}        --runBQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: false)
+        --options.BQRS [str]              Additional custom options given to BQRS.
+${c_blue}    MultiQC: ${c_reset}
+      Generate a MultiQC report which combined various QC reports into a single report.
+${c_green}        --runMultiQC [bool] ${c_reset}             Perform MultiQC to generate a single report containing various QC logs.
+        --options.MultiQC [str]          Additional custom options given to MultiQC.
+${c_blue}    Other options: ${c_reset}
+      --email [email]                     Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits.
+      --email_on_fail [email]             Same as --email, except only send mail if the workflow is not successful.
+      --max_multiqc_email_size [str]      Threshold size for MultiQC report to be attached in notification email. If file generated by pipeline exceeds the threshold, it will not be attached (Default: 25MB)
+      --name [str]                        Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+    """.stripIndent()
+}
+
+
+/*=================================
+          Input validation
+=================================*/
+
+// Show help message and exit.
+if(params.help){
+  helpMessage()
+  exit 0
+}
+
+
+
+
+
+
+
+
+
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
 //Workflows
 include pre_processing from './sub-workflows/pre_processing.nf' params(params)
