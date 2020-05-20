@@ -1,9 +1,6 @@
 #!/usr/bin/env nextflow
 nextflow.preview.dsl=2
-include CreateIntervalList from './NextflowModules/Utils/CreateIntervaList.nf' params(params)
 include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)
-include SplitIntervals from './NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.splitintervals.toolOptions)
-include SplitNCigarReads from './NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)
 //Workflows
 include pre_processing from './sub-workflows/pre_processing.nf' params(params)
 include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
@@ -11,8 +8,7 @@ include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(p
 include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
 include alignment_based_quant from './sub-workflows/alignment_based_quant.nf' params(params)
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
-include gatk4_bqsr from './sub-workflows/gatk4_bqsr.nf' params(params)
-include gatk4_hc from './sub-workflows/gatk4_hc.nf' params(params)
+include gatk_germline_snp_indel from './sub-workflows/gatk_germline_snp_indel.nf' params(params)
 //End workflows                                                                  
 //Check minimal resource parameters
 if (!params.out_dir) {
@@ -58,14 +54,6 @@ workflow {
   main :  
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
-    if (params.scatter_interval_list && params.runGATK4_HC ) {
-      scatter_interval_list = Channel
-        .fromPath( params.scatter_interval_list, checkIfExists: true)
-        .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
-    } else if ( !params.scatter_interval_list && params.runGATK4_HC ) {
-        CreateIntervalList( genome_index, genome_dict )
-        scatter_interval_list = CreateIntervalList.out.genome_interval_list
-    }
     if ( params.runSortMeRna) {
         rRNA_database = file(params.rRNA_database_manifest)
         //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
@@ -148,22 +136,16 @@ workflow {
     } else {
         salmon_logs = Channel.empty()
     }
+    //GATK4 germline variant calling with optional BQSR
     if ( params.runGATK4_HC ) {
-      if (params.runMapping && params.runMarkDup) {
-        SplitIntervals( 'no-break', scatter_interval_list)
-        SplitNCigarReads(mapped.bam_sorted.map {sample_id, rg_id, bam, bai -> 
-                                                 [sample_id, bam, bai] })
-        if ( params.runGATK4_BQSR) {
-          //Perform BSQR
-          gatk4_bqsr(SplitNCigarReads.out, SplitIntervals.out.flatten())
-          gatk4_hc(gatk4_bqsr.out[0], SplitIntervals.out.flatten(), run_name)
-        } else {
-            gatk4_hc(SplitNCigarReads.out, SplitIntervals.out.flatten(), run_name)
-        }      
-      }  else {
-       exit 1, "GATK4 requires alignment, markdup step. Please enable runMapping and runMarkDup!"
-      }     
-    }  
+      if ( params.runMapping ) {
+          gatk_germline_snp_indel( run_name, mapped.bam_dedup.map {sample_id, rg_id, bam, bai -> 
+                                                                 [sample_id, bam, bai] }) 
+      } else {
+            exit 1, "GATK4 requires alignment, markdup step. Please enable runMapping and runMarkDup!"
+      }        
+    }
+    //MultiQC report  
     if ( params.runMultiQC ) {
         multiqc_report( run_name,
                         fastqc_logs,
