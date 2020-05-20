@@ -224,7 +224,7 @@ workflow {
         salmon_logs = Channel.empty()
     }
     // # 6) GATK4 germline variant calling with optional BQSR
-    if ( params.runGATK4_HC ) {
+    if ( params.runGermlineCallingGATK ) {
       if ( params.runMapping ) {
           include gatk_germline_snp_indel from './sub-workflows/gatk_germline_snp_indel.nf' params(params)
           gatk_germline_snp_indel( run_name, mapped.bam_dedup.map {sample_id, rg_id, bam, bai -> 

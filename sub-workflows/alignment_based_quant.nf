@@ -1,15 +1,15 @@
 include EdgerNormalize from '../utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
-include FeatureCounts from '../NextflowModules/Subread/2.0.0/FeatureCounts.nf' params( optional:params.fc.toolOptions,
-										                                                                  biotypeQC:params.biotypeQC,
-                                                                                      singleEnd: params.singleEnd,
-                                                                                      stranded: params.stranded,
-                                                                                      unstranded: params.unstranded,
-                                                                                      revstranded: params.revstranded,
-                                                                                      fc_group_features: params.fc_group_features,
-                                                                                      fc_count_type: params.fc_count_type,
-                                                                                      fc_group_features_type: params.fc_group_features_type,
-                                                                                      fc_extra_attributes : params.fc_extra_attributes, 
-                                                                                      gencode: params.gencode)
+include FeatureCounts from '../NextflowModules/Subread/2.0.0/FeatureCounts.nf' params( optional: params.options.FeatureCounts,
+										                                                                   biotypeQC:params.biotypeQC,
+                                                                                       singleEnd: params.singleEnd,
+                                                                                       stranded: params.stranded,
+                                                                                       unstranded: params.unstranded,
+                                                                                       revstranded: params.revstranded,
+                                                                                       fc_group_features: params.fc_group_features,
+                                                                                       fc_count_type: params.fc_count_type,
+                                                                                       fc_group_features_type: params.fc_group_features_type,
+                                                                                       fc_extra_attributes : params.fc_extra_attributes, 
+                                                                                       gencode: params.gencode)
 
 workflow alignment_based_quant {
     take:

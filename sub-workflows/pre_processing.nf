@@ -1,12 +1,12 @@
-include TrimGalore from '../NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.trimgalore.toolOptions, 
+include TrimGalore from '../NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.options.TrimGalore, 
                                                                                    singleEnd: params.singleEnd )
-include SortMeRNA from '../NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params( singleEnd:params.singleEnd )
+include SortMeRNA from '../NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params( singleEnd: params.singleEnd )
 
 workflow pre_processing {
     take:
       fastq_files
     main:
-      if ( params.runSortMeRna) {
+      if ( params.runSortMeRNA) {
             rRNA_database = file(params.rRNA_database_manifest)
             //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
             sortmerna_fasta = Channel
@@ -14,7 +14,7 @@ workflow pre_processing {
                 .map { row -> file(row) }
       }
       // Determine final fastqs files
-      if ( params.runTrimGalore && params.runSortMeRna ) {
+      if ( params.runTrimGalore && params.runSortMeRNA ) {
           TrimGalore(fastq_files) 
           SortMeRNA(TrimGalore.out.fastqs_trimmed, sortmerna_fasta.collect())
           final_fastqs = SortMeRNA.out.non_rRNA_fastqs
@@ -25,7 +25,7 @@ workflow pre_processing {
 
 
 
-      } else if ( params.runTrimGalore && !params.runSortMeRna ) {
+      } else if ( params.runTrimGalore && !params.runSortMeRNA ) {
           TrimGalore(fastq_files)
           final_fastqs = TrimGalore.out.fastqs_trimmed 
           trim_logs = TrimGalore.out.trimming_report
@@ -33,7 +33,7 @@ workflow pre_processing {
           srna_log = Channel.empty()
 
 
-      } else if ( !params.runTrimGalore &&  params.runSortMeRna ) {
+      } else if ( !params.runTrimGalore &&  params.runSortMeRNA ) {
           SortMeRNA(fastq_files, sortmerna_fasta.collect() )
           final_fastqs = SortMeRNA.out.non_rRNA_fastqs 
           trim_logs = Channel.empty()
