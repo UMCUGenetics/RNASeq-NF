@@ -5,8 +5,14 @@ include SortMeRNA from '../NextflowModules/SortMeRNA/4.2.0/SortMeRNA.nf' params(
 workflow pre_processing {
     take:
       fastq_files
-      sortmerna_fasta
     main:
+      if ( params.runSortMeRna) {
+            rRNA_database = file(params.rRNA_database_manifest)
+            //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
+            sortmerna_fasta = Channel
+                .from( rRNA_database.readLines() )
+                .map { row -> file(row) }
+      }
       // Determine final fastqs files
       if ( params.runTrimGalore && params.runSortMeRna ) {
           TrimGalore(fastq_files) 

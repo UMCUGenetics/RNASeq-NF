@@ -10,6 +10,7 @@ include alignment_based_quant from './sub-workflows/alignment_based_quant.nf' pa
 include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
 include gatk_germline_snp_indel from './sub-workflows/gatk_germline_snp_indel.nf' params(params)
 //End workflows                                                                  
+
 //Check minimal resource parameters
 if (!params.out_dir) {
    exit 1, "Output directory not found. Please provide the correct path!"
@@ -51,16 +52,11 @@ if (!params.genome_index && params.runGATK4_HC) {
 }
 
 workflow {
-  main :  
+  main :
+    //Set run and retrieve input fastqs  
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
-    if ( params.runSortMeRna) {
-        rRNA_database = file(params.rRNA_database_manifest)
-        //if (rRNA_database.isEmpty()) {exit 1, "File ${rRNA_database.getName()} is empty!"}
-        sortmerna_fasta = Channel
-            .from( rRNA_database.readLines() )
-            .map { row -> file(row) }
-    }
+   //Pipeline log info
     params.version = "Beta"
     log.info """=======================================================
     RNASeq-NF ${params.version}"
