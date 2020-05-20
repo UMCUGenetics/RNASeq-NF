@@ -21,6 +21,7 @@ workflow gatk_germline_snp_indel {
     take:
       run_id
       bam_dedup
+      
     main:
         //Check for Scatter intervallist
         if ( params.scatter_interval_list ) {

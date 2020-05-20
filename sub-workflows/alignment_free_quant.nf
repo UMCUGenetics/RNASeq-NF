@@ -20,6 +20,7 @@ workflow alignment_free_quant {
     take:
       fastq_files
       run_name
+
     main:
       if ( params.salmon_index ) {
           salmon_index = Channel
@@ -34,6 +35,7 @@ workflow alignment_free_quant {
       }
       Quant ( MergeFastqLanes (fastq_files ), salmon_index.collect() )
       QuantMerge ( run_name, Quant.out.map { it[1] }.collect() )
+      
     emit:
       quants_merged = QuantMerge.out
       logs =  Quant.out.quant_table 

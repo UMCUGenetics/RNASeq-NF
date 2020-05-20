@@ -6,6 +6,8 @@ include GenePredToBed from '../NextflowModules/UCSC/377/GenePredToBed/GenePredTo
 workflow post_mapping_QC {
     take:
       bams_in
+      genome_gtf
+
     main:
       if (params.genome_bed ) {
           //Create bed12 index file
@@ -13,15 +15,13 @@ workflow post_mapping_QC {
               .fromPath(params.genome_bed, checkIfExists: true)
               .ifEmpty { exit 1, "Bed12 file not found: ${params.genome_bed}"}
       } else if ( !params.genome_bed ) {
-          genome_gtf = Channel
-              .fromPath(params.genome_gtf, checkIfExists: true)
-              .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
           GtfToGenePred ( genome_gtf)
           GenePredToBed ( GtfToGenePred.out.genome_genepred )
           genome_bed = GenePredToBed.out.genome_bed12
       }
       RSeQC(bams_in, genome_bed)
       LCExtrap(bams_in)
+      
     emit:
       RSeQC.out
       LCExtrap.out
