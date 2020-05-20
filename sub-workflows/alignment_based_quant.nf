@@ -15,8 +15,10 @@ workflow alignment_based_quant {
     take:
       run_name
       bam_files
-      genome_gtf
     main:
+      genome_gtf = Channel
+          .fromPath(params.genome_gtf, checkIfExists: true)
+          .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
       FeatureCounts( run_name, bam_files.collect(), genome_gtf.collect() )
       if ( params.normalize_counts ) {
           EdgerNormalize (run_name, FeatureCounts.out.count_table )

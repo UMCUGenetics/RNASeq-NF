@@ -28,6 +28,12 @@ workflow gatk_germline_snp_indel {
               .fromPath( params.scatter_interval_list, checkIfExists: true)
               .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
         } else if ( !params.scatter_interval_list ) {
+            genome_index = Channel
+                .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
+                .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
+            genome_dict = Channel
+                .fromPath( params.genome_dict, checkIfExists: true)
+                .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
             CreateIntervalList( genome_index, genome_dict )
             scatter_interval_list = CreateIntervalList.out.genome_interval_list
         }

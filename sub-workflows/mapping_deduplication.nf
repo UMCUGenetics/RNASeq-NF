@@ -6,8 +6,11 @@ include GenomeGenerate from '../NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' p
 workflow markdup_mapping {
     take:
       fastq_files
-      genome_gtf
     main:
+      //Create GTF input channel
+      genome_gtf = Channel
+              .fromPath(params.genome_gtf, checkIfExists: true)
+              .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
      //Create STAR index if not present
       if (params.star_index) {
           star_index = Channel
@@ -18,9 +21,10 @@ workflow markdup_mapping {
           genome_fasta = Channel
               .fromPath(params.genome_fasta, checkIfExists: true)
               .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
-        //Generate Genome
-        GenomeGenerate ( genome_fasta, genome_gtf )
-        star_index = GenomeGenerate.out.star_index
+        
+          //Generate Genome
+          GenomeGenerate ( genome_fasta, genome_gtf )
+          star_index = GenomeGenerate.out.star_index
       } 
       /* Run mapping on a per sample per lane basis */
       AlignReads( fastq_files, star_index.collect(), genome_gtf.collect() )

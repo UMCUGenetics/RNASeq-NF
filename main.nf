@@ -18,39 +18,22 @@ if (!params.out_dir) {
 if (!params.fastq_path) {
   exit 1, "fastq files not found. Please provide the correct path!"
 }
-
 if (!params.genome_fasta) {
   exit 1, "Genome fasta not found. Please provide the correct path!"
-} else {
-    genome_fasta = Channel
-      .fromPath(params.genome_fasta, checkIfExists: true)
-      .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
-}
+} 
 if (!params.genome_gtf) {
   exit 1, "Genome GTF not found. Please provide the correct path!"
-} else {
-    genome_gtf = Channel
-      .fromPath(params.genome_gtf, checkIfExists: true)
-      .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
-}
+} 
 if (!params.transcripts_fasta && params.runSalmon) {
   exit 1, "Transcript fasta not found. Please provide the correct path!"
 } 
 if (!params.genome_dict && params.runGATK4_HC) {
     exit 1, "Genome dictionary not found. Please provide the correct path!"
-} else {
-    genome_dict = Channel
-        .fromPath( params.genome_dict, checkIfExists: true)
-        .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
-}
+} 
 if (!params.genome_index && params.runGATK4_HC) {
     exit 1, "Genome index not found. Please provide the correct path!"
-} else {
-    genome_index = Channel
-        .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
-        .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
-}
-
+} 
+//Start workflow
 workflow {
   main :
     //Set run and retrieve input fastqs  
@@ -78,8 +61,8 @@ workflow {
     summary['Config Profile'] = workflow.profile
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
-    //Pre-processing / QC
-    pre_processing ( fastq_files, sortmerna_fasta )
+    // # 1) Pre-processing / QC
+    pre_processing ( fastq_files )
     trim_logs = pre_processing.out.trim_logs
     fastqc_logs = pre_processing.out.fastqc_logs
     sortmerna_logs = Channel.empty()
@@ -96,14 +79,14 @@ workflow {
               .groupTuple(by:0)
               .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
     }
-    //STAR alignment
+    // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
-        mapped = markdup_mapping(fastqs_transformed, genome_gtf )
+        mapped = markdup_mapping( fastqs_transformed )
         star_logs = mapped.logs
     } else {
         star_logs = Channel.empty()
     }
-    //Post-mapping QC
+    // # 3) Post-mapping QC
     if ( params.runPostQC) {
       if (params.runMapping) {
           post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> [sample_id, bam, bai] } )
@@ -114,10 +97,10 @@ workflow {
     } else {
         post_qc_logs = Channel.empty()
     } 
-    //featureCounts expression quantification.
+    // # 4) featureCounts 
     if ( params.runFeatureCounts) {
       if (params.runMapping) {
-         alignment_based_quant ( run_name, mapped.bam_sorted.map { it[2] }, genome_gtf )
+         alignment_based_quant ( run_name, mapped.bam_sorted.map { it[2] } )
          fc_logs = alignment_based_quant.out.fc_summary
         } else {
           exit 1, "featureCounts requires alignment step. Please enable runMapping!"
@@ -125,14 +108,14 @@ workflow {
     } else {
           fc_logs = Channel.empty()
     }
-    //Salmon alignment-free expression quantification   
+    // # 5) Salmon    
     if ( params.runSalmon ) {
       alignment_free_quant( fastqs_transformed, run_name )
       salmon_logs = alignment_free_quant.out.logs
     } else {
         salmon_logs = Channel.empty()
     }
-    //GATK4 germline variant calling with optional BQSR
+    // # 6) GATK4 germline variant calling with optional BQSR
     if ( params.runGATK4_HC ) {
       if ( params.runMapping ) {
           gatk_germline_snp_indel( run_name, mapped.bam_dedup.map {sample_id, rg_id, bam, bai -> 
@@ -141,7 +124,7 @@ workflow {
             exit 1, "GATK4 requires alignment, markdup step. Please enable runMapping and runMarkDup!"
       }        
     }
-    //MultiQC report  
+    // # 7) MultiQC report  
     if ( params.runMultiQC ) {
         multiqc_report( run_name,
                         fastqc_logs,
