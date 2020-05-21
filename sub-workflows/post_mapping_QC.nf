@@ -20,10 +20,10 @@ workflow post_mapping_QC {
           GenePredToBed ( GtfToGenePred.out.genome_genepred )
           genome_bed = GenePredToBed.out.genome_bed12
       }
-      RSeQC(bams_in, genome_bed)
+      RSeQC(bams_in, genome_bed.collect())
       LCExtrap(bams_in)
       if (params.runRSeQC_TIN) {
-          RSeQC_TIN(bams_in, genome_bed) 
+          RSeQC_TIN(bams_in, genome_bed.collect()) 
       }
       
     emit:
