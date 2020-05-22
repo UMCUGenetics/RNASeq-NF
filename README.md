@@ -4,12 +4,13 @@ RNASeq-NF is an NGS analysis pipeline for RNA expression quantification and germ
 
 The pipeline performs the following tasks.
 
+* Read QC (*FastQC*)
 * Sequence trimming (*TrimGalore*)
 * rRNA removal (*SortMeRNA*)
 * Mapping and read-group annotation (*STAR*)
 * Alignment-QC (*RSeQC, Preseq*)
 * PCR duplicate detection (*Sambamba MarkDup*)
-* Gene-expression quantification (*HTSeq-count, featureCounts*)
+* Gene-expression quantification ( *featureCounts*)
 * Transcript quantification (*Salmon*)
 * Variant calling (*GATK4*)
 * QC report (*MultiQC*)
