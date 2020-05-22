@@ -4,8 +4,6 @@
 * `--unstranded` true/false for unstranded library prep (Default: true)
 * `--stranded` true/false for forward-stranded library prep (Default: false)
 * `--revstranded` true/false for reverse-stranded library prep (Default: false)
-* `--hts_group_features` htseq-count annotation feature for expression quantification (Default: gene_id)
-* `--hts_count_type` htseq-count annotation feature for expression quantification (Default: exon)
 * `--fc_group_features` subread featureCounts group (Default: gene_id)
 * `--fc_count_type subread` subread featureCounts type (Default: exon)
 * `--fc_group_features_type` GTF biotype field for subread featureCounts (Default: gene_biotype)
@@ -16,7 +14,7 @@
 **Pipeline steps**
 
 * `--runTrimGalore` Read trimming with TrimGalore (Default: true)
-* `--runSortMeRna` rRNA filtering with SortMeRNA (Default: true)
+* `--runSortMeRNA` rRNA filtering with SortMeRNA (Default: true)
 * `--runPostQC` Alignment QC with RSeQC,Preseq (Default: true)
 * `--runMarkDup` Sambamba markdup (Default: true)
 * `--runHTSeqCount` Expression quantification with htseq-count (Default: false)
