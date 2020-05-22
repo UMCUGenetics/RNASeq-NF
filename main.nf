@@ -31,7 +31,7 @@ ${c_blue}    Standard options: ${c_reset}
          --profile [str]                 Configuration profile to use, leave empty to run locally.
                                               Available: slurm, SGE, singularity.
          --genome_config [path]          Path to genome configuration file containing options from ${c_blue}standard references${c_reset}.
-         --single_end [bool]             Specifies that the input is from single-end experiment(s). (Default: false)
+         --singleEnd [bool]             Specifies that the input is from single-end experiment(s). (Default: false)
          --unstranded [bool]             Specifies that the input is from an unstranded library prep. (Default: true)
          --stranded [bool]               Specifies that the input is from an forward-stranded library prep. (Default: false)
          --revstranded [bool]            Specifies that the input is from an reverse-stranded library prep. (Default: false)
@@ -45,7 +45,6 @@ ${c_yellow}        --genome_bed [path] ${c_reset}             Path to BED12-form
 ${c_blue}    FastQC: ${c_reset}
       Perform FastQC on the unaligned sequencing reads before and, optionally, after trimming.
 ${c_green}        --runFastQC [bool] ${c_reset}          Run FastQC. (Default: true)
-${c_green}        --runFastQCTrimmed [bool] ${c_reset}   Run FastQC after trimming (if enabled). (Default: true)
         --options.FastQC [str]       Additional custom options given to FastQC.
 ${c_blue}    TrimGalore: ${c_reset}
       Trims sequence adapters from sequencing reads and filters low-complexity and small reads.
@@ -56,23 +55,21 @@ ${c_blue}    SortMeRNA: ${c_reset}
 ${c_green}        --runSortMeRNA [bool] ${c_reset}           Run SortMeRNA. (Default: true)
 ${c_yellow}        --rRNA_database_manifest [path]${c_reset}  Path to rRNA database files.
         --options.SortMeRNA [str]        Additional custom options given to SortMeRNA.
-${c_blue}    Alignment - STAR: ${c_reset}
+${c_blue}    Alignment - STAR/MarkDup: ${c_reset}
       Performs alignment of sequencing reads against the genome using STAR.
-${c_green}        --runSTAR [bool] ${c_reset}                Run STAR. (Default: true)
-${c_green}        --runMarkDup [bool] ${c_reset}             Runs Sambamba MarkDuplicates. (Default: true)
+${c_green}        --runMapping [bool] ${c_reset}                Run STAR. (Default: true)
         --options.STAR [str]             Additional custom options given to STAR.
 ${c_blue}    Post-alignment QC: ${c_reset}
       Various QC to perform after alignment to assess quality of alignment and sequencing read input.
-${c_green}        --runTIN [bool] ${c_reset}                 Run tin.py to assess distribution of reads over gene-body. (Default: true)
-${c_green}        --RSeQC [bool] ${c_reset}                  Run RSeQC components: inner_distance, read_distribution, infer_experiment, junction_annotation, bam_stat, junction_saturation and read_duplication. (Default: true)
-${c_green}        --runPreseq [bool] ${c_reset}              Run preseq to predict and estimate the complexity of the sequencing library. (Default: true)
+${c_green}        --runRSeQC_TIN [bool] ${c_reset}                 Run tin.py to assess distribution of reads over gene-body. (Default: true)
+${c_green}        --runPostQC [bool] ${c_reset}                  Run RSeQC components: inner_distance, read_distribution, infer_experiment, junction_annotation, bam_stat, junction_saturation and read_duplication. Run preseq to predict and estimate the complexity of the sequencing library (Default: true)
 ${c_blue}    Counting - SubRead / FeatureCounts: ${c_reset}
       Read counting, per BAM file, per <fc_group_features> by counting all reads overlapping with <fc_count_type>.
 ${c_green}        --runFeatureCounts [bool] ${c_reset}       Run FeatureCounts. (Default: true)
         --fc_group_features [str]        Feature to summarize reads on. (Default: gene_id)
         --fc_count_type [str]            Feature to count overlapping reads, and subsequently summarized by --fc_group_features. (Default: exon)
         --fc_group_features_type [str]   GTF biotype field for subread featureCounts (Default: gene_biotype)
-        --normalize_counts [bool]        Enable edgeR RPKM/CPM normalization for featureCounts (Default: true) ????
+        --normalize [bool]        Enable edgeR RPKM/CPM normalization for featureCounts (Default: true) ????
         --options.FeatureCounts [str]    Additional custom options given to FeatureCounts.
 ${c_blue}    Salmon: ${c_reset}
       Performs transcript alignment and quantification of the expression of transcripts, per isoform.
