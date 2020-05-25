@@ -12,7 +12,7 @@ include BaseRecalibrationTable from '../NextflowModules/GATK/4.1.3.0/BaseRecalib
 include GatherBaseRecalibrationTables from '../NextflowModules/GATK/4.1.3.0/GatherBaseRecalibrationTables.nf' params(mem:params.gatherbaserecalibrator.mem)
 include BaseRecalibration from '../NextflowModules/GATK/4.1.3.0/BaseRecalibration.nf' params (mem:params.applybqsr.mem,
                                                                                               genome_fasta:params.genome_fasta)
-include MergeBams from '../NextflowModules/Sambamba/0.6.8/MergeBams.nf' params(mem:params.mergebams.mem)
+include Merge from '../NextflowModules/Sambamba/0.7.0/Merge.nf' params(params)
 include SplitIntervals from '../NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.options.GATK4_SplitIntervals )
 include SplitNCigarReads from '../NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)                     
 include CreateIntervalList from '../NextflowModules/Utils/CreateIntervaList.nf' params(params)
@@ -59,13 +59,13 @@ workflow gatk_germline_calling {
                 .combine(scatter_intervals)
             )
             //Merge recalibrated bams
-            MergeBams(
+            Merge(
               BaseRecalibration.out
                 .groupTuple()
                 .map{ [it[0],it[2],it[3]] }
             )
             //Set final bam file to recalibrated bam
-            final_bam = MergeBams.out
+            final_bam = Merge.out
         }
         //      
         HaplotypeCaller(final_bam.combine(scatter_intervals))
@@ -82,7 +82,7 @@ workflow gatk_germline_calling {
         )
       
     emit:
-      bam_recal = MergeBams.out	
+      bam_recal = Merge.out	
       vcf_filter = VariantFiltration.out
       bqsr_table = GatherBaseRecalibrationTables.out
 
