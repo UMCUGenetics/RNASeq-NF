@@ -76,13 +76,19 @@ ${c_blue}    Salmon: ${c_reset}
 ${c_green}        --runSalmon [bool] ${c_reset}              Run Salmon. (Default: false)
 ${c_yellow}        --transcripts_fasta [path] ${c_reset}      Path to transcripts in FASTA format.
         --salmon_index [path]            Path to Salmon Index (auto-generated if not given).
-        --options.Salmon [str]           Additional custom options given to Salmon.
+      Additional custom options given to Salmon submodules.
+        --options.Salmon_quant [str]
+        --options.Salmon_index [str] 
+        --options.Salmon_quantmerge [str]
 ${c_blue}    GATK (v4) - Germline variant calling: ${c_reset}
       Performs germline variant calling using the RNA-Seq best-practices as established by GATK.
 ${c_green}        --runGermlineCallingGATK [bool] ${c_reset} Run GATK4 for (germline) variant calling. (Default: false)
 ${c_yellow}        --scatter_interval_list [path] ${c_reset}  Path to scatter.interval_list (required for GATK4)
         --genome_known_sites [path]      Path to snp_sites.vcf (optional for use in GATK4 BQSR)
-        --options.GATKGermline [str]     Additional custom options given to GATK4.
+      Additional custom options given to GATK4 tools.
+          --options.GATK4_SplitIntervals [str]
+          --options.GATK4_HaplotypeCaller [str]
+          --options.GATK4_VariantFiltration [str]
 ${c_blue}    GATK (v4) - Base quality score recalibration (BQSR): ${c_reset}
       Performs BQSR.
 ${c_green}        --runGATK4_BQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: false)
