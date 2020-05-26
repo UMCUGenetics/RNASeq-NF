@@ -42,9 +42,9 @@ Known variants in vcf format (optional) should be included in the genome config 
 
 All remaining files will be created at run-time and stored in the output folder (reference_resources). Since buidling the STAR index requires a significant amount of memory, ensure that sufficient memory is available on the host system and allocated in process.config. 
 
-***Generating resource files at run-time should only be done upon running the pipeline for the first time with a specific genome build. Include the resource files in your genome config for subsequent analysis to avoid re-building them and putting a strain on the host-system.*** 
+***Generating resource files at run-time should only be done upon running the pipeline for the first time with a specific genome build. Include the resource files in your genome config for subsequent analysis to avoid re-building them and putting a strain on the host-system. Example genome configuration files can be found in `./resources/test_run`.*** 
 
-Example genome configuration files can be found `./resources/test_run`.
+
 
 **Nextflow configuration**
 
