@@ -2,15 +2,24 @@
 
 **Analysis configuration**
 
-Default [settings](./settings.md) are stored in `./conf/base.config` and will be automatically set upon execution of the pipeline. These defaults can be overwriten by either appending the setting of interest directly as command-line arguments or storing them in a seperate configuration file. An example of such a configuration file can be found in  `./conf/tet_run.config`. 
+Default [settings](./settings.md) are stored in `./conf/base.config` and will be automatically set upon execution of the pipeline. These defaults can be overwriten by either appending the setting of interest directly as command-line arguments or storing them in a seperate configuration file. An example of such a configuration file can be found in  `./conf/test_run.config`. 
 
 Runtime specific resources (memory, cpu's) should be sufficent for most jobs but can be always be altered if required. 
 
 ```
- withLabel : HTSeq_0_11_3_Count {
+  withLabel : SortMeRNA_4_2_0 {
       time = '24h'
       penv = 'threaded'
-      cpus = 2
+      cpus = 4
+      memory = '15G'
+      publishDir.path = "${params.out_dir}/QC/"
+      publishDir.mode = 'copy'
+      publishDir.saveAs = {filename ->
+                     if (filename.indexOf("_rRNA_report.txt") > 0) "SorteMeRNA/$filename"
+                     else if (filename.indexOf("_filtered_rRNA.fastq.gz") > 0) "SorteMeRNA/rRNA-reads/$filename"
+                     else null }
+
+  }
 ```
 
 The new configuration can be appended with the  `-c` option. For example;
@@ -42,7 +51,11 @@ Known variants in vcf format (optional) should be included in the genome config 
 
 All remaining files will be created at run-time and stored in the output folder (reference_resources). Since buidling the STAR index requires a significant amount of memory, ensure that sufficient memory is available on the host system and allocated in process.config. 
 
-Example genome configuration files can be found `./resources/test_run`.
+**Note** 
+
+***Generating resource files at run-time should only be done upon running the pipeline for the first time with a specific genome build. Include the resource files in your genome config for subsequent analysis to avoid re-building them and putting a strain on the host-system. Example genome configuration files can be found in `./resources/test_run`.*** 
+
+
 
 **Nextflow configuration**
 

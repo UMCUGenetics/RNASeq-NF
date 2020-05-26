@@ -1,34 +1,33 @@
 **General pipeline settings**
-
+* `--help` Display pipeline help menu (Default: false) 
 * `--singleEnd` true/false for single-end sequencing (Default: false)
 * `--unstranded` true/false for unstranded library prep (Default: true)
 * `--stranded` true/false for forward-stranded library prep (Default: false)
 * `--revstranded` true/false for reverse-stranded library prep (Default: false)
-* `--hts_group_features` htseq-count annotation feature for expression quantification (Default: gene_id)
-* `--hts_count_type` htseq-count annotation feature for expression quantification (Default: exon)
+* `--gencode` gencode reference. Required for Salmonh indexing (Default: false).
+
+**featureCount quantification settings**
 * `--fc_group_features` subread featureCounts group (Default: gene_id)
 * `--fc_count_type subread` subread featureCounts type (Default: exon)
 * `--fc_group_features_type` GTF biotype field for subread featureCounts (Default: gene_biotype)
 * `--normalize_counts` enable edgeR RPKM/CPM normalization for featureCounts (Default: true)
-* `--gencode` gencode reference (Default: false).
 * `--biotypeQC` perform featureCounts biotype quantification (Default: true).
 
 **Pipeline steps**
-
+* `--runFastQC` Read QC with fastqc (Default: true)
 * `--runTrimGalore` Read trimming with TrimGalore (Default: true)
-* `--runSortMeRna` rRNA filtering with SortMeRNA (Default: true)
+* `--runSortMeRNA` rRNA filtering with SortMeRNA (Default: true)
 * `--runPostQC` Alignment QC with RSeQC,Preseq (Default: true)
+* `--runRSeQC_TIN ` RSeQC TIN (Default: true)
 * `--runMarkDup` Sambamba markdup (Default: true)
-* `--runHTSeqCount` Expression quantification with htseq-count (Default: false)
 * `--runFeatureCounts` Expression quantification with featureCounts (Default: true)
 * `--runMapping` Read alignment with STAR (Default: true)
 * `--runSalmon` Alignment-free transcript quantification with Salmon (Default: false)
 * `--runMultiQC` MultiQC report (Default: true)
-* `--runGATK4_HC` GATK4 germline variant calling (Default: false)
-* `--runGATK4_BQSR` GATK4 base quality score recalibration (Default: false)
+* `--runGermlineCallingGATK` GATK4 germline variant calling (Default: false)
+* `--runGATK4_BQSR` GATK4 base quality score recalibration with `--runGermlineCallingGATK` enabled (Default: true).
 
 **Reference resources**
-
 * `--genome_fasta` /path/to/reference/genome.fasta
 * `--genome_index` /path/to/reference/genome.fasta.fai
 * `--genome_dict` /path/to/reference/genome.dict
