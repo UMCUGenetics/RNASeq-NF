@@ -10,14 +10,17 @@ The pipeline performs the following tasks.
 * Mapping and read-group annotation (*STAR*)
 * Alignment-QC (*RSeQC, Preseq*)
 * PCR duplicate detection (*Sambamba MarkDup*)
-* Gene-expression quantification ( *featureCounts*)
+* Gene-expression/biotype quantification ( *featureCounts*)
+* Gene-expression normalization ( *edgeR*)
 * Transcript quantification (*Salmon*)
 * Variant calling (*GATK4*)
 * QC report (*MultiQC*)
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. 
 
-Several components have been adapted from the [nf-core rnaseq](https://github.com/nf-core/rnaseq) community pipeline and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup. Please refer to the [manual](https://nf-co.re/rnaseq/docs/output) for a description on how to interpret the different output files.
+Several components have been adapted from the [nf-core rnaseq](https://github.com/nf-core/rnaseq) community pipeline and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup. 
+
+Please refer to the nf-core rnaseq [manual](https://nf-co.re/rnaseq/docs/output) for a description on how to interpret the different output files.
 
 ## Getting started
 
@@ -26,13 +29,15 @@ Several components have been adapted from the [nf-core rnaseq](https://github.co
 Download the [Nextflow](https://www.nextflow.io/) binary.
 
 ### Singularity
-Install [Singularity](https://sylabs.io/guides/3.5/admin-guide/) on the host system. For UMCU users, please follow the instructions on the [HPC wiki](https://wiki.bioinformatics.umcutrecht.nl/bin/view/HPC/SlurmScheduler) on how to use Slurm & Singularity.  
+Install [Singularity](https://sylabs.io/guides/3.5/admin-guide/) on the host system. 
+
+For UMCU users, please follow the instructions on the [HPC wiki](https://wiki.bioinformatics.umcutrecht.nl/bin/view/HPC/SlurmScheduler) on how to use Slurm & Singularity.  
 
 Start an interactive Slurm session on the HPC cluster.
 ```
 srun -n 2 --mem 5G --time 12:00:00 --gres=tmpspace:10G --pty bash
 ```
-The nextflow process needs to run until the analysis (see 4) is finished and all jobs have been scheduled. It is therefore wise to execute the above command within a terminal multiplexer, such as **screen** or **Tmux**. Alternatively, the command can be embedded within a **sbatch** script. Though this should be done by default, ensure that the singularity environment variables point to $TMPDIR. In the srun command above, we passed 10G to our session.
+The nextflow process needs to remain active until the analysis (see 4) is finished and all jobs have been scheduled. It is therefore wise to execute the above command within a terminal multiplexer, such as **screen** or **Tmux**. Alternatively, the command can be embedded within a **sbatch** script. Though this should be done by default, ensure that the singularity environment variables point to $TMPDIR. In the srun command above, we passed 10G to our session.
 
 ```
 SINGULARITY_LOCALCACHEDIR=${TMPDIR}
@@ -61,13 +66,13 @@ SampleName_S1_L001_R1_001.fastq.gz
 
 ## Examples
 
-### Single-End
+### Single-end reads
 
 Run the pipeline with default settings for a reverse-stranded SE library.
 ```
 ./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config> --unstranded=false --revstranded --singleEnd -profile slurm -resume 
 ```
-### Paired-End ##
+### Paired-end reads ##
 
 Run the pipeline with default settings for a forward-stranded PE library.
 ```
