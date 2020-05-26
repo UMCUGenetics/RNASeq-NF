@@ -69,7 +69,7 @@ ${c_green}        --runFeatureCounts [bool] ${c_reset}       Run FeatureCounts. 
         --fc_group_features [str]        Feature to summarize reads on. (Default: gene_id)
         --fc_count_type [str]            Feature to count overlapping reads, and subsequently summarized by --fc_group_features. (Default: exon)
         --fc_group_features_type [str]   GTF biotype field for subread featureCounts (Default: gene_biotype)
-        --normalize [bool]        Enable edgeR RPKM/CPM normalization for featureCounts (Default: true) ????
+        --normalize_counts [bool]        Enable edgeR RPKM/CPM normalization for featureCounts (Default: true) 
         --options.FeatureCounts [str]    Additional custom options given to FeatureCounts.
 ${c_blue}    Salmon: ${c_reset}
       Performs transcript alignment and quantification of the expression of transcripts, per isoform.
@@ -85,8 +85,8 @@ ${c_yellow}        --scatter_interval_list [path] ${c_reset}  Path to scatter.in
         --options.GATKGermline [str]     Additional custom options given to GATK4.
 ${c_blue}    GATK (v4) - Base quality score recalibration (BQSR): ${c_reset}
       Performs BQSR.
-${c_green}        --runBQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: false)
-        --options.BQRS [str]              Additional custom options given to BQRS.
+${c_green}        --runGATK4_BQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: false)
+        --options.GATK4_BQRS [str]              Additional custom options given to BQRS.
 ${c_blue}    MultiQC: ${c_reset}
       Generate a MultiQC report which combined various QC reports into a single report.
 ${c_green}        --runMultiQC [bool] ${c_reset}             Perform MultiQC to generate a single report containing various QC logs.
