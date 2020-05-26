@@ -7,10 +7,19 @@ Default [settings](./settings.md) are stored in `./conf/base.config` and will be
 Runtime specific resources (memory, cpu's) should be sufficent for most jobs but can be always be altered if required. 
 
 ```
- withLabel : HTSeq_0_11_3_Count {
+  withLabel : SortMeRNA_4_2_0 {
       time = '24h'
       penv = 'threaded'
-      cpus = 2
+      cpus = 4
+      memory = '15G'
+      publishDir.path = "${params.out_dir}/QC/"
+      publishDir.mode = 'copy'
+      publishDir.saveAs = {filename ->
+                     if (filename.indexOf("_rRNA_report.txt") > 0) "SorteMeRNA/$filename"
+                     else if (filename.indexOf("_filtered_rRNA.fastq.gz") > 0) "SorteMeRNA/rRNA-reads/$filename"
+                     else null }
+
+  }
 ```
 
 The new configuration can be appended with the  `-c` option. For example;
