@@ -8,7 +8,7 @@ include QuantMerge from '../NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( 
 include MergeFastqLanes from '../NextflowModules/Utils/MergeFastqLanes.nf' params( params )
 include Index as SalmonIndex from '../NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode,
                                                                                     optional: params.options.Salmon_index )
-≈
+
 workflow alignment_free_quant {
     take:
       fastq_files
