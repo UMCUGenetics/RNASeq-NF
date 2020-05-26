@@ -3,12 +3,12 @@ include Quant from '../NextflowModules/Salmon/1.2.1/Quant.nf' params( singleEnd:
                                                                       unstranded: params.unstranded,
                                                                       revstranded: params.revstranded,
                                                                       saveUnaligned: params.saveUnaligned,
-								                                                      optional: params.options.Salmon_quant )
+								      optional: params.options.Salmon_quant )
 include QuantMerge from '../NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.options.Salmon_quantmerge  )
 include MergeFastqLanes from '../NextflowModules/Utils/MergeFastqLanes.nf' params( params )
 include Index as SalmonIndex from '../NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode,
                                                                                     optional: params.options.Salmon_index )
-
+≈
 workflow alignment_free_quant {
     take:
       fastq_files

@@ -1,6 +1,6 @@
 include EdgerNormalize from '../utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
 include FeatureCounts from '../NextflowModules/Subread/2.0.0/FeatureCounts.nf' params( optional: params.options.FeatureCounts,
-										                                                                   biotypeQC:params.biotypeQC,
+										       biotypeQC:params.biotypeQC,
                                                                                        singleEnd: params.singleEnd,
                                                                                        stranded: params.stranded,
                                                                                        unstranded: params.unstranded,

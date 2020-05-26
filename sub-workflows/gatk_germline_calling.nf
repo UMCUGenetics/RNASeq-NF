@@ -1,21 +1,21 @@
-include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params (mem:params.haplotypecaller.mem,
-                                                                                          genome_fasta:params.genome_fasta,
-                                                                                          optional: params.options.GATK4_HaplotypeCaller  )
-include VariantFiltration from '../NextflowModules/GATK/4.1.3.0/VariantFiltration.nf' params(mem:params.variantfiltration.mem,,
-                                                                                             genome_fasta:params.genome_fasta,
-                                                                                             optional: params.options.GATK4_VariantFiltration  )
+include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params ( mem:params.haplotypecaller.mem,
+                                                                                           genome_fasta:params.genome_fasta,
+                                                                                           optional: params.options.GATK4_HaplotypeCaller )
+include VariantFiltration from '../NextflowModules/GATK/4.1.3.0/VariantFiltration.nf' params( mem:params.variantfiltration.mem,
+                                                                                              genome_fasta:params.genome_fasta,
+                                                                                              optional: params.options.GATK4_VariantFiltration )
 include MergeVCFs as MergeVCF from '../NextflowModules/GATK/4.1.3.0/MergeVCFs.nf' params( mem: params.mergevcf.mem )
 include BaseRecalibrationTable from '../NextflowModules/GATK/4.1.3.0/BaseRecalibrationTable.nf' params( mem:params.baserecalibrator.mem,
                                                                                                         optional:params.options.GATK4_BQRS,
                                                                                                         genome_known_sites:params.genome_known_sites,
-                                                                                                        genome_fasta:params.genome_fasta)
-include GatherBaseRecalibrationTables from '../NextflowModules/GATK/4.1.3.0/GatherBaseRecalibrationTables.nf' params(mem:params.gatherbaserecalibrator.mem)
-include BaseRecalibration from '../NextflowModules/GATK/4.1.3.0/BaseRecalibration.nf' params (mem:params.applybqsr.mem,
-                                                                                              genome_fasta:params.genome_fasta)
-include Merge from '../NextflowModules/Sambamba/0.7.0/Merge.nf' params(params)
-include SplitIntervals from '../NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params(optional: params.options.GATK4_SplitIntervals )
-include SplitNCigarReads from '../NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params(genome_fasta:params.genome_fasta)                     
-include CreateIntervalList from '../NextflowModules/Utils/CreateIntervaList.nf' params(params)
+                                                                                                        genome_fasta:params.genome_fasta )
+include GatherBaseRecalibrationTables from '../NextflowModules/GATK/4.1.3.0/GatherBaseRecalibrationTables.nf' params( mem:params.gatherbaserecalibrator.mem )
+include BaseRecalibration from '../NextflowModules/GATK/4.1.3.0/BaseRecalibration.nf' params ( mem:params.applybqsr.mem,
+                                                                                               genome_fasta:params.genome_fasta )
+include Merge from '../NextflowModules/Sambamba/0.7.0/Merge.nf' params( params )
+include SplitIntervals from '../NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params( optional: params.options.GATK4_SplitIntervals )
+include SplitNCigarReads from '../NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params( genome_fasta:params.genome_fasta)                     
+include CreateIntervalList from '../NextflowModules/Utils/CreateIntervaList.nf' params( params )
 
 workflow gatk_germline_calling {
     take:
@@ -82,7 +82,7 @@ workflow gatk_germline_calling {
         )
       
     emit:
-      bam_recal = Merge.out	
+      bam_recal = final_bam	
       vcf_filter = VariantFiltration.out
       bqsr_table = GatherBaseRecalibrationTables.out
 

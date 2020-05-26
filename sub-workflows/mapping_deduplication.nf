@@ -1,7 +1,7 @@
 include Markdup from '../NextflowModules/Sambamba/0.7.0/Markdup.nf' params( mem:params.sambambamarkdup.mem )
-include AlignReads from '../NextflowModules/STAR/2.7.3a/AlignReads.nf' params(singleEnd:params.singleEnd, optional:params.options.STAR )   
-include Index from '../NextflowModules/Sambamba/0.7.0/Index.nf' params(params)
-include GenomeGenerate from '../NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params(params)
+include AlignReads from '../NextflowModules/STAR/2.7.3a/AlignReads.nf' params( singleEnd:params.singleEnd, optional:params.options.STAR )   
+include Index from '../NextflowModules/Sambamba/0.7.0/Index.nf' params( params )
+include GenomeGenerate from '../NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params( params )
 
 workflow markdup_mapping {
     take:
