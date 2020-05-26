@@ -82,7 +82,8 @@ workflow gatk_germline_calling {
         )
       
     emit:
-      bam_recal = final_bam	
+      bam_recal = Merge.out
+      bam_ncigar =  SplitNCigarReads.out	
       vcf_filter = VariantFiltration.out
       bqsr_table = GatherBaseRecalibrationTables.out
 
