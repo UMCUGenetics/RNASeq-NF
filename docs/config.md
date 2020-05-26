@@ -2,7 +2,7 @@
 
 **Analysis configuration**
 
-Default [settings](./settings.md) are stored in `./conf/base.config` and will be automatically set upon execution of the pipeline. These defaults can be overwriten by either appending the setting of interest directly as command-line arguments or storing them in a seperate configuration file. An example of such a configuration file can be found in  `./conf/tet_run.config`. 
+Default [settings](./settings.md) are stored in `./conf/base.config` and will be automatically set upon execution of the pipeline. These defaults can be overwriten by either appending the setting of interest directly as command-line arguments or storing them in a seperate configuration file. An example of such a configuration file can be found in  `./conf/test_run.config`. 
 
 Runtime specific resources (memory, cpu's) should be sufficent for most jobs but can be always be altered if required. 
 
