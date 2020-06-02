@@ -245,8 +245,7 @@ workflow {
                         sortmerna_logs,
                         star_logs,
                         post_qc_logs,
-                        fc_logs,
-                        salmon_logs ) 		      
+                        fc_logs ) 		      
       }
 
 }
