@@ -1,6 +1,6 @@
 ### 2.2 Configuration files
 
-Pipeline settings [settings](./settings.md) are stored in configuration files for convenience, see /confs folder for examples. A .config file can be passed to the nextflow executor via the `-c` argument.
+Pipeline [settings](./settings.md) are stored in configuration files for convenience, see /confs folder for examples. A .config file can be passed to the nextflow executor via the `-c` argument.
 
 For starter, copy one of the example config files in /confs and modify it dependent on your analysis requirements. Then run the pipeline by including your config file.
 ```
