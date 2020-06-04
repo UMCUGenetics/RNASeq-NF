@@ -7,13 +7,13 @@ For starter, copy one of the example config files in /confs and modify it depend
 nextflow run RNASeq-NF/main.nf -c /path/to/your/settings.config --fastq_path <path/to/fastq/files> --out_dir </path/to/output_dir> -profile slurm -resume
 ```
 
-**Executors and logs*
+**Executors and logs**
 
 Nextflow's base configuration (executors, containerization etc.) should always be included in the analysis config. Set the cacheDir to a location with enough space to store your singularity images. 
 
 `cacheDir = '/path/to/my/cache/dir`
 
-**Pipeline parameters*
+**Pipeline parameters**
 
 Analysis parameters, such as specified in the `params` section, can be stored either in the the config file (recommended) or appended on the command line, for example `--singleEnd`. 
 
