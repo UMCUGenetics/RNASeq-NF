@@ -151,13 +151,14 @@ workflow {
     ======================================================="""
     def summary = [:]
     summary['Pipeline Name']  = 'RNASeq-NF'
-    summary['Pipeline Version'] = params.version
-    summary['Run Name']     = run_name
+    summary['Pipeline Version'] =  workflow.manifest.version
+    summary['Nextflow Version'] =  workflow.manifest.nextflowVersion
+    summary['Run Name'] = run_name
+    summary['Mode'] = params.singleEnd ? 'Single-end' : 'Paired-end'
     summary['Fastq dir']   = params.fastq_path
+    summary['Output dir']   = params.out_dir
     summary['Genome fasta']   = params.genome_fasta
     summary['Genome GTF']   = params.genome_gtf
-    summary['Mode']   = params.singleEnd ? 'Single-end' : 'Paired-end'
-    summary['Output dir']   = params.out_dir
     summary['Working dir']  = workflow.workDir
     summary['Container Engine'] = workflow.containerEngine
     summary['Current home']   = "$HOME"
