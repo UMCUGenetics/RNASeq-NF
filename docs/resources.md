@@ -4,12 +4,11 @@ Download your prefered reference genome from [Ensembl](https://www.ensembl.org/i
 ### 2. Reference transcript sequence (optional)
 For transcript quantificaton with Salmon, download the cDNA sequences of interest from [Ensembl](https://www.ensembl.org/index.html).
 
-For example;          
 ```
 wget ftp://ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.cdna.all.fa.gz
 ```
-The fasta will be used to build the Salmon transcriptome index for alignment-free quantification.
 
+The fasta will be used to build the Salmon transcriptome index for alignment-free quantification.
 
 ### 3. GATK resource bundle (optional)  
 
