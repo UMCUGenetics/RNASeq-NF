@@ -145,9 +145,8 @@ workflow {
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
    //Pipeline log info
-    params.version = "1.0.0-rc1"
     log.info """=======================================================
-    RNASeq-NF ${params.version}"
+    RNASeq-NF ${ workflow.manifest.version}"
     ======================================================="""
     def summary = [:]
     summary['Pipeline Name']  = 'RNASeq-NF'
