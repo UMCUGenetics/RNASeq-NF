@@ -64,23 +64,10 @@ Before starting the pipeline, ensure that the input fastq files follow the [Illu
 SampleName_S1_L001_R1_001.fastq.gz
 ```
 
-## Examples
-
-### Single-end reads
-
-Run the pipeline with default settings for a reverse-stranded SE library.
+Run the pipeline.
 ```
-./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config> --unstranded=false --revstranded --singleEnd -profile slurm -resume 
+./nextflow run ./RNASeq-NF/main.nf -c </path/to/run.config> --fastq_path <fastq_dir> --out_dir <output_dir> -profile slurm -resume 
 ```
-### Paired-end reads ##
-
-Run the pipeline with default settings for a forward-stranded PE library.
-```
-./nextflow run ./RNASeq-NF/main.nf --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config> --unstranded=false --stranded -profile slurm -resume 
-```
-
-Thes settings above can be appended to a custom config file as well and passed to the pipeline via the `-c` parameter.
-
 For local execution (without HPC backend), simply omit the -profile parameter.
 
 
