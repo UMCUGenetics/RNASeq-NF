@@ -4,7 +4,7 @@ Pipeline [settings](./settings.md) are stored in configuration files for conveni
 
 For starter, copy one of the example config files in /confs and modify it dependent on your analysis requirements. Then run the pipeline by including your config file.
 ```
-nextflow run RNASeq-NF/main.nf -c /path/to/your/settings.config --fastq_path <path/to/fastq/files> --out_dir </path/to/output_dir> -profile slurm -resume
+nextflow run RNASeq-NF/main.nf -c </path/to/your/settings.config> --fastq_path <path/to/fastq/files> --out_dir </path/to/output_dir> -profile slurm -resume
 ```
 
 **Executors and logs**
