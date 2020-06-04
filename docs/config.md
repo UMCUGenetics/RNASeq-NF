@@ -43,7 +43,7 @@ All remaining files will be created at run-time and stored in the output folder 
 
 ***Generating resource files at run-time should only be done upon running the pipeline for the first time with a specific genome build. Include the resource files in your genome config for subsequent analysis to avoid re-building and putting unnecessary strains on the host-system. Example genome configuration files can be found in `./resources/test_run`.*** 
 
-**Process configuration
+**Process configuration**
 
 Runtime specific resources (memory, cpu's) should be sufficent for most jobs but can be always be altered if required. 
 
