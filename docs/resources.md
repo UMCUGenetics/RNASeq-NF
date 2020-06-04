@@ -24,5 +24,5 @@ wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G
 wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.idx.gz
 ```
 
-### 4. SortMeRNA ribosomal reference files (optional)
+### 4. SortMeRNA ribosomal reference databases (optional)
 The locations of the rRNA databases are stored in the /resources/sortmerna-db-default.txt file. The fasta files are downloaded from GitHub and staged in the pipeline working directory. Use the offline version in case of connection problems or unavailability. 
