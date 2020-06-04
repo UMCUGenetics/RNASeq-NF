@@ -145,7 +145,7 @@ workflow {
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
    //Pipeline log info
-    params.version = "Beta"
+    params.version = "1.0.0-rc1"
     log.info """=======================================================
     RNASeq-NF ${params.version}"
     ======================================================="""
@@ -154,7 +154,8 @@ workflow {
     summary['Pipeline Version'] = params.version
     summary['Run Name']     = run_name
     summary['Fastq dir']   = params.fastq_path
-    summary['Genome config']   = params.genome_config
+    summary['Genome fasta']   = params.genome_fasta
+    summary['Genome GTF']   = params.genome_gtf
     summary['Mode']   = params.singleEnd ? 'Single-end' : 'Paired-end'
     summary['Output dir']   = params.out_dir
     summary['Working dir']  = workflow.workDir
