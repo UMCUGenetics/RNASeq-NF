@@ -49,7 +49,7 @@ SINGULARITY_TMPDIR=${TMPDIR}
 Clone this repository and ensure that the master branch is checked-out.
 
 ```
-git clone --recursive https://github.com/UMCUGenetics/RNASeq-NF.git
+git clone --recurse-submodules https://github.com/UMCUGenetics/RNASeq-NF.git
 ```
 
 ### 3. Configuration
