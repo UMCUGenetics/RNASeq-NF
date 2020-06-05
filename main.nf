@@ -145,18 +145,19 @@ workflow {
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
    //Pipeline log info
-    params.version = "Beta"
     log.info """=======================================================
-    RNASeq-NF ${params.version}"
+    RNASeq-NF ${ workflow.manifest.version}"
     ======================================================="""
     def summary = [:]
     summary['Pipeline Name']  = 'RNASeq-NF'
-    summary['Pipeline Version'] = params.version
-    summary['Run Name']     = run_name
+    summary['Pipeline Version'] =  workflow.manifest.version
+    summary['Nextflow Version'] =  workflow.manifest.nextflowVersion
+    summary['Run Name'] = run_name
+    summary['Mode'] = params.singleEnd ? 'Single-end' : 'Paired-end'
     summary['Fastq dir']   = params.fastq_path
-    summary['Genome config']   = params.genome_config
-    summary['Mode']   = params.singleEnd ? 'Single-end' : 'Paired-end'
     summary['Output dir']   = params.out_dir
+    summary['Genome fasta']   = params.genome_fasta
+    summary['Genome GTF']   = params.genome_gtf
     summary['Working dir']  = workflow.workDir
     summary['Container Engine'] = workflow.containerEngine
     summary['Current home']   = "$HOME"

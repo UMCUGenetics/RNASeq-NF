@@ -4,12 +4,11 @@ Download your prefered reference genome from [Ensembl](https://www.ensembl.org/i
 ### 2. Reference transcript sequence (optional)
 For transcript quantificaton with Salmon, download the cDNA sequences of interest from [Ensembl](https://www.ensembl.org/index.html).
 
-For example;          
 ```
 wget ftp://ftp.ensembl.org/pub/grch37/current/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.cdna.all.fa.gz
 ```
-The fasta will be used to build the Salmon transcriptome index for alignment-free quantification.
 
+The fasta will be used to build the Salmon transcriptome index for alignment-free quantification.
 
 ### 3. GATK resource bundle (optional)  
 
@@ -24,5 +23,5 @@ wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G
 wget ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.idx.gz
 ```
 
-### 4. SortMeRNA ribosomal reference files (optional)
+### 4. SortMeRNA ribosomal reference databases (optional)
 The locations of the rRNA databases are stored in the /resources/sortmerna-db-default.txt file. The fasta files are downloaded from GitHub and staged in the pipeline working directory. Use the offline version in case of connection problems or unavailability. 
