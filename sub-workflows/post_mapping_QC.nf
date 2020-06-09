@@ -27,7 +27,7 @@ workflow post_mapping_QC {
       LCExtrap(bams_in)
       
     emit:
-      RSeQC.out
-      RSeQC_TIN.out
-      LCExtrap.out
+      rseqc_logs = RSeQC.out
+      rseqc_tin_logs = RSeQC_TIN.out
+      preseq_lce_logs = LCExtrap.out
 }
