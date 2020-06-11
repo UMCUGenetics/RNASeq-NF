@@ -7,6 +7,11 @@ workflow pre_processing {
     take:
       fastq_files
     main:
+      //Empty log channels
+      srna_logs = Channel.empty()
+      trim_logs = Channel.empty()
+      fastqc_logs = Channel.empty()
+      //
       if (params.runFastQC) {
          FastQC(fastq_files)
       }
@@ -24,31 +29,25 @@ workflow pre_processing {
           final_fastqs = SortMeRNA.out.non_rRNA_fastqs
           trim_logs = TrimGalore.out.trimming_report
           fastqc_logs = TrimGalore.out.fastqc_report 
-          srna_log = SortMeRNA.out.qc_report
-
-
-
+          srna_logs = SortMeRNA.out.qc_report
 
       } else if ( params.runTrimGalore && !params.runSortMeRNA ) {
           TrimGalore(fastq_files)
           final_fastqs = TrimGalore.out.fastqs_trimmed 
           trim_logs = TrimGalore.out.trimming_report
           fastqc_logs = TrimGalore.out.fastqc_report 
-          srna_log = Channel.empty()
-
-
+         
       } else if ( !params.runTrimGalore &&  params.runSortMeRNA ) {
           SortMeRNA(fastq_files, sortmerna_fasta.collect() )
           final_fastqs = SortMeRNA.out.non_rRNA_fastqs 
-          trim_logs = Channel.empty()
-          fastqc_logs = Channel.empty()
+          srna_logs = SortMeRNA.out.qc_report
 
       } else {
           final_fastqs = fastq_files
       }
       emit:
         processed_fastqs = final_fastqs
-        srna_log = srna_log
+        srna_logs = srna_logs
         trim_logs = trim_logs
         fastqc_logs = fastqc_logs 
 }

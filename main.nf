@@ -144,7 +144,7 @@ workflow {
     include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)  
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
-   //Pipeline log info
+    //Pipeline log info
     log.info """=======================================================
     RNASeq-NF ${ workflow.manifest.version}"
     ======================================================="""
@@ -173,7 +173,7 @@ workflow {
     //Logs
     trim_logs = pre_processing.out.trim_logs
     fastqc_logs = pre_processing.out.fastqc_logs
-    sortmerna_logs = Channel.empty()
+    sortmerna_logs = pre_processing.out.srna_logs
     // Determine final fastqs files
     final_fastqs = pre_processing.out.processed_fastqs 
     //Transform output channels
@@ -243,7 +243,6 @@ workflow {
         multiqc_report( run_name,
                         fastqc_logs,
                         trim_logs,
-                        sortmerna_logs,
                         star_logs,
                         post_qc_logs,
                         fc_logs,
