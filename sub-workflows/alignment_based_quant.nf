@@ -8,6 +8,7 @@ include FeatureCounts from '../NextflowModules/Subread/2.0.0/FeatureCounts.nf' p
                                                                                        fc_group_features: params.fc_group_features,
                                                                                        fc_count_type: params.fc_count_type,
                                                                                        fc_group_features_type: params.fc_group_features_type,
+										       fc_extra_attributes: params.fc_extra_attributes,
                                                                                        gencode: params.gencode)
 
 workflow alignment_based_quant {
