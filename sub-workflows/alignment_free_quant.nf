@@ -31,5 +31,5 @@ workflow alignment_free_quant {
       
     emit:
       quants_merged = QuantMerge.out
-      logs =  Quant.out.quant_table 
+      logs =  Quant.out.quant_table.map { it[1] } 
 }
