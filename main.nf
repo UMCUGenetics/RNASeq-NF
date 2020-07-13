@@ -183,6 +183,7 @@ workflow {
     fastqs_merged = MergeFastqLanes (fastqs_transformed)
     // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
+        fastqs_merged.view()
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
         mapped = markdup_mapping( fastqs_merged, genome_fasta, genome_gtf )
         star_logs = mapped.logs
