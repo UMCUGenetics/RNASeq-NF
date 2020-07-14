@@ -179,13 +179,16 @@ workflow {
     final_fastqs = pre_processing.out.processed_fastqs 
     //Transform output channels
     fastqs_transformed = final_fastqs.groupTuple(by:0).map { sample_id, rg_id, reads -> [sample_id, rg_id[0], reads.flatten()]}
-    //Merge Fastqs lanes before proceeding
-    fastqs_merged = MergeFastqLanes (fastqs_transformed)
+    //Merge Fastqs lanes before proceeding.
+    if ( params.MergeFQ ) {
+    	fastqs_processed = MergeFastqLanes (fastqs_transformed)
+    } else {
+        fastqs_processed = fastqs_transformed
+    }
     // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
-        fastqs_merged.view()
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
-        mapped = markdup_mapping( fastqs_merged, genome_fasta, genome_gtf )
+        mapped = markdup_mapping( fastqs_processed, genome_fasta, genome_gtf )
         star_logs = mapped.logs
     } else {
         star_logs = Channel.empty()
@@ -218,7 +221,7 @@ workflow {
     // # 5) Salmon    
     if ( params.runSalmon ) {
       include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
-      alignment_free_quant( fastqs_merged, run_name )
+      alignment_free_quant( fastqs_processed, run_name )
       salmon_logs = alignment_free_quant.out.logs
     } else {
         salmon_logs = Channel.empty()
