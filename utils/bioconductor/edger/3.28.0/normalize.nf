@@ -17,7 +17,7 @@ process EdgerNormalize {
 
     script:
     """
-    edgerNormalize.R ${counts} ${run_id}_${params.tool}   
+    edgerNormalize.R ${counts} ${run_id}   
     """
 
 }
