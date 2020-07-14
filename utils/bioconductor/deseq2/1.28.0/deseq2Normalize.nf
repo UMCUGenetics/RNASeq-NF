@@ -11,7 +11,7 @@ process Deseq2Normalize {
     file(counts)
 
     output:
-    file("${run_id}_readCounts_deseq2.txt")
+    file("${run_id}_featureCounts_deseq2.txt")
    
     script:
     """

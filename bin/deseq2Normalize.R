@@ -18,7 +18,7 @@ colnames(cds.norm) <- gsub("\\.", "-", colnames(cds.norm))
 
 write.table(
   cds.norm,
-  file = paste0(args[2], "_readCounts_deseq2.txt"),
+  file = paste0(args[2], "_featureCounts_deseq2.txt"),
   row.names = T,
   quote = F,
   sep = "   "
