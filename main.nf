@@ -190,6 +190,8 @@ workflow {
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
         mapped = markdup_mapping( fastqs_processed, genome_fasta, genome_gtf )
         star_logs = mapped.logs
+        flagstat_logs = mapped.markdup_flagstat
+
     } else {
         star_logs = Channel.empty()
     }
@@ -246,7 +248,8 @@ workflow {
                         post_qc_logs,
                         fc_logs,
 			salmon_logs,
-			sortmerna_logs ) 		      
+			sortmerna_logs,
+			flagstat_logs ) 		      
       }
 
 }

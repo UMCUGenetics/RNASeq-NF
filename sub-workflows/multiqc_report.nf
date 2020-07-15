@@ -10,9 +10,10 @@ workflow multiqc_report {
       fc_logs
       salmon_logs
       sortmerna_logs
+      flagstat_logs
      
       
     main: 
-      qc_files = Channel.empty().mix( fastqc_logs, trim_logs, star_logs, post_mapping_qc_logs, fc_logs, salmon_logs, sortmerna_logs ).collect()
+      qc_files = Channel.empty().mix( fastqc_logs, trim_logs, star_logs, post_mapping_qc_logs, flagstat_logs, fc_logs, salmon_logs, sortmerna_logs ).collect()
       MultiQC(title, qc_files)
 }
