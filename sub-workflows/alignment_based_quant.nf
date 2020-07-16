@@ -1,4 +1,5 @@
-include EdgerNormalize from '../utils/bioconductor/edger/3.28.0/normalize.nf' params( tool:"fc" )
+include EdgerNormalize from '../utils/bioconductor/edger/3.28.0/normalize.nf' params( params )
+include Deseq2Normalize from '../utils/bioconductor/deseq2/1.28.0/deseq2Normalize.nf' params( params )
 include FeatureCounts from '../NextflowModules/Subread/2.0.0/FeatureCounts.nf' params( optional: params.options.FeatureCounts,
 										       biotypeQC:params.biotypeQC,
                                                                                        singleEnd: params.singleEnd,
@@ -21,6 +22,7 @@ workflow alignment_based_quant {
       FeatureCounts( run_name, bam_files.collect(), genome_gtf.collect() )
       if ( params.normalize_counts ) {
           EdgerNormalize (run_name, FeatureCounts.out.count_table )
+          Deseq2Normalize (run_name, FeatureCounts.out.count_table )
       } 
       
     emit:

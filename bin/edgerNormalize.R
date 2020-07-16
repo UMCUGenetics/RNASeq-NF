@@ -15,6 +15,6 @@ x <- DGEList(counts=counts, genes=fc.df[,c("Geneid","Length")] )
 df.rpkm <- rpkm(x,x$genes$Length, normalized.lib.sizes=F)
 df.cpm <- cpm(x)
 
-write.table(df.rpkm, file=paste0(args[2],"_readCounts_RPKM.txt"), row.names=T, quote=F,sep="   ")
-write.table(df.cpm, file=paste0(args[2],"_readCounts_CPM.txt"), row.names=T, quote=F,sep="   ")
+write.table(df.rpkm, file=paste0(args[2],"_featureCounts_RPKM.txt"), row.names=T, quote=F,sep="   ")
+write.table(df.cpm, file=paste0(args[2],"_featureCounts_CPM.txt"), row.names=T, quote=F,sep="   ")
 

@@ -11,13 +11,13 @@ process EdgerNormalize {
     file(counts)
 
     output:
-    file("${run_id}_${params.tool}_readCounts_RPKM.txt")
-    file("${run_id}_${params.tool}_readCounts_CPM.txt")
+    file("${run_id}_featureCounts_RPKM.txt")
+    file("${run_id}_featureCounts_CPM.txt")
 
 
     script:
     """
-    edgerNormalize.R ${counts} ${run_id}_${params.tool}   
+    edgerNormalize.R ${counts} ${run_id}   
     """
 
 }

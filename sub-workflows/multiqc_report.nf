@@ -1,4 +1,4 @@
-include MultiQC from '../NextflowModules/MultiQC/1.8/MultiQC.nf' params( optional:params.options.MultiQC )
+include MultiQC from '../NextflowModules/MultiQC/1.9/MultiQC.nf' params( optional:params.options.MultiQC )
 
 workflow multiqc_report {
     take:
@@ -9,9 +9,11 @@ workflow multiqc_report {
       post_mapping_qc_logs
       fc_logs
       salmon_logs
+      sortmerna_logs
+      flagstat_logs
      
       
     main: 
-      qc_files = Channel.empty().mix( fastqc_logs, trim_logs, star_logs, post_mapping_qc_logs, fc_logs, salmon_logs ).collect()
+      qc_files = Channel.empty().mix( fastqc_logs, trim_logs, star_logs, post_mapping_qc_logs, flagstat_logs, fc_logs, salmon_logs, sortmerna_logs ).collect()
       MultiQC(title, qc_files)
 }

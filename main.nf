@@ -142,6 +142,7 @@ workflow {
   main :
     //Set run and retrieve input fastqs
     include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)  
+    include MergeFastqLanes from './NextflowModules/Utils/MergeFastqLanes.nf' params( params )
     run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
     //Pipeline log info
@@ -177,24 +178,24 @@ workflow {
     // Determine final fastqs files
     final_fastqs = pre_processing.out.processed_fastqs 
     //Transform output channels
-    if (params.singleEnd) {
-        fastqs_transformed = final_fastqs
-             .groupTuple(by:0)
-             .map { sample_id, rg_ids, reads -> [sample_id, rg_ids[0], reads.flatten().toSorted(), []] }
+    fastqs_transformed = final_fastqs.groupTuple(by:0).map { sample_id, rg_id, reads -> [sample_id, rg_id[0], reads.flatten()]}
+    //Merge Fastqs lanes before proceeding.
+    if ( params.MergeFQ ) {
+    	fastqs_processed = MergeFastqLanes (fastqs_transformed)
     } else {
-         fastqs_transformed = final_fastqs
-              .map{ sample_id, rg_ids, reads -> [sample_id, rg_ids, reads[0], reads[1]] }
-              .groupTuple(by:0)
-              .map{ sample_id, rg_ids, r1, r2 -> [sample_id, rg_ids[0], r1.toSorted(), r2.toSorted()] }
+        fastqs_processed = fastqs_transformed
     }
     // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
-        mapped = markdup_mapping( fastqs_transformed, genome_fasta, genome_gtf )
+        mapped = markdup_mapping( fastqs_processed, genome_fasta, genome_gtf )
         star_logs = mapped.logs
+        flagstat_logs = mapped.markdup_flagstat
+
     } else {
         star_logs = Channel.empty()
     }
+
     // # 3) Post-mapping QC
     if ( params.runPostQC) {
       if (params.runMapping) {
@@ -222,7 +223,7 @@ workflow {
     // # 5) Salmon    
     if ( params.runSalmon ) {
       include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
-      alignment_free_quant( fastqs_transformed, run_name )
+      alignment_free_quant( fastqs_processed, run_name )
       salmon_logs = alignment_free_quant.out.logs
     } else {
         salmon_logs = Channel.empty()
@@ -246,7 +247,9 @@ workflow {
                         star_logs,
                         post_qc_logs,
                         fc_logs,
-			salmon_logs ) 		      
+			salmon_logs,
+			sortmerna_logs,
+			flagstat_logs ) 		      
       }
 
 }
