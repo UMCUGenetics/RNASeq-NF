@@ -14,7 +14,6 @@ dds <- DESeqDataSetFromMatrix(countData = cds[, rownames(colData)], colData = co
 size.factors <- estimateSizeFactors(dds)
 #Normalize counts
 cds.norm <- counts(size.factors, normalized = T)
-colnames(cds.norm) <- gsub("\\.", "-", colnames(cds.norm))
 
 write.table(
   cds.norm,
