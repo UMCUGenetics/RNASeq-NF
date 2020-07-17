@@ -1,0 +1,101 @@
+---
+title: "QC Report - NextFlow RNA-Seq run"
+author: "RNA-Seq NF"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+logo: ""
+output: html_document
+params:
+  input: ""
+---
+
+<!-- Rscript -e "rmarkdown::render(\"RNASeqNF_QC.Rmd\", params = list(input = \"<input folder>\"))" -->
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+library(rmarkdown)
+library(plotly)
+```
+
+```{r, code = readLines("RNASeqNF_QC.R"), include=F}
+```
+
+# Overview - Input samples.
+
+Overview of the input files (fastq) per sample.
+
+For paired-end samples (R1 and R2), the number of R1 and R2 files should be equal.
+
+```{r, message=FALSE, warning=FALSE}
+if(!is.null(plots.QC$fastq)){
+    ggplotly(plots.QC$fastq, width = 1000) %>% layout(legend = list(orientation = "h", x = 0, y = 1.1))
+}else{
+    'No FASTQ files found!'
+}
+```
+
+
+# TrimGalore
+
+This overview depicts the number of input reads (R1/R2) present within the given fastq files and the total number of respective reads containing any leftover adapter sequences.
+
+
+```{r, message=FALSE, warning=FALSE}
+if(!is.null(plots.QC$TrimGalore)){
+    ggplotly(plots.QC$TrimGalore, width = 1000) %>% layout(legend = list(orientation = "h", x = 0, y = 1.1))
+}else{
+    'No TrimGalore Logs found.'
+}
+```
+
+# SortMeRNA
+
+The percentage of (trimmed) reads passing the E-value threshold meaning they have a high-confidence hit against one of the ribosomal databases.
+Typically, these should be <5% of the total (m)RNA reads present within the sample.
+
+High numbers reflect a poor ribosomal RNA isolation prior to sequencing.
+
+```{r, message=FALSE, warning=FALSE}
+if(!is.null(plots.QC$SortMeRNA)){
+    ggplotly(plots.QC$SortMeRNA, width = 1000) %>% layout(legend = list(orientation = "h", x = 0, y = 1.1))
+}else{
+    'No SortMeRNA Logs found.'
+}
+```
+
+# Complexity curves.
+
+Complexity curves estimate the predicted diversity of the sequenced reads in relation to the number of sequenced reads.
+It represents whether all unique molecules within the sample have been sequenced. If so, the line should flatten.
+
+```{r, message=FALSE, warning=FALSE}
+if(!is.null(plots.QC$complexity)){
+    ggplotly(plots.QC$complexity, width = 1000) %>% layout(legend = list(orientation = "h", x = 0, y = 1.1))
+}else{
+    'No complexity curves logs found.'
+}
+```
+
+# Flagstat
+
+Information on sequencing metrics.
+
+```{r, message=FALSE, warning=FALSE}
+if(!is.null(plots.QC$BAMStat)){
+    ggplotly(plots.QC$BAMStat, width = 1000) %>% layout(legend = list(orientation = "h", x = 0, y = 1.1))
+}else{
+    'No RSeQC Bamstat files found.'
+}
+```
+
+# TIN
+
+Transcript Integrity Numbers (TIN) represent the uniform distribution of reads across the gene-bodies of all transcripts.
+This ranges from 0 (no uniformity) to 1 (full uniformity), typical high-quality fresh-frozen experimts should have TIN >60% whilst FFPE samples, due to fragmentation and additional degradation, should see numbers around 40-50%. Low numbers indicate poor quality and fragmented RNA input (or skewed sequencing).
+
+```{r, message=FALSE, warning=FALSE}
+if(!is.null(plots.QC$TIN)){
+    ggplotly(plots.QC$TIN, width = 1000) %>% layout(legend = list(orientation = "h", x = 0, y = 1.1))
+}else{
+    'No TIN files found.'
+}
+```
