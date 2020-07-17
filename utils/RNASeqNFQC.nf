@@ -3,11 +3,12 @@ process RNASeqNFQC {
     label 'rnaseqnfqc_1_0_0'
     label 'rnaseqnfqc_1_0_0'
     
-    container = 'file:///hpc/compgen/users/tschafers/container/rb-5f115574487994a95c1139a3_latest.sif'
+    container = 'library://tscha/remote-builds/rb-5f115574487994a95c1139a3'
     shell = ['/bin/bash', '-euo', 'pipefail']
 
     input:
        val(run_id)
+       file(rmd_template)
        file(qc_files)
 
     output:
@@ -15,7 +16,7 @@ process RNASeqNFQC {
    
     script:
        """
-       Rscript -e "rmarkdown::render(\"/bin/RNASeqNF_QC.Rmd\", params = list(input =\"\$PWD\"))"  
+       Rscript -e "rmarkdown::render(\\"RNASeqNF_QC.Rmd\\", params = list(input =\\"\$PWD\\"))"  
        """
 
 }
