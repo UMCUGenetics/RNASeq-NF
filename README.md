@@ -11,7 +11,7 @@ The pipeline performs the following tasks.
 * Alignment-QC (*RSeQC, Preseq*)
 * PCR duplicate detection (*Sambamba MarkDup*)
 * Gene-expression/biotype quantification ( *featureCounts*)
-* Gene-expression normalization ( *edgeR*, *DESeq2)
+* Gene-expression normalization ( *edgeR*, *DESeq2*)
 * Transcript quantification (*Salmon*)
 * Variant calling (*GATK4*)
 * QC report (*MultiQC*, *CustomQC*)
