@@ -240,16 +240,16 @@ workflow {
     }
     // # 7) MultiQC report  
     if ( params.runMultiQC ) {
-        include multiqc_report from './sub-workflows/multiqc_report.nf' params(params)
-        multiqc_report( run_name,
-                        fastqc_logs,
-                        trim_logs,
-                        star_logs,
-                        post_qc_logs,
-                        fc_logs,
-			salmon_logs,
-			sortmerna_logs,
-			flagstat_logs ) 		      
+        include qc_report from './sub-workflows/qc_report.nf' params(params)
+        qc_report( run_name,
+                    fastqc_logs,
+                    trim_logs,
+                    star_logs,
+                    post_qc_logs,
+                    fc_logs,
+	            salmon_logs,
+		    sortmerna_logs,
+	            flagstat_logs ) 		      
       }
 
 }
