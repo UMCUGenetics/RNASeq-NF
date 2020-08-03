@@ -5,6 +5,7 @@
 * `--stranded` true/false for forward-stranded library prep (Default: false)
 * `--revstranded` true/false for reverse-stranded library prep (Default: false)
 * `--gencode` gencode reference. Required for Salmonh indexing (Default: false).
+* `--customQC` Run customQC module and generate HTML report (Default: true).
 
 **featureCount quantification settings**
 * `--fc_group_features` subread featureCounts group (Default: gene_id)
