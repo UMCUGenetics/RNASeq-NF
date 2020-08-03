@@ -2,7 +2,7 @@
 
 RNASeq-NF is an NGS analysis pipeline for RNA expression quantification and germline variant calling (GATK4).
 
-![RNASeq-NF](./docs/img/RNASeq_pipeline.png)
+![RNASeq-NF](./docs/img/RNASeq_pipeline.png?raw=true "RNASeq-NF core workflow")
 
 The pipeline performs the following tasks.
 
