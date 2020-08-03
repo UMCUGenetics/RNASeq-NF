@@ -16,13 +16,13 @@ The pipeline performs the following tasks.
 * Variant calling (*GATK4*)
 * QC report (*MultiQC*, *CustomQC*)
 
-## Core analysis workflow
-
-<img src="docs/img/RNASeq-NF_workflow.png" width="600" >
-
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. 
 
 Several components have been adapted from the [nf-core rnaseq](https://github.com/nf-core/rnaseq) community pipeline and rewritten in [DSL2](https://www.nextflow.io/docs/edge/dsl2.html) syntax to enable a more modular setup. 
+
+## Core analysis workflow
+
+<img src="docs/img/RNASeq-NF_workflow.png" width="600" >
 
 Please refer to the nf-core rnaseq [manual](https://nf-co.re/rnaseq/docs/output) for a description on how to interpret the different output files.
 
