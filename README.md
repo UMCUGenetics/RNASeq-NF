@@ -2,8 +2,6 @@
 
 RNASeq-NF is an NGS analysis pipeline for RNA expression quantification and germline variant calling (GATK4).
 
-<img src="docs/img/RNASeq-NF_workflow.png" width="600">
-
 The pipeline performs the following tasks.
 
 * Read QC (*FastQC*)
@@ -17,6 +15,8 @@ The pipeline performs the following tasks.
 * Transcript quantification (*Salmon*)
 * Variant calling (*GATK4*)
 * QC report (*MultiQC*, *CustomQC*)
+
+<img src="docs/img/RNASeq-NF_workflow.png" width="600", alt="RNASeq-NF core workflow">
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. 
 
