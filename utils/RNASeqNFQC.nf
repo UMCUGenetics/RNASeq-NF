@@ -8,15 +8,14 @@ process RNASeqNFQC {
 
     input:
        val(run_id)
-       file(rmd_template)
        file(qc_files)
-
+       file(rmd_file)
     output:
        file("*.html")
    
     script:
        """
-       Rscript -e "rmarkdown::render(\\"RNASeqNF_QC.Rmd\\", params = list(input =\\"\$PWD\\"))"  
+       Rscript -e "rmarkdown::render(\\"RNASeqNF_QC.Rmd\\", params = list(input =\\"\$PWD\\"), output_file =\\"\$PWD/${run_id}_cqc.html\\")"  
        """
 
 }
