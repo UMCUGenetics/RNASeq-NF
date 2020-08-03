@@ -11,10 +11,10 @@ The pipeline performs the following tasks.
 * Alignment-QC (*RSeQC, Preseq*)
 * PCR duplicate detection (*Sambamba MarkDup*)
 * Gene-expression/biotype quantification ( *featureCounts*)
-* Gene-expression normalization ( *edgeR*)
+* Gene-expression normalization ( *edgeR*, *DESeq2)
 * Transcript quantification (*Salmon*)
 * Variant calling (*GATK4*)
-* QC report (*MultiQC*)
+* QC report (*MultiQC*, *CustomQC*)
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. 
 
