@@ -16,7 +16,9 @@ The pipeline performs the following tasks.
 * Variant calling (*GATK4*)
 * QC report (*MultiQC*, *CustomQC*)
 
-<img src="docs/img/RNASeq-NF_workflow.png" width="600" alt="RNASeq-NF core workflow">
+## Core analysis workflow
+
+<img src="docs/img/RNASeq-NF_workflow.png" width="600" >
 
 This implementation is a work in progress and aims to reach feature parity with the [UMCU RNASeq pipeline](https://github.com/UMCUGenetics/RNASeq) while also introducing new features and methods according to developments in the field. 
 
