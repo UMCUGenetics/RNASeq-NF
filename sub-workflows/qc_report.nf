@@ -18,5 +18,7 @@ workflow qc_report {
       //MultiQC report
       MultiQC(title, qc_files)
       //CustomQC report
-      RNASeqNFQC(title, Channel.fromPath(params.rmd_template), qc_files)
+      if (params.customQC) {
+         RNASeqNFQC(title, Channel.fromPath(params.rmd_template), qc_files)
+      } 
 }
