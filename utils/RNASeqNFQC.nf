@@ -3,7 +3,7 @@ process RNASeqNFQC {
     label 'rnaseqnfqc_1_0_0'
     label 'rnaseqnfqc_1_0_0'
     
-    container = 'library://tscha/remote-builds/rb-5f115574487994a95c1139a3'
+    container = 'library://tscha/default/rnaseq-nf_qc:v1.0.0'
     shell = ['/bin/bash', '-euo', 'pipefail']
 
     input:
