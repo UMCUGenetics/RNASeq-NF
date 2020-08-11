@@ -110,10 +110,12 @@ if(params.help){
   helpMessage()
   exit 0
 }
-
 // Minimal required parameters.
 if (!params.out_dir) {
    exit 1, "Output directory not found, please provide the correct path! (--out_dir)"
+}
+if (!params.email) {
+   exit 1, "Please provide an email address"
 }
 
 if (!params.fastq_path) {
@@ -137,13 +139,13 @@ if (!params.genome_gtf) {
       .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
 }
 
+def run_name =  params.fastq_path.split('/')[-1]
 //Start workflow
 workflow {
   main :
     //Set run and retrieve input fastqs
     include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)  
     include MergeFastqLanes from './NextflowModules/Utils/MergeFastqLanes.nf' params( params )
-    run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
     //Pipeline log info
     log.info """=======================================================
@@ -193,6 +195,7 @@ workflow {
         flagstat_logs = mapped.markdup_flagstat
 
     } else {
+        flagstat_logs = Channel.empty()
         star_logs = Channel.empty()
     }
 
@@ -241,15 +244,46 @@ workflow {
     // # 7) MultiQC report  
     if ( params.runMultiQC ) {
         include qc_report from './sub-workflows/qc_report.nf' params(params)
-        qc_report( run_name,
+        qc_report(  run_name,
                     fastqc_logs,
                     trim_logs,
                     star_logs,
                     post_qc_logs,
                     fc_logs,
-	            salmon_logs,
-		    sortmerna_logs,
-	            flagstat_logs ) 		      
-      }
+	                  salmon_logs,
+		                sortmerna_logs,
+	                  flagstat_logs ) 		      
+    }
+    // # 8) Workflow completion notification
+}
 
+//Adapted from https://github.com/UMCUGenetics/DxNextflowWES
+workflow.onComplete {
+            // HTML Template
+            def template = new File("$baseDir/assets/workflow_complete.html")
+            def binding = [
+                run_name: run_name,
+                workflow: workflow
+            ]
+            def engine = new groovy.text.GStringTemplateEngine()
+            def email_html = engine.createTemplate(template).make(binding).toString()
+            // Send email
+            if (workflow.success) {
+              def subject = "RNASeq Workflow Successful: ${run_name}"
+              if (params.runMultiQC) {
+                  sendMail(to: params.email, 
+                           subject: subject, 
+                           body: email_html, 
+                           attach: "${params.out_dir}/report/MultiQC/${run_name}_multiqc_report.html")
+              } else {
+                  sendMail(to: params.email,
+                           subject: subject,
+                           body: email_html )
+                }                
+            } else {
+                def subject = "RNASeq Workflow Failed: ${run_name}"
+                sendMail(to: params.email, 
+                         subject: subject, 
+                         body: email_html)
+            }
 }
