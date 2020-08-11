@@ -131,8 +131,8 @@ if (params.runMapping || params.runPostQC || params.runFeatureCounts) {
         .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
   }
 }
-def run_name =  params.fastq_path.split('/')[-1]
-if (!params.custom_run_name) {
+def run_name = params.fastq_path.split('/')[-1]
+if ( params.custom_run_name) {
     run_name = params.custom_run_name
 }
 //Start workflow
