@@ -132,6 +132,9 @@ if (params.runMapping || params.runPostQC || params.runFeatureCounts) {
   }
 }
 def run_name =  params.fastq_path.split('/')[-1]
+if (!params.custom_run_name) {
+    run_name = params.custom_run_name
+}
 //Start workflow
 workflow {
   main :
