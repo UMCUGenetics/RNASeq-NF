@@ -117,28 +117,20 @@ if (!params.out_dir) {
 if (!params.email) {
    exit 1, "Please provide an email address"
 }
-
 if (!params.fastq_path) {
   exit 1, "fastq files not found, please provide the correct path! (--fastq_path)"
 }
 
-if (!params.genome_fasta) {
-  exit 1, "Genome fasta not found, please provide the correct path! (--genome_fasta)"
-} else {
-  // Try importing.
-  genome_fasta = Channel
-      .fromPath(params.genome_fasta, checkIfExists: true)
-      .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
+if (params.runMapping || params.runPostQC || params.runFeatureCounts) {
+  if (!params.genome_gtf ) {
+          exit 1, "A GTF file is required for STAR, RSeQC &featureCounts. Please provide the correct filepath! (--genome_gtf)"
+  } else {
+    // Try importing.
+    genome_gtf = Channel
+        .fromPath( params.genome_gtf, checkIfExists: true )
+        .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
+  }
 }
-if (!params.genome_gtf) {
-  exit 1, "Genome GTF not found, please provide the correct path! (--genome_gtf)"
-} else {
-  // Try importing.
-  genome_gtf = Channel
-      .fromPath(params.genome_gtf, checkIfExists: true)
-      .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
-}
-
 def run_name =  params.fastq_path.split('/')[-1]
 //Start workflow
 workflow {
@@ -190,7 +182,7 @@ workflow {
     // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
-        mapped = markdup_mapping( fastqs_processed, genome_fasta, genome_gtf )
+        mapped = markdup_mapping( fastqs_processed, genome_gtf )
         star_logs = mapped.logs
         flagstat_logs = mapped.markdup_flagstat
 
