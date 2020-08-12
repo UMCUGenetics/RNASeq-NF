@@ -1,3 +1,7 @@
+if (!params.genome_fasta) {
+  exit 1, "GATK requires a genome fasta file. Please provide the correct filepath! (--genome_fasta)"
+} 
+//Import GATK modules
 include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params ( mem:params.haplotypecaller.mem,
                                                                                            genome_fasta:params.genome_fasta,
                                                                                            optional: params.options.GATK4_HaplotypeCaller )
@@ -27,14 +31,14 @@ workflow gatk_germline_calling {
         if ( params.scatter_interval_list ) {
             scatter_interval_list = Channel
               .fromPath( params.scatter_interval_list, checkIfExists: true)
-              .ifEmpty { exit 1, "Scatter intervals not found: ${params.scatter_interval_list}"}
+              .ifEmpty { exit 1, "Genome scatter intervals not found: ${params.scatter_interval_list}"}
         } else if ( !params.scatter_interval_list ) {
             genome_index = Channel
                 .fromPath(params.genome_fasta + '.fai', checkIfExists: true)
-                .ifEmpty { exit 1, "Fai file not found: ${params.genome_fasta}.fai"}
+                .ifEmpty { exit 1, "Genome fai file not found: ${params.genome_fasta}.fai"}
             genome_dict = Channel
                 .fromPath( params.genome_dict, checkIfExists: true)
-                .ifEmpty { exit 1, "Genome dictionary not found: ${params.genome_dict}"}
+                .ifEmpty { exit 1, "Genome dict not found: ${params.genome_dict}"}
             CreateIntervalList( genome_index, genome_dict )
             scatter_interval_list = CreateIntervalList.out.genome_interval_list
         }
@@ -42,7 +46,7 @@ workflow gatk_germline_calling {
         SplitIntervals( 'no-break', scatter_interval_list)
         scatter_intervals = SplitIntervals.out.flatten()
         //NCigar split
-        SplitNCigarReads(bam_dedup)
+        SplitNCigarReads( bam_dedup )
         final_bam = SplitNCigarReads.out.bam_file
         //Perform BQSR
         if ( params.runGATK4_BQSR  ) {
@@ -68,7 +72,7 @@ workflow gatk_germline_calling {
             final_bam = Merge.out
         }
         //      
-        HaplotypeCaller(final_bam.combine(scatter_intervals))
+        HaplotypeCaller(final_bam.combine( scatter_intervals) )
         //Merge scattered vcf chunks/sample
         MergeVCF(
           HaplotypeCaller.out.groupTuple(by:[0]).map{

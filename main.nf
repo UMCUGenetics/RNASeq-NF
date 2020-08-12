@@ -117,29 +117,24 @@ if (!params.out_dir) {
 if (!params.email) {
    exit 1, "Please provide an email address"
 }
-
 if (!params.fastq_path) {
   exit 1, "fastq files not found, please provide the correct path! (--fastq_path)"
 }
 
-if (!params.genome_fasta) {
-  exit 1, "Genome fasta not found, please provide the correct path! (--genome_fasta)"
-} else {
-  // Try importing.
-  genome_fasta = Channel
-      .fromPath(params.genome_fasta, checkIfExists: true)
-      .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
+if (params.runMapping || params.runPostQC || params.runFeatureCounts) {
+  if (!params.genome_gtf ) {
+          exit 1, "A GTF file is required for STAR, RSeQC &featureCounts. Please provide the correct filepath! (--genome_gtf)"
+  } else {
+    // Try importing.
+    genome_gtf = Channel
+        .fromPath( params.genome_gtf, checkIfExists: true )
+        .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
+  }
 }
-if (!params.genome_gtf) {
-  exit 1, "Genome GTF not found, please provide the correct path! (--genome_gtf)"
-} else {
-  // Try importing.
-  genome_gtf = Channel
-      .fromPath(params.genome_gtf, checkIfExists: true)
-      .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
+def run_name = params.fastq_path.split('/')[-1]
+if ( params.custom_run_name) {
+    run_name = params.custom_run_name
 }
-
-def run_name =  params.fastq_path.split('/')[-1]
 //Start workflow
 workflow {
   main :
@@ -156,6 +151,7 @@ workflow {
     summary['Pipeline Version'] =  workflow.manifest.version
     summary['Nextflow Version'] =  workflow.manifest.nextflowVersion
     summary['Run Name'] = run_name
+    summary['Email'] = params.email
     summary['Mode'] = params.singleEnd ? 'Single-end' : 'Paired-end'
     summary['Fastq dir']   = params.fastq_path
     summary['Output dir']   = params.out_dir
@@ -190,7 +186,7 @@ workflow {
     // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
-        mapped = markdup_mapping( fastqs_processed, genome_fasta, genome_gtf )
+        mapped = markdup_mapping( fastqs_processed, genome_gtf )
         star_logs = mapped.logs
         flagstat_logs = mapped.markdup_flagstat
 

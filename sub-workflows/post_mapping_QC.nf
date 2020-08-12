@@ -14,7 +14,7 @@ workflow post_mapping_QC {
           //Create bed12 index file
           genome_bed = Channel
               .fromPath(params.genome_bed, checkIfExists: true)
-              .ifEmpty { exit 1, "Bed12 file not found: ${params.genome_bed}"}
+              .ifEmpty { exit 1, "Genome bed12 file not found: ${params.genome_bed}"}
       } else if ( !params.genome_bed ) {
           GtfToGenePred ( genome_gtf)
           GenePredToBed ( GtfToGenePred.out.genome_genepred )
