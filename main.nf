@@ -35,6 +35,7 @@ ${c_blue}    Standard options: ${c_reset}
          --unstranded [bool]             Specifies that the input is from an unstranded library prep. (Default: true)
          --stranded [bool]               Specifies that the input is from an forward-stranded library prep. (Default: false)
          --revstranded [bool]            Specifies that the input is from an reverse-stranded library prep. (Default: false)
+         --MergeFQ [bool] Merge multi-lane Fastq files per sample before alignment. (Default: true)
 ${c_blue}    Standard references: ${c_reset}
       If not specified in the configuration file or you wish to overwrite any of standard references.
 ${c_yellow}        --genome_fasta [path] ${c_reset}           Path to genome sequence file (FASTA).
@@ -46,8 +47,7 @@ ${c_yellow}        --genome_index [path] ${c_reset}           Path to genome ind
 
         --star_index [path]              Path to STAR index (generated automatically if not given).
         --gencode [bool]                 Specifies if the supplied GTF is from GENCODE. (Default: false)
-        --MergeFQ [bool] Merge multi-lane Fastq files per sample before alignment. (Default: true)
-        --customQC [bool] Run CustomQC script and generate an html report. (Default: true)
+      
 
 ${c_blue}    FastQC: ${c_reset}
       Perform FastQC on the unaligned sequencing reads before trimming.
@@ -104,6 +104,10 @@ ${c_blue}    MultiQC: ${c_reset}
       Generate a MultiQC report which combined various QC reports into a single report.
 ${c_green}        --runMultiQC [bool] ${c_reset}             Perform MultiQC to generate a single report containing various QC logs.
         --options.MultiQC [str]          Additional custom options given to MultiQC.
+${c_blue}    CustomQC: ${c_reset}
+      Generate a custom R markdown QC report  which combines various QC reports into a single report.
+${c_green}        --customQC [bool] ${c_reset}             Perform CustomQC to generate a single report containing various QC logs.
+
     """.stripIndent()
 }
 
