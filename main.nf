@@ -22,15 +22,15 @@ def helpMessage() {
     log.info"""
     Usage:
     The typical command for running the pipeline is as follows:
-    nextflow run UMCUGenetics/RNASeq-NF --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config
+    nextflow run UMCUGenetics/RNASeq-NF --fastq_path <fastq_dir> --out_dir <output_dir> -c <path/to/analysis.config --email <email address>
 ${c_blue}    Mandatory arguments: ${c_reset}
 ${c_yellow}        --fastq_path [str] ${c_reset}              Path to a directory containing fastq files.
                                                     Files should be named in the following format: xxx_xxx_xxxx
-${c_yellow}        --out_dir [str] ${c_reset}                 The output directory where the results will be saved
+${c_yellow}        --out_dir [str] ${c_reset}                 The output directory where the results will be saved.
+${c_yellow}        --email [str] ${c_reset}                   The email address to send workflow summary and MultiQC report to.
 ${c_blue}    Standard options: ${c_reset}
          --profile [str]                 Configuration profile to use, leave empty to run locally.
                                               Available: slurm, SGE, singularity.
-         --genome_config [path]          Path to genome configuration file containing options from ${c_blue}standard references${c_reset}.
          --singleEnd [bool]             Specifies that the input is from single-end experiment(s). (Default: false)
          --unstranded [bool]             Specifies that the input is from an unstranded library prep. (Default: true)
          --stranded [bool]               Specifies that the input is from an forward-stranded library prep. (Default: false)
@@ -40,10 +40,17 @@ ${c_blue}    Standard references: ${c_reset}
 ${c_yellow}        --genome_fasta [path] ${c_reset}           Path to genome sequence file (FASTA).
 ${c_yellow}        --genome_gtf [path] ${c_reset}             Path to GTF file containing genomic annotations.
 ${c_yellow}        --genome_bed [path] ${c_reset}             Path to BED12-format of the supplied GTF (auto-generated from supplied GTF if not given).
+${c_yellow}        --genome_dict [path] ${c_reset}            Path to genome dictionary (required for GATK).
+${c_yellow}        --genome_index [path] ${c_reset}           Path to genome index (required for GATK).
+
+
         --star_index [path]              Path to STAR index (generated automatically if not given).
         --gencode [bool]                 Specifies if the supplied GTF is from GENCODE. (Default: false)
+        --MergeFQ [bool] Merge multi-lane Fastq files per sample before alignment. (Default: true)
+        --customQC [bool] Run CustomQC script and generate an html report. (Default: true)
+
 ${c_blue}    FastQC: ${c_reset}
-      Perform FastQC on the unaligned sequencing reads before and, optionally, after trimming.
+      Perform FastQC on the unaligned sequencing reads before trimming.
 ${c_green}        --runFastQC [bool] ${c_reset}          Run FastQC. (Default: true)
         --options.FastQC [str]       Additional custom options given to FastQC.
 ${c_blue}    TrimGalore: ${c_reset}
@@ -91,7 +98,7 @@ ${c_yellow}        --scatter_interval_list [path] ${c_reset}  Path to scatter.in
           --options.GATK4_VariantFiltration [str]
 ${c_blue}    GATK (v4) - Base quality score recalibration (BQSR): ${c_reset}
       Performs BQSR.
-${c_green}        --runGATK4_BQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: false)
+${c_green}        --runGATK4_BQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: true)
         --options.GATK4_BQRS [str]              Additional custom options given to BQRS.
 ${c_blue}    MultiQC: ${c_reset}
       Generate a MultiQC report which combined various QC reports into a single report.
