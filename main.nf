@@ -22,28 +22,35 @@ def helpMessage() {
     log.info"""
     Usage:
     The typical command for running the pipeline is as follows:
-    nextflow run UMCUGenetics/RNASeq-NF --fastq_path <fastq_dir> --out_dir <output_dir> --genome_config <path/to/genome.config
+    nextflow run UMCUGenetics/RNASeq-NF --fastq_path <fastq_dir> --out_dir <output_dir> -c <path/to/analysis.config --email <email address>
 ${c_blue}    Mandatory arguments: ${c_reset}
 ${c_yellow}        --fastq_path [str] ${c_reset}              Path to a directory containing fastq files.
                                                     Files should be named in the following format: xxx_xxx_xxxx
-${c_yellow}        --out_dir [str] ${c_reset}                 The output directory where the results will be saved
+${c_yellow}        --out_dir [str] ${c_reset}                 The output directory where the results will be saved.
+${c_yellow}        --email [str] ${c_reset}                   The email address to send workflow summary and MultiQC report to.
 ${c_blue}    Standard options: ${c_reset}
          --profile [str]                 Configuration profile to use, leave empty to run locally.
                                               Available: slurm, SGE, singularity.
-         --genome_config [path]          Path to genome configuration file containing options from ${c_blue}standard references${c_reset}.
          --singleEnd [bool]             Specifies that the input is from single-end experiment(s). (Default: false)
          --unstranded [bool]             Specifies that the input is from an unstranded library prep. (Default: true)
          --stranded [bool]               Specifies that the input is from an forward-stranded library prep. (Default: false)
          --revstranded [bool]            Specifies that the input is from an reverse-stranded library prep. (Default: false)
+         --MergeFQ [bool] Merge multi-lane Fastq files per sample before alignment. (Default: true)
 ${c_blue}    Standard references: ${c_reset}
       If not specified in the configuration file or you wish to overwrite any of standard references.
 ${c_yellow}        --genome_fasta [path] ${c_reset}           Path to genome sequence file (FASTA).
 ${c_yellow}        --genome_gtf [path] ${c_reset}             Path to GTF file containing genomic annotations.
 ${c_yellow}        --genome_bed [path] ${c_reset}             Path to BED12-format of the supplied GTF (auto-generated from supplied GTF if not given).
+${c_yellow}        --genome_dict [path] ${c_reset}            Path to genome dictionary (required for GATK).
+${c_yellow}        --genome_index [path] ${c_reset}           Path to genome index (required for GATK).
+
+
         --star_index [path]              Path to STAR index (generated automatically if not given).
         --gencode [bool]                 Specifies if the supplied GTF is from GENCODE. (Default: false)
+      
+
 ${c_blue}    FastQC: ${c_reset}
-      Perform FastQC on the unaligned sequencing reads before and, optionally, after trimming.
+      Perform FastQC on the unaligned sequencing reads before trimming.
 ${c_green}        --runFastQC [bool] ${c_reset}          Run FastQC. (Default: true)
         --options.FastQC [str]       Additional custom options given to FastQC.
 ${c_blue}    TrimGalore: ${c_reset}
@@ -91,12 +98,16 @@ ${c_yellow}        --scatter_interval_list [path] ${c_reset}  Path to scatter.in
           --options.GATK4_VariantFiltration [str]
 ${c_blue}    GATK (v4) - Base quality score recalibration (BQSR): ${c_reset}
       Performs BQSR.
-${c_green}        --runGATK4_BQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: false)
+${c_green}        --runGATK4_BQRS [bool] ${c_reset}  Run BQRS to recalibrate base quality scores. (Default: true)
         --options.GATK4_BQRS [str]              Additional custom options given to BQRS.
 ${c_blue}    MultiQC: ${c_reset}
       Generate a MultiQC report which combined various QC reports into a single report.
 ${c_green}        --runMultiQC [bool] ${c_reset}             Perform MultiQC to generate a single report containing various QC logs.
         --options.MultiQC [str]          Additional custom options given to MultiQC.
+${c_blue}    CustomQC: ${c_reset}
+      Generate a custom R markdown QC report  which combines various QC reports into a single report.
+${c_green}        --customQC [bool] ${c_reset}             Perform CustomQC to generate a single report containing various QC logs.
+
     """.stripIndent()
 }
 
@@ -110,40 +121,37 @@ if(params.help){
   helpMessage()
   exit 0
 }
-
 // Minimal required parameters.
 if (!params.out_dir) {
    exit 1, "Output directory not found, please provide the correct path! (--out_dir)"
 }
-
+if (!params.email) {
+   exit 1, "Please provide an email address"
+}
 if (!params.fastq_path) {
   exit 1, "fastq files not found, please provide the correct path! (--fastq_path)"
 }
 
-if (!params.genome_fasta) {
-  exit 1, "Genome fasta not found, please provide the correct path! (--genome_fasta)"
-} else {
-  // Try importing.
-  genome_fasta = Channel
-      .fromPath(params.genome_fasta, checkIfExists: true)
-      .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
+if (params.runMapping || params.runPostQC || params.runFeatureCounts) {
+  if (!params.genome_gtf ) {
+          exit 1, "A GTF file is required for STAR, RSeQC &featureCounts. Please provide the correct filepath! (--genome_gtf)"
+  } else {
+    // Try importing.
+    genome_gtf = Channel
+        .fromPath( params.genome_gtf, checkIfExists: true )
+        .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
+  }
 }
-if (!params.genome_gtf) {
-  exit 1, "Genome GTF not found, please provide the correct path! (--genome_gtf)"
-} else {
-  // Try importing.
-  genome_gtf = Channel
-      .fromPath(params.genome_gtf, checkIfExists: true)
-      .ifEmpty { exit 1, "GTF file not found: ${params.genome_gtf}"}
+def run_name = params.fastq_path.split('/')[-1]
+if ( params.custom_run_name) {
+    run_name = params.custom_run_name
 }
-
 //Start workflow
 workflow {
   main :
     //Set run and retrieve input fastqs
     include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)  
     include MergeFastqLanes from './NextflowModules/Utils/MergeFastqLanes.nf' params( params )
-    run_name = params.fastq_path.split('/')[-1]
     fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
     //Pipeline log info
     log.info """=======================================================
@@ -154,6 +162,7 @@ workflow {
     summary['Pipeline Version'] =  workflow.manifest.version
     summary['Nextflow Version'] =  workflow.manifest.nextflowVersion
     summary['Run Name'] = run_name
+    summary['Email'] = params.email
     summary['Mode'] = params.singleEnd ? 'Single-end' : 'Paired-end'
     summary['Fastq dir']   = params.fastq_path
     summary['Output dir']   = params.out_dir
@@ -188,11 +197,12 @@ workflow {
     // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
-        mapped = markdup_mapping( fastqs_processed, genome_fasta, genome_gtf )
+        mapped = markdup_mapping( fastqs_processed, genome_gtf )
         star_logs = mapped.logs
         flagstat_logs = mapped.markdup_flagstat
 
     } else {
+        flagstat_logs = Channel.empty()
         star_logs = Channel.empty()
     }
 
@@ -241,15 +251,46 @@ workflow {
     // # 7) MultiQC report  
     if ( params.runMultiQC ) {
         include qc_report from './sub-workflows/qc_report.nf' params(params)
-        qc_report( run_name,
+        qc_report(  run_name,
                     fastqc_logs,
                     trim_logs,
                     star_logs,
                     post_qc_logs,
                     fc_logs,
-	            salmon_logs,
-		    sortmerna_logs,
-	            flagstat_logs ) 		      
-      }
+	                  salmon_logs,
+		                sortmerna_logs,
+	                  flagstat_logs ) 		      
+    }
+    // # 8) Workflow completion notification
+}
 
+//Adapted from https://github.com/UMCUGenetics/DxNextflowWES
+workflow.onComplete {
+            // HTML Template
+            def template = new File("$baseDir/assets/workflow_complete.html")
+            def binding = [
+                run_name: run_name,
+                workflow: workflow
+            ]
+            def engine = new groovy.text.GStringTemplateEngine()
+            def email_html = engine.createTemplate(template).make(binding).toString()
+            // Send email
+            if (workflow.success) {
+              def subject = "RNASeq Workflow Successful: ${run_name}"
+              if (params.runMultiQC) {
+                  sendMail(to: params.email, 
+                           subject: subject, 
+                           body: email_html, 
+                           attach: "${params.out_dir}/report/MultiQC/${run_name}_multiqc_report.html")
+              } else {
+                  sendMail(to: params.email,
+                           subject: subject,
+                           body: email_html )
+                }                
+            } else {
+                def subject = "RNASeq Workflow Failed: ${run_name}"
+                sendMail(to: params.email, 
+                         subject: subject, 
+                         body: email_html)
+            }
 }

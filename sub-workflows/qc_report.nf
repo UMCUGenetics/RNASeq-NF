@@ -22,3 +22,4 @@ workflow qc_report {
          RNASeqNFQC(title, Channel.fromPath(params.rmd_template), qc_files)
       } 
 }
+

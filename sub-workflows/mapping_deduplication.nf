@@ -7,16 +7,24 @@ include Flagstat from '../NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( pa
 workflow markdup_mapping {
     take:
       fastq_files
-      genome_fasta
       genome_gtf
-
+ 
     main:
-     //Create STAR index if not present
+      //Create STAR index if not present
       if (params.star_index) {
           star_index = Channel
               .fromPath(params.star_index, checkIfExists: true)
               .ifEmpty { exit 1, "STAR index not found: ${params.star_index}"}
+
       } else if (!params.star_index && params.runMapping) {
+          if (!params.genome_fasta) {
+              exit 1, "A Genome fasta file is required for STAR index. Please provide the correct filepath! (--genome_fasta)"
+          } else {
+              // Try importing.
+              genome_fasta = Channel
+                  .fromPath(params.genome_fasta, checkIfExists: true)
+                  .ifEmpty { exit 1, "Fasta file not found: ${params.genome_fasta}"}
+          }
           //Generate Genome
           GenomeGenerate ( genome_fasta, genome_gtf )
           star_index = GenomeGenerate.out.star_index

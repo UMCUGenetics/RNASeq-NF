@@ -67,7 +67,7 @@ Before starting the pipeline, ensure that the input fastq files follow the [Illu
 
 Run the pipeline.
 ```
-./nextflow run ./RNASeq-NF/main.nf -c </path/to/run.config> --fastq_path <fastq_dir> --out_dir <output_dir> -profile slurm -resume 
+./nextflow run ./RNASeq-NF/main.nf -c </path/to/run.config> --fastq_path <fastq_dir> --out_dir <output_dir> --email <email> -profile slurm -resume 
 ```
 For local execution (without HPC backend), simply omit the -profile parameter.
 
