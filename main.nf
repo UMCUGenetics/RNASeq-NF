@@ -211,7 +211,7 @@ workflow {
       if (params.runMapping) {
           include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
           post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> [sample_id, bam, bai] }, genome_gtf )
-          post_qc_logs = post_mapping_QC.out[0].map {it[1]}.mix(post_mapping_QC.out[2].map {it[1]}).collect()
+          post_qc_logs = post_mapping_QC.out[0].map {it[1]}.mix(post_mapping_QC.out[2].map {it[1]}).mix(post_mapping_QC.out[1].map {it[1]}).collect()
       } else {
           exit 1, "PostQC requires alignment step. Please enable runMapping!"
       } 
