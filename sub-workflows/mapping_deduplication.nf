@@ -34,11 +34,11 @@ workflow markdup_mapping {
       Index( AlignReads.out.bam_file.map {sample_id, rg_id, bam ->
                                          [sample_id, bam] })
       Markdup( AlignReads.out.bam_file.join(Index.out))
-      Flagstat( Markdup.out.map {sample_id, rg_id, bam, bai -> [sample_id, bam, bai] })
-      
+      Flagstat( AlignReads.out.bam_file.join(Index.out).map {sample_id, rg_id, bam, bai -> [sample_id, bam, bai] } )      
+
     emit:
       bam_sorted = AlignReads.out.bam_file.join(Index.out)
       logs = AlignReads.out.log.mix(AlignReads.out.final_log)
       bam_dedup = Markdup.out
-      markdup_flagstat = Flagstat.out
+      star_flagstat = Flagstat.out
 }

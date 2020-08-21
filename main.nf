@@ -199,7 +199,7 @@ workflow {
         include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
         mapped = markdup_mapping( fastqs_processed, genome_gtf )
         star_logs = mapped.logs
-        flagstat_logs = mapped.markdup_flagstat
+        flagstat_logs = mapped.star_flagstat
 
     } else {
         flagstat_logs = Channel.empty()
