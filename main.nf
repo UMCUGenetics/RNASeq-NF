@@ -278,19 +278,20 @@ workflow.onComplete {
             if (workflow.success) {
               def subject = "RNASeq Workflow Successful: ${run_name}"
               if (params.runMultiQC) {
-                  sendMail(to: params.email, 
-                           subject: subject, 
-                           body: email_html, 
-                           attach: "${params.out_dir}/report/MultiQC/${run_name}_multiqc_report.html")
+                  sendMail( to: params.email,
+			                      subject: subject,
+			                      body: email_html,
+                            attach: "${params.out_dir}/report/MultiQC/${run_name}_multiqc_report.html")
+                         
               } else {
-                  sendMail(to: params.email,
-                           subject: subject,
-                           body: email_html )
-                }                
+                  sendMail( to: params.email,
+                            subject: subject,
+                            body: email_html)
+                }                                
             } else {
                 def subject = "RNASeq Workflow Failed: ${run_name}"
-                sendMail(to: params.email, 
-                         subject: subject, 
-                         body: email_html)
+                sendMail( to: params.email, 
+                          subject: subject, 
+                          body: email_html)
             }
 }
