@@ -11,6 +11,7 @@ top_modules:
 - 'cutadapt'
 - 'sortmerna'
 - 'star'
+- 'samtools'
 - 'rseqc'
 - 'preseq'
 - 'featureCounts'
@@ -24,7 +25,6 @@ table_columns_visible:
         total_sequences: False
     RSeQC:
         proper_pairs_percent: False
-    Samtools:
-        mapped_passed: False
+    
 
 
