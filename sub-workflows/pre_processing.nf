@@ -14,6 +14,7 @@ workflow pre_processing {
       //
       if (params.runFastQC) {
          FastQC(fastq_files)
+         fastqc_logs = FastQC.out.fastqc_report
       }
       if ( params.runSortMeRNA) {
            rRNA_database = file(params.rRNA_database_manifest)
