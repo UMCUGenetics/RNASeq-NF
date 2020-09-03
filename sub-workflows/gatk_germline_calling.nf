@@ -20,11 +20,15 @@ include Merge from '../NextflowModules/Sambamba/0.7.0/Merge.nf' params( params )
 include SplitIntervals from '../NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params( optional: params.options.GATK4_SplitIntervals )
 include SplitNCigarReads from '../NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params( genome_fasta:params.genome_fasta)                     
 include CreateIntervalList from '../NextflowModules/Utils/CreateIntervaList.nf' params( params )
+//Sambamba modules
+include Markdup from '../NextflowModules/Sambamba/0.7.0/Markdup.nf' params( mem:params.sambambamarkdup.mem )
+include Flagstat as Flagstat_markdup from '../NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params )
+
 
 workflow gatk_germline_calling {
     take:
       run_id
-      bam_dedup
+      bam_file
 
     main:
         //Check for Scatter intervallist
@@ -45,8 +49,13 @@ workflow gatk_germline_calling {
         //Scatter intervals
         SplitIntervals( 'no-break', scatter_interval_list)
         scatter_intervals = SplitIntervals.out.flatten()
+        //Sambamba Markdup
+        Markdup( bam_file )
+        Flagstat_markdup( Markdup.out.map {sample_id, rg_id, bam, bai -> 
+			                  [sample_id, bam, bai]} )
         //NCigar split
-        SplitNCigarReads( bam_dedup )
+        SplitNCigarReads( Markdup.out.map {sample_id, rg_id, bam, bai ->
+                                          [sample_id, bam, bai]} )
         final_bam = SplitNCigarReads.out.bam_file
         //Perform BQSR
         if ( params.runGATK4_BQSR  ) {
@@ -87,6 +96,8 @@ workflow gatk_germline_calling {
       
     emit:
       bam_recal = Merge.out
+      bam_markdup = Markdup.out
+      markdup_flagstat = Flagstat_markdup.out
       bam_ncigar =  SplitNCigarReads.out	
       vcf_filter = VariantFiltration.out
       bqsr_table = GatherBaseRecalibrationTables.out
