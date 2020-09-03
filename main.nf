@@ -196,10 +196,10 @@ workflow {
     }
     // # 2) STAR alignment | Sambamba markdup
     if ( params.runMapping ) {
-        include markdup_mapping from './sub-workflows/mapping_deduplication.nf' params(params)
-        mapped = markdup_mapping( fastqs_processed, genome_gtf )
+        include star_alignment from './sub-workflows/star_alignment.nf' params(params)
+        mapped = star_alignment ( fastqs_processed, genome_gtf )
         star_logs = mapped.logs
-        flagstat_logs = mapped.markdup_flagstat
+        flagstat_logs = mapped.star_flagstat
 
     } else {
         flagstat_logs = Channel.empty()
@@ -242,8 +242,7 @@ workflow {
     if ( params.runGermlineCallingGATK ) {
       if ( params.runMapping ) {
           include gatk_germline_calling from './sub-workflows/gatk_germline_calling.nf' params(params)
-          gatk_germline_calling( run_name, mapped.bam_dedup.map {sample_id, rg_id, bam, bai -> 
-                                                                 [sample_id, bam, bai] }) 
+          gatk_germline_calling( run_name, mapped.bam_sorted ) 
       } else {
             exit 1, "GATK4 requires alignment, markdup step. Please enable runMapping and runMarkDup!"
       }        
