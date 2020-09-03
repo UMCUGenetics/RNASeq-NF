@@ -1,11 +1,9 @@
-include Markdup from '../NextflowModules/Sambamba/0.7.0/Markdup.nf' params( mem:params.sambambamarkdup.mem )
 include AlignReads from '../NextflowModules/STAR/2.7.3a/AlignReads.nf' params( singleEnd:params.singleEnd, optional:params.options.STAR )   
 include Index from '../NextflowModules/Sambamba/0.7.0/Index.nf' params( params )
 include GenomeGenerate from '../NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params( params )
 include Flagstat as Flagstat_raw from '../NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params )
-include Flagstat as Flagstat_markdup from '../NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params )
 
-workflow markdup_mapping {
+workflow star_alignment {
     take:
       fastq_files
       genome_gtf
@@ -34,15 +32,11 @@ workflow markdup_mapping {
       AlignReads( fastq_files, star_index.collect(), genome_gtf.collect() )
       Index( AlignReads.out.bam_file.map {sample_id, rg_id, bam ->
                                          [sample_id, bam] })
-      Markdup( AlignReads.out.bam_file.join(Index.out))
-      Flagstat_raw( AlignReads.out.bam_file.join(Index.out).map {sample_id, rg_id, bam, bai -> [sample_id, bam, bai] } )      
-      Flagstat_markdup( Markdup.out.map {sample_id, rg_id, bam, bai -> [sample_id, bam, bai] } )
+      Flagstat_raw( AlignReads.out.bam_file.join(Index.out).map {sample_id, rg_id, bam, bai -> 
+						                [sample_id, bam, bai] } )      
 
     emit:
       bam_sorted = AlignReads.out.bam_file.join(Index.out)
       logs = AlignReads.out.log.mix(AlignReads.out.final_log)
-      bam_dedup = Markdup.out
       star_flagstat = Flagstat_raw.out
-      markdup_flagstat = Flagstat_markdup.out
-
 }
