@@ -20,10 +20,11 @@ workflow alignment_based_quant {
 
     main:
       FeatureCounts( run_name, bam_files.collect(), genome_gtf.collect() )
+      //if ( params.normalize_counts ) {
       if ( params.normalize_counts ) {
           EdgerNormalize (run_name, FeatureCounts.out.count_table )
           Deseq2Normalize (run_name, FeatureCounts.out.count_table )
-      } 
+      }
       
     emit:
       fc_read_counts =  FeatureCounts.out.count_table

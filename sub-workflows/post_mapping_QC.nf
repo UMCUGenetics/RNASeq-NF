@@ -10,6 +10,9 @@ workflow post_mapping_QC {
       genome_gtf
 
     main:
+        rseqc_logs = Channel.empty()
+        rseqc_tin_logs = Channel.empty()
+        preseq_lce_logs = Channel.empty()
       if (params.genome_bed ) {
           //Create bed12 index file
           genome_bed = Channel
@@ -20,14 +23,16 @@ workflow post_mapping_QC {
           GenePredToBed ( GtfToGenePred.out.genome_genepred )
           genome_bed = GenePredToBed.out.genome_bed12
       }
-      RSeQC(bams_in, genome_bed.collect())
+        RSeQC(bams_in, genome_bed.collect())
+      
       if (params.runRSeQC_TIN) {
           RSeQC_TIN(bams_in, genome_bed.collect()) 
+            rseqc_tin_logs = RSeQC_TIN.out
       }
       LCExtrap(bams_in)
       
     emit:
+      rseqc_tin_logs = rseqc_tin_logs
       rseqc_logs = RSeQC.out
-      rseqc_tin_logs = RSeQC_TIN.out
       preseq_lce_logs = LCExtrap.out
 }
