@@ -8,7 +8,8 @@ args = commandArgs(trailingOnly=TRUE)
 
 fc.df <- read.delim(args[1], comment.char="#")
 # Normalize 
-counts <- fc.df[,8:ncol(fc.df)]
+counts <- data.frame(fc.df[,8:ncol(fc.df)])
+colnames(counts) <- colnames(fc.df)[8:ncol(fc.df)]
 rownames(counts) <- fc.df$Geneid
 x <- DGEList(counts=counts, genes=fc.df[,c("Geneid","Length")] )
 # RPKM/CPM normalization

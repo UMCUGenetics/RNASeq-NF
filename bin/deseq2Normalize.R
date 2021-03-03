@@ -6,6 +6,7 @@ library("DESeq2")
 args = commandArgs(trailingOnly=TRUE)
 counts_raw <- read.delim(args[1], comment.char="#", row.names = 1)
 cds = as.matrix(counts_raw[,7:ncol(counts_raw)])
+colnames(cds) <- colnames(counts_raw)[7:ncol(counts_raw)]
 #Get column data and set dummy condition
 (colData <- data.frame(row.names=colnames(cds),condition=factor(c(rep("exp", ncol(cds))))))
 #Create DEseq2 dataset
