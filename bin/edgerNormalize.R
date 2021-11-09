@@ -26,4 +26,3 @@ df.tpm = tpm3(counts, x$genes$Length)
 write.table(df.rpkm, file=paste0(args[2],"_featureCounts_RPKM.txt"), row.names=T, quote=F,sep="   ")
 write.table(df.cpm, file=paste0(args[2],"_featureCounts_CPM.txt"), row.names=T, quote=F,sep="   ")
 write.table(df.tpm, file=paste0(args[2],"_featureCounts_TPM.txt"), row.names=T, quote=F,sep="   ")
-

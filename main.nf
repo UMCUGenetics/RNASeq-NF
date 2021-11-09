@@ -38,6 +38,7 @@ ${c_blue}    Standard options: ${c_reset}
          --MergeFQ [bool] Merge multi-lane Fastq files per sample before alignment. (Default: true)
 ${c_blue}    Standard references: ${c_reset}
       If not specified in the configuration file or you wish to overwrite any of standard references.
+${c_yellow}        --genome [str] ${c_reset}                  The genome from resources.config to use for this analysis.
 ${c_yellow}        --genome_fasta [path] ${c_reset}           Path to genome sequence file (FASTA).
 ${c_yellow}        --genome_gtf [path] ${c_reset}             Path to GTF file containing genomic annotations.
 ${c_yellow}        --genome_bed [path] ${c_reset}             Path to BED12-format of the supplied GTF (auto-generated from supplied GTF if not given).
@@ -131,6 +132,25 @@ if (!params.email) {
 if (!params.fastq_path && !params.bam_path) {
   exit 1, "Please specify either a 'fastq_path' or a 'bam_path'! (--fastq_path or --bam_path)"
 }
+if (!params.genome){
+  exit 1, "No 'genome' parameter found in .config file or on the commandline (add -- in front of the parameter)."
+}else{
+  if ( !params.genomes[params.genome] ){
+    exit 1, "'genome' parameter ${params.genome} not found in list of genomes in resources.config!"
+  }
+  //set parameters
+  params.genome_fasta = params.genomes[params.genome].genome_fasta
+  params.genome_gtf = params.genomes[params.genome].genome_gtf
+  params.genome_bed  = params.genomes[params.genome].genome_bed
+  params.genome_dict  = params.genomes[params.genome].genome_dict
+  params.genome_index  = params.genomes[params.genome].genome_index
+  params.genome_known_sites  = params.genomes[params.genome].genome_known_sites
+  params.scatter_interval_list  = params.genomes[params.genome].scatter_interval_list
+  params.star_index  = params.genomes[params.genome].star_index
+  params.salmon_index   = params.genomes[params.genome].salmon_index
+  params.transcripts_fasta   = params.genomes[params.genome].transcripts_fasta
+}
+
 
 /* Extended input and settings checking
 */
