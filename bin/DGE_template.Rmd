@@ -1,0 +1,469 @@
+---
+title: "RNASeq Report"
+author: "UBEC"
+date: "`r format(Sys.time(), '%Y/%m/%d')`"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  html_document:
+    toc: yes
+    toc_depth: '3'
+df_print: paged
+header-includes: \usepackage{placeins}
+params:
+  run_id: ""
+  count_file: ""
+  md_file: ""
+  comparisons_file: ""
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set
+library("purrr")
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#Example from nf script
+#comparisons within project
+#Rscript -e "rmarkdown::render(\\"DEG_template.Rmd\\", params = list(input =\\"\$PWD\\"), output_file =\\"\$PWD/${run_id}_cqc.html\\")" 
+
+
+
+#All preperation code, loading data, etc
+###### START HERE ######
+##### Step 1 ###########
+
+
+# Note: Make sure that your design file contains only one column (main effect). The primary application of this DEG script are simple case/control designs.
+#### Case/Control design (1 factor) ####### 
+# If you specify a contrast, make sure that the reference level is the LAST variabel in the factor.
+# E.x c("condition","case", "control")). This ensure that the fold-change is calculated relative to the reference level, not the other way around.
+
+### Multi-factor design ######
+### Combine variables across factor column in the design matrix to test for interaction effects ###
+### See the DESEQ2 Vignette section on interactions for more information on how to combine factor levels.
+### https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#interactions
+
+
+# Do not use this script for complex designs with multiple factors etc.
+
+# To DO
+# 1. Set project name, w.dir
+# 2. Set main effect (column in design)
+# 3. Set design formula
+# 4. Set design contrasts
+# 5. Set annotation database
+# 6. Hope that it runs!!!!
+
+
+#check parameters
+#if(is.null(params$input) | params$input == '') stop('Please specify the QC input folder (--input)')
+
+
+source("DGE_helper_functions.R")
+
+#project <- "RUN_ID"
+#w.dir <- "/path/to/project/data"
+#print(paste0("Working directory: ", getwd()))
+
+#check if config file (containing comparisons) is specified
+if(is.null(params$comparisons_file) | params$comparisons_file == '') stop('Please specify the comparisons file for the DGE analysis (--dge_config)')
+source(params$comparisons_file)
+if(is.null(params$md_file) | params$md_file == '') md_file=paste0(project, "_metadata.txt")
+if(is.null(params$count_file) | params$count_file == '') count_file <- paste0(project, "_exon_featureCounts.raw.txt")
+
+
+#scan reads data into vector/list using 'sep' as seperator and 'what' indicates data type, here text
+#gsub is used to  potential spaces surrounding the values
+#strsplit finally splits the character vector into substrings based on the ', '
+comparision <- strsplit(gsub(" ", "",scan(text=comparision, what="", sep="&"), fixed=TRUE), ",")
+
+#check if condition is specified, add if not
+if(comparision[[1]][1] != "condition"){
+  x=function(l, x){l=c(x, l)}
+  comparision=lapply(comparision, x, "condition")
+}
+
+#result is a comparisons witht the following for, can be hardcoded/overwritten here...
+#comparision <- list(c("condition", "A", "CTRL"),
+#                    c("condition", "B", "CTRL"),
+#                    c("condition", "B", "A")
+#)
+
+#setting 1 core is at least faster on local windows for DESeq method?
+setCores(1)
+
+#print(getwd())
+#w.dir=params$wdir
+#setwd(paste0(w.dir))
+#w.dir=getwd()
+w.dir=dirname(params$count_file)
+setwd(paste0(w.dir))
+
+#to determine
+#design <- ~batch+condition
+design <- ~condition 
+
+#correct - in comparison
+comparision = map(comparision, correctIds)
+
+#read i multiple metadata and readcounts files (combine runs)?
+combined_run = F
+addBatch = F
+
+#Filter settings
+#fdr value
+alpha = 0.05
+#fold change cutoff, 1.5-2 depending on number of results...
+fc.cutoff = 1.5
+
+#misc settings
+#pre.filtering is used to filter out genes with a low nr of readcounts, mainly used for efficiency but not absolutely necessary as this is done by DESeq2 itself as well
+#also, there is no specific value to be used as cutoff. We use a cutoff of at least 5 reads total per row (gene) across all samples
+pre.filtering = TRUE
+#write the normalized count file for future use
+write.normalized = TRUE
+#extra plots (addition to MDS, included for completeness but not part of the default output)
+plot.mds = FALSE
+#biomart is the more up to date and complete source, otherwise bioconductor annotation packages will be used
+use_biomart = TRUE
+#annotation database to use for linking gene names to ids
+#anno_db_data = init_annotation_db(use_biomart=T, species = "mouse_grcm38")
+anno_db_data = init_annotation_db(use_biomart=T, species = "human_grch37")
+
+anno_db = anno_db_data$anno_db
+gene_id_column = anno_db_data$gene_id_column
+gene_name_column = anno_db_data$gene_name_column
+
+
+# --------------------------------------------------------------------------------
+# ##################################START DEG analysis######################################
+# --------------------------------------------------------------------------------
+
+if(combined_run) {
+  #read in collection of files
+  
+  readcount_files<- list.files(getwd(), pattern = "_featureCounts.raw.txt", full.names = T)
+  raw_counts<- map(readcount_files, read_in_feature_counts_custom)
+  
+  #fix column name old files if necessary
+  #colnames(raw_counts[[1]])[1] = "Geneid"
+  
+  rawcounts = Reduce(merge_counts, raw_counts) 
+  row.names(rawcounts) <- rawcounts$Geneid
+  rawcounts = rawcounts[, -1]
+  #raw_counts=NULL
+  
+  #create metadata  
+  metadata_files<- list.files(getwd(), pattern = "_MetaData.txt", full.names = T)
+  if(length(metadata_files) ==0){
+    metadata_files<- list.files(getwd(), pattern = "_metadata.txt", full.names = T)
+  }
+  md <- map(metadata_files, readMetadataFile)
+  md = Reduce(rbind, md) 
+  rownames(md) = correctIds(md$sampleid)
+  
+  #add batch information to metadata file
+  if(addBatch ==T){
+    
+    #construct dataframe for batch info
+    #set size
+    samplecount=0
+    for(i in 1:length(raw_counts)){
+      samplecount = samplecount+ncol(raw_counts[[i]])-1
+    }
+    #create initial dataframe
+    batch_map <- data.frame(sample=rep("", samplecount), batch=rep("", samplecount), stringsAsFactors=FALSE)
+    
+    #start filling
+    row=1
+    for(i in 1:length(raw_counts)){
+      tmp = raw_counts[[i]]
+      
+      for(j in 2:ncol(tmp)){
+        batch_map[row, ] = list(colnames(tmp)[j], i)
+        row = row+1
+      }
+    }
+    rownames(batch_map) = batch_map$sample
+    
+    #and add to metadata
+    md$batch=-1
+    for(i in 1:ncol(rawcounts)){
+      sample=colnames(rawcounts)[i]
+      md[sample, ]$batch = batch_map[sample, ]$batch
+    }
+  }
+} else {
+  #otherwise simply read in single files
+  
+  #Read in MetaData
+  #md <- readMetadataFile(paste0(project, "_metadata.txt"))
+  md <- readMetadataFile(params$md_file)
+  #correct md, first set rownames
+  rownames(md) = correctIds(md$sampleid)
+  
+  #depending on date run (and thus version pipeline) can be either "_exon_featureCounts.raw.txt" or _featureCounts.raw.txt"
+  #countfile <- paste0(project, "_exon_featureCounts.raw.txt")
+  countfile <- params$count_file
+  
+  #Read raw readcounts
+  rawcounts=read_in_feature_counts_custom(countfile)
+  #only keep counts for samples actually in metadata
+  #rawcounts = rawcounts[, c("gene_name", rownames(md))]
+  
+  colnames(rawcounts)[1] = "Geneid"
+  row.names(rawcounts) <- rawcounts$Geneid
+}
+
+md$condition_org = md$condition
+#correct conditions where necessary (a '-' causes issues in comparisons)
+md$condition = correctIds(md$condition_org)
+
+#determine minimal group size to set cutoff for counts
+min_groupsize=getMinimalGroupSize(md)
+
+##########
+#specific setup
+########
+
+#Change to directory where results will be written
+dir.create(file.path(w.dir, "DE"), showWarnings = FALSE)
+setwd(paste0(w.dir, "/DE"))
+current_wd = getwd()
+
+dds <- DESeqDataSetFromMatrix(countData = rawcounts[, rownames(md)],
+                              colData = md,
+                              design = design)
+
+#Pre-filter low count values
+if (pre.filtering) {
+  dds <- DESeq(dds, parallel = T)  
+  idx <- rowSums(counts(dds, normalized = T) >= 5) >= min_groupsize
+  dds <- dds[idx,]
+}
+dds <- DESeq(dds, parallel = T, test = "Wald")
+
+if (write.normalized) {
+  dds <- estimateSizeFactors(dds)
+  counts.norm <- counts(dds, normalized=TRUE)  
+  write.csv(data.frame("GENEID"=rownames(counts.norm),counts.norm), file = paste0(project,"_counts_normalized",".csv"), quote = F, row.names = F)
+}
+```
+
+\clearpage
+# RNASeq - Differential Expression Report: `r project` 
+
+# 1. PROJECT OVERVIEW
+
+## 1.1 Aims of the project
+
+The aims of the project discussed in this report are highlighted in bold:
+  
+  **Data QC and sample comparison**
+  
+  **Differential expression analysis**
+  
+  # 2. FILES PROVIDED
+  
+  For the performed analyses, a number of files are produced, and figures are made to support the findings and their understanding. The type of files and figures that are provided are explained in detailed below.
+
+-   CSV file with normalized data: raw counts corrected for sequencing differences between the samples. These normalized counts are at linear scale and are useful to get an idea of the expression changes across samples (note: not for within sample comparison of gene levels).
+
+-   CSV files with differential expression lists per comparison. Both complete versions with no filtering based on p-value or fold change applied yet, so all genes of the dataset are included, as well as a filtered versions with cutoffs used for an adjusted p-value cutoff of `r alpha` and a log2 foldchange of `r round(log2(fc.cutoff))`. The differential expression results are optimized for an adjusted p-value cutoff of `r alpha`. The output in the tables contain the following:
+  
+  -   GENEID -- The ENSEMBL GENEID identifier
+
+-   external_gene_name -- (Optional, only when annoated). The gene name/symbol for the GENEID
+
+-   BaseMean -- Average of the normalized count values across all samples.
+
+-   Log2FoldChange -- Effect size estimate log2(normalized counts group1/group2), positive values are upregulated in group1 cells. Each sample file is named "DE_group1vsgroup2" and should be used to infer the direction of the fold change.
+
+-   lfcSE -- Uncertainty associated with the log2FC estimate.
+
+-   P-value -- Wald test reflecting the probability that a fold change as strong as the observed one, would be seen under the situation described by the null hypothesis.
+
+-   Padj -- P-value adjusted for multiple testing with Benjamini-Hochberg method.
+
+
+-   Heatmap (HM): is useful to visualize a list of multiple genes across samples (e.g. the list of differentially expressed genes of a specific comparison), instead of looking at the expression pattern of individual genes. The represented expression values are normalized transformed counts. The genes (rows) are clustered based on similarities in their expression pattern across the samples. The normalized transformed counts are shown, scaled per gene (representing the deviation from the average across samples).
+
+-   The gene plots show the normalized counts for the top10 significant genes (Padj\<`r alpha`) with highest fold change (gene count on linear and log10 scale), to illustrate the expression across the samples. The adjusted P-value and log2 fold change for each gene are indicated underneath each graph.
+
+\clearpage
+# 3. METHODS
+
+## 3.1 Sample similarity and 2D representation
+
+The overall similarity between samples is assessed by calculating the Euclidean distances and represented in a heatmap. Principal component analysis helps to visualize the underlying structure based on the variation in the data. For both approaches, the data is transformed using Variance Stabilizing Transformation to ensure roughly equal contribution from all genes.
+
+## 3.2 Differential expression
+
+### 3.2.1 Differential expression using general linear models
+
+For the comparisons which combines samples, DESeq2 was used, an R-package that provides methods for differential expression testing based on linear models. DESeq2 models the raw counts, using normalization factors to account for differences in library depth. Then, it estimates the gene-wise dispersions (variability) and shrinks these estimates to generate more accurate estimates of dispersion to model the counts. Finally, DESeq2 will fit the negative binomial model and perform hypothesis testing using the Wald test for each gene. A Wald test statistic is computed based on the estimated fold change along with a probability (the p-value) that a test statistic at least as extreme as the observed value were selected at random. We essentially want to determine whether the mean expression levels of different sample groups are significantly different. The log2 fold changes are adjusted using Bayesian shrinkage (sh_log2FC). The log2 fold changes of genes with little information or high dispersion (variation) are adjusted toward more likely lower log2 fold change estimates. This fold change value is recommended to use for ordering or when using a fold change cutoff for downstream analysis of the gene list. This fold change is used for representation (MA-plots and indicated heatmap).
+
+The statistics of the differential expression analyses are represented in MA-plots and volcano plots. The expression profiles of the list of differentially expressed genes are shown in heatmaps (selection of DE genes based on adjusted P-value and fold change). The top10 differentially regulated genes (higher fold change) are individually represented across samples.
+
+\clearpage
+# 4. Results
+
+## 4.1 Sample comparison
+
+To evaluate the relatedness between samples, the Euclidean distances between the samples and principal components in the dataset are determined and represented below (Figure 1 and Figure 2).  
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#Heatmap
+generateHeatmap(dds=dds, title=paste0("Heatmap ",project))
+```
+
+
+*Figure 1 Heatmap showing the correlation between the transcriptional profiles of all samples.*
+  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#PCA
+vsd <- vst(dds, blind=TRUE)
+pcadata<- plotPCA(vsd, intgroup = colnames(md),  returnData=T)
+generatePCARepel(pcadata=pcadata, color="condition", title=project)
+
+if(addBatch){
+  generatePCARepel(pcadata,"condition", "batch", project)
+}
+```
+
+*Figure 2 Principal component plots of all samples reveal the underlying structure in the expression data of all samples in 2D.*
+  
+  \clearpage
+## 4.2 Differential gene expression analysis
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
+comparison_counter=1
+figure_counter=3
+contrast_reuse = list()
+
+for (comp in comparision) {
+  sub_dir=paste0(comp[2], "_vs_", comp[3])
+  dir.create(file.path(current_wd, sub_dir), showWarnings = FALSE)
+  setwd(file.path(current_wd, sub_dir))
+  
+  contrast =  c(comp[1],comp[2], comp[3])
+  results_contrast = getDataForContrast(
+    dds = dds,
+    #contrast =  c(comp[1],comp[2], comp[3]),
+    contrast=contrast,
+    anno_db = anno_db,
+    fdrval = alpha,
+    fcval=fc.cutoff)
+  
+  contrast_reuse[[length(contrast_reuse)+1]] = contrast
+  contrast_reuse[[length(contrast_reuse)+1]] = results_contrast
+  
+  cat("  \n### 4.2.", comparison_counter, " Comparison ", comp[2], " vs ", comp[3], "\n", sep = "")
+  
+  cat("The gene expression differences between ", comp[2], " and ", comp[3], " samples was assessed. In total ", nrow(results_contrast[results_contrast$filter!=0,]), "genes were found significantly differentially regulated with an adjusted P-value <", alpha, " and a fold change exceeding ", fc.cutoff, " (|log2FC|>", round(log2(fc.cutoff), digits=2), "). \n" )
+  
+  cat("  \\FloatBarrier")
+  
+  plotVolcano(results_contrast=results_contrast, contrast= c(comp[1],comp[2], comp[3]), fcval=fc.cutoff, fdrval=alpha)
+  cat("  *Figure ",figure_counter, " Volcano-plot (scatter plotthat shows statistical significance (P value) versus magnitude of change (log2 fold change)).*")
+  figure_counter = figure_counter+1
+  
+  cat("  \\FloatBarrier")
+  plotMA(results_contrast=results_contrast, contrast= c(comp[1],comp[2], comp[3]), fdrval=alpha)
+  
+  cat(  "*Figure ",figure_counter, " MA-Plot (scatter plot of log2 fold changes (on the y-axis) versus the mean of normalized counts (on the x-axis)*")
+  figure_counter = figure_counter+1
+  
+  setwd(current_wd)
+  comparison_counter = comparison_counter+1
+  
+  
+  cat("  \\clearpage")
+  cat("  \n")
+}
+```
+
+\clearpage
+
+
+## 4.3 Provided files
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
+
+cat("  \n### 4.3.1 DE Report\n")
+cat("  \nThis file...  \n")
+
+cat("  \n### 4.3.2 General plots and data\n")
+
+cat("  *Heatmap (Figure 1):*")
+cat(paste0("  \n./DE/HM_",project,".pdf  \n"))
+cat("\n")
+
+cat("  *PCA Plot (Figure 2):*")
+cat(paste0("  \n./DE/PCA_",project,".pdf  \n"))
+cat("\n")
+
+cat("  *Normalized counts CSV file:*")
+cat(paste0("  \n./DE/", project, "_counts_normalized.csv  \n"))
+
+comparison_counter=3
+figure_counter=3
+
+for (comp in comparision) {
+  contrast =  c(comp[1],comp[2], comp[3])
+  cat("  \n### 4.3.", comparison_counter, " Comparison ", comp[2], " vs ", comp[3], " plots and data\n", sep = "")
+  
+  
+  cat("  *QC-plots (Volcano and MA, figure ", figure_counter, " and ", (figure_counter+1), "):*", sep="")
+  cat(paste0("  \n./DE/", comp[2], "_vs_", comp[3], "/QC_", contrast[1],"_",contrast[2],"_versus_",contrast[3],".pdf  \n"))
+  
+  cat("\n")
+  cat("  *Differential expression CSV list (unfiltered):*")
+  cat(paste0("  \n./DE/", comp[2], "_vs_", comp[3], "/condition_", contrast[1],"_",contrast[2],"_vs_",contrast[3],".csv  \n"))
+  
+  cat("\n")
+  cat("  *Differential expression CSV list (p-adj & foldchange filtered):*")
+  cat(paste0("  \n./DE/", comp[2], "_vs_", comp[3], "/condition_", contrast[1],"_",contrast[2],"_vs_",contrast[3],"_padj_",alpha,".csv  \n"))
+  
+  comparison_counter = comparison_counter+1
+  figure_counter=figure_counter+2
+}
+
+
+```
+
+\clearpage
+
+```{r include=F}
+setwd(paste0(w.dir, "/DE"))
+
+generateHeatmap(dds=dds, title=paste0("Heatmap ",project), filename=file.path(paste0("HM_",project,".pdf")))
+
+pdf(paste0("PCA_",project,".pdf"))
+
+if(addBatch){
+  generatePCARepel(pcadata,"condition", "batch", project)
+}else{
+  generatePCARepel(pcadata=pcadata, color="condition", title=project)
+}
+dev.off()
+
+current_wd = getwd()
+
+for (i in seq(from=1, to=length(contrast_reuse), by=2)){
+  
+  contrast = contrast_reuse[[i]]
+  results_contrast = contrast_reuse[[i+1]]
+  
+  sub_dir=paste0(contrast[2], "_vs_", contrast[3])
+  dir.create(file.path(current_wd, sub_dir), showWarnings = FALSE)
+  setwd(file.path(current_wd, sub_dir))
+  
+  pdf(paste0("QC_", contrast[1],"_",contrast[2],"_versus_",contrast[3],".pdf"))
+  plotVolcano(results_contrast=results_contrast, contrast=contrast, fcval=fc.cutoff, fdrval=alpha)
+  plotMA(results_contrast=results_contrast, contrast=contrast, fdrval=alpha)
+  dev.off()
+}
+```

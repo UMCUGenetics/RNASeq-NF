@@ -28,10 +28,11 @@ ${c_yellow}        --fastq_path [str] OR --bam_path [str] ${c_reset}            
                                                     Files should be named in the following format: xxx_xxx_xxxx
 ${c_yellow}        --out_dir [str] ${c_reset}                 The output directory where the results will be saved.
 ${c_yellow}        --email [str] ${c_reset}                   The email address to send workflow summary and MultiQC report to.
+${c_yellow}        --account [str] ${c_reset}                   The cluster account to be used for the computation and jobs.
 ${c_blue}    Standard options: ${c_reset}
          --profile [str]                 Configuration profile to use, leave empty to run locally.
                                               Available: slurm, SGE, singularity.
-         --singleEnd [bool]             Specifies that the input is from single-end experiment(s). (Default: false)
+         --single_end [bool]             Specifies that the input is from single-end experiment(s). (Default: false)
          --unstranded [bool]             Specifies that the input is from an unstranded library prep. (Default: true)
          --stranded [bool]               Specifies that the input is from an forward-stranded library prep. (Default: false)
          --revstranded [bool]            Specifies that the input is from an reverse-stranded library prep. (Default: false)
@@ -126,11 +127,15 @@ if(params.help){
 if (!params.out_dir) {
    exit 1, "Output directory not found, please provide the correct path! (--out_dir)"
 }
-if (!params.email) {
-   exit 1, "Please provide an email address"
+if (params.runTrimGalore || params.runSortMeRNA || params.runMapping || params.runFastQC ) {
+    if (!params.fastq_path ){
+        exit 1, "Steps requiring fastq data speciifed, please specify a 'fastq_path'! (--fastq_path)"
+    }
 }
-if (!params.fastq_path && !params.bam_path) {
-  exit 1, "Please specify either a 'fastq_path' or a 'bam_path'! (--fastq_path or --bam_path)"
+if (params.runFeatureCounts || params.runSalmon || params.runPostQC || params.runGermlineCallingGATK || params.runGATK4_BQSR) {
+    if (!params.fastq_path && !params.bam_path) {
+      exit 1, "Please specify either a 'fastq_path' or a 'bam_path'! (--fastq_path or --bam_path)"
+    }
 }
 if (!params.genome){
   exit 1, "No 'genome' parameter found in .config file or on the commandline (add -- in front of the parameter)."
@@ -195,9 +200,23 @@ if ( params.runPostQC) {
     }
 }
 
+count_file = Channel.empty()
 if ( params.runFeatureCounts) {
     if(!params.bam_path && !params.runMapping){
         exit 1, "--runFeatureCounts is specified. This requires mapped bam files, but neither --runMapping nor --bam_path are specified. Exiting!"
+    }
+}
+
+if ( params.runDGE) {
+    //alignment_based_quant.fc_read_counts , params.md_file, params.comparisons_file
+    if(!params.runFeatureCounts && !params.count_file){
+	exit 1, "count file is required when running DGE analysis and not running featureCounts! (--count_file)"
+    }
+    if (!params.md_file) {
+        exit 1, "Metadata file is required when running DGE analysis! (--md_file)"
+    }
+    if (!params.comparisons_file) {
+       exit 1, "comparisons file is required when running DGE analysis! (--comparisons_file)"
     }
 }
 
@@ -223,6 +242,35 @@ else{
 if ( params.custom_run_name) {
     run_name = params.custom_run_name
 }
+
+def report_values_file
+if ( params.runReport ) {
+  if (!params.report_template ) {
+      report_template = Channel
+        .fromPath( file("$baseDir/assets/RNASeq_report_template.md"), checkIfExists: true )
+        .ifEmpty { exit 1, "Default markdown report template $baseDir/assets/RNASeq_report_template.md not found, and none specified! Please specify one with --report_template or disable report step"}
+  } else {
+    // Try importing.
+    report_template = Channel
+        .fromPath( params.report_template, checkIfExists: true )
+        .ifEmpty { exit 1, "Markdown report template not found: ${params.report_template}"}
+  }
+  if(params.report_values_file){
+    report_values_file = Channel
+        .fromPath( params.report_values_file, checkIfExists: true )
+        .ifEmpty { exit 1, "Report template values file not found: ${params.report_values_file}"}
+  } else {
+    def defaultValuesFile = new File("$baseDir/assets/rnaseq_template_values.txt")
+    if(defaultValuesFile.exists()){
+        report_values_file = Channel
+            .fromPath( defaultValuesFile )
+            .ifEmpty { exit 1, "Default report values template $baseDir/assets/rnaseq_template_values.txt not found, and none specified! Please specify one with --report_values_file, now none will be used..."}
+    } else {
+        println "Default report values template $baseDir/assets/rnaseq_template_values.txt not found, and none specified! Please specify one with --report_values_file, now none will be used..."
+    }
+  }
+}
+
 //Start workflow
 workflow {
   main :
@@ -236,8 +284,12 @@ workflow {
     summary['Nextflow Version'] =  workflow.manifest.nextflowVersion
     summary['Run Name'] = run_name
     summary['Email'] = params.email
-    summary['Mode'] = params.singleEnd ? 'Single-end' : 'Paired-end'
-    summary['Fastq dir']   = params.fastq_path
+    summary['Mode'] = params.single_end ? 'Single-end' : 'Paired-end'
+    if ( params.fastq_path ) {
+        summary['Fastq dir']   = params.fastq_path
+    } else {
+        summary['BAM dir']   = params.bam_path
+    }
     summary['Output dir']   = params.out_dir
     summary['Genome fasta']   = params.genome_fasta
     summary['Genome GTF']   = params.genome_gtf
@@ -248,6 +300,9 @@ workflow {
     summary['Current path']   = "$PWD"
     summary['Script dir']     = workflow.projectDir
     summary['Config Profile'] = workflow.profile
+    if ( params.account ) {
+        summary['Account'] = params.account
+    }
     log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
     log.info "========================================="
     
@@ -257,7 +312,7 @@ workflow {
     fastqc_logs = Channel.empty()
     trim_logs = Channel.empty()
     sortmerna_logs = Channel.empty()
-
+    flagstat_logs = Channel.empty()
 
     if ( params.fastq_path ){
         
@@ -285,25 +340,18 @@ workflow {
         }
     }
     //otherwise set up bam files for further use
-    else {        
+    else if ( params.bam_path ){
 
         //alternative, direct way
         include { extractBamFromDir } from './NextflowModules/Utils/bam.nf' params( params )
-        //get bams from path
+        //get bams from path, fill in sample id for rg id to make compatible for further processing
         sorted_bams = extractBamFromDir(params.bam_path).map { sample_id, bam, bai -> [sample_id, sample_id, bam, bai]}
 	empty_logs = Channel.empty()
-	empty_flagstat = Channel.empty()
-	mapped = [ "bam_sorted":sorted_bams, "logs":empty_logs, "star_flagstat":empty_flagstat ] 
 
-	//else bam files will be used for further processing as handled above
-        include Flagstat as Flagstat_raw from './NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params ) 
-        Flagstat_raw( mapped.bam_sorted.map {sample_id, rg_id, bam, bai ->  [sample_id, bam, bai] } )  
-        flagstat_logs = Flagstat_raw.out
+        mapped = [ "bam_sorted":sorted_bams, "logs":empty_logs, "star_flagstat":flagstat_logs ] 
     }
 
-
     // # 2) STAR alignment | Sambamba markdup
-    flagstat_logs = Channel.empty()
     star_logs = Channel.empty()
 
     if ( params.runMapping ) {        
@@ -312,13 +360,7 @@ workflow {
             mapped = star_alignment ( fastqs_processed, genome_gtf )
             star_logs = mapped.logs
             flagstat_logs = mapped.star_flagstat
-        }/* else {
-            //else bam files will be used for further processing as handled above
-            include Flagstat as Flagstat_raw from './NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params ) 
-            Flagstat_raw( mapped.bam_sorted.map {sample_id, rg_id, bam, bai ->  [sample_id, bam, bai] } )  
-            flagstat_logs = Flagstat_raw.out
         }
-*/
     }
 
     // # 3) Post-mapping QC
@@ -326,18 +368,23 @@ workflow {
 
     if ( params.runPostQC) {
         include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
-        post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> [sample_id, bam, bai] }, genome_gtf )
-        //post_mapping_QC( mapped.bam_sorted, genome_gtf )
+        //adjusted
+        post_mapping_QC( mapped.bam_sorted, genome_gtf )
+        //original version
+        //post_mapping_QC( mapped.bam_sorted.map { sample_id, rg_id, bam, bai -> [sample_id, bam, bai] }, genome_gtf )
         post_qc_logs = post_mapping_QC.out[0].map {it[1]}.mix(post_mapping_QC.out[2].map {it[1]}).mix(post_mapping_QC.out[1].map {it[1]}).collect()
+        //use only passed bams for further processing (featurecounts and vc)
+        mapped = [ "bam_sorted":post_mapping_QC.out.qc_bams, "logs":star_logs, "star_flagstat":flagstat_logs ] 
     }
 
     // # 4) featureCounts 
     fc_logs = Channel.empty()
-
+    
     if ( params.runFeatureCounts) {
         include alignment_based_quant from './sub-workflows/alignment_based_quant.nf' params(params)
         alignment_based_quant ( run_name, mapped.bam_sorted.map { it[2] }, genome_gtf )
         fc_logs = alignment_based_quant.out.fc_summary
+        count_file = alignment_based_quant.out.fc_read_counts
     }
     // # 5) Salmon    
     salmon_logs = Channel.empty()
@@ -366,12 +413,28 @@ workflow {
 		                sortmerna_logs,
 	                  flagstat_logs ) 		      
     }
-    // # 8) Workflow completion notification
+    // # 8) RNASeq general report  
+    if ( params.runReport ) {
+        include { generate_rnaseq_report } from './sub-workflows/generate_rnaseq_report.nf' params(params)
+        generate_rnaseq_report (run_name, report_template, report_values_file )
+    }
+    // # 9) DGE analysis and report  
+    if ( params.runDGE ) {
+        //use specified count file when featureCounts is not ran
+        if ( !params.runFeatureCounts && params.count_file ) {
+            count_file = params.count_file
+        }
+        include { generate_dge_report } from './sub-workflows/generate_dge_report.nf' params(params)
+        generate_dge_report (run_name, count_file , params.md_file, params.comparisons_file, params.dge_template )
+    }
+    // # 9) Workflow completion notification
 }
 
 //Adapted from https://github.com/UMCUGenetics/DxNextflowWES
 workflow.onComplete {
-            // HTML Template
+    // Email not obligatory anymore...
+    if (params.email) {
+        // HTML Template
             def template = new File("$baseDir/assets/workflow_complete.html")
             def binding = [
                 run_name: run_name,
@@ -399,4 +462,5 @@ workflow.onComplete {
                           subject: subject, 
                           body: email_html)
             }
+    }
 }

@@ -1,4 +1,4 @@
-include AlignReads from '../NextflowModules/STAR/2.7.3a/AlignReads.nf' params( singleEnd:params.singleEnd, optional:params.options.STAR )   
+include AlignReads from '../NextflowModules/STAR/2.7.3a/AlignReads.nf' params( single_end:params.single_end, optional:params.options.STAR )   
 include Index from '../NextflowModules/Sambamba/0.7.0/Index.nf' params( params )
 include GenomeGenerate from '../NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params( params )
 include Flagstat as Flagstat_raw from '../NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params )

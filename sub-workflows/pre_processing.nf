@@ -1,6 +1,6 @@
 include TrimGalore from '../NextflowModules/TrimGalore/0.6.5/TrimGalore.nf' params( optional: params.options.TrimGalore, 
-                                                                                   singleEnd: params.singleEnd )
-include SortMeRNA from '../NextflowModules/SortMeRNA/4.3.3/SortMeRNA.nf' params( singleEnd: params.singleEnd )
+                                                                                   single_end: params.single_end )
+include SortMeRNA from '../NextflowModules/SortMeRNA/4.3.3/SortMeRNA.nf' params( single_end: params.single_end )
 include FastQC from '../NextflowModules/FastQC/0.11.8/FastQC.nf' params( optional: params.options.FastQC) 
 
 workflow pre_processing {

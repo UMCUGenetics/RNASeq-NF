@@ -1,3 +1,6 @@
+
+\newpage
+
 # RNA-SEQ PIPELINE
 
 RNASeq-NF is an NGS analysis pipeline for RNA expression quantification and germline variant calling (GATK4).
@@ -20,7 +23,7 @@ RNASeq-NF is an NGS analysis pipeline for RNA expression quantification and germ
 
 ## Core analysis workflow
 
-<img src="docs/img/RNASeq-NF_workflow.png" width="600" >
+<img src="RNASeq-NF_workflow.png" width="600" >
 
 Please refer to the nf-core rnaseq [manual](https://nf-co.re/rnaseq/docs/output) for a description on how to interpret the different output files.  
 
@@ -36,7 +39,7 @@ The pipeline can be downloaded from the link below:
 
 Follow the "Getting Started" section to set up the pipeline for own use. 
 
-\<\<\<  
+\newpage
 
 ## Output description
 
@@ -102,11 +105,11 @@ Various QC logs and reports
 - **work/**  
 	The Nextflow working directory containing logs and script from the various cached steps. Kept for completeness and not of importance for the user
 
-\<\<\<  
+\newpage
 
 ## Additional information
 
-\<\<\<  
+\newpage
 
 ## FeatureCounts
 Readcounts are generated using the featureCounts function from the Subreads package:
@@ -144,40 +147,40 @@ This unit is known as counts per million reads mapped (CPM). In its basic form, 
 	
 		CPMi = ([# of mapped reads for i]/[total reads])*10^6
 	
-\<\<\<  
-
+\newpage
+  
 ## Software
 Tools used:
 	
-- FastQC v0.11.8  
+- FastQC value_fastqc  
     [https://www.bioinformatics.babraham.ac.uk/projects/fastqc/](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
-- PreSeq v2.0.3  
+- PreSeq value_preseq  
 	[https://github.com/smithlabcode/preseq](https://github.com/smithlabcode/preseq)
-- RSeQC v3.0.1  
+- RSeQC value_rseqc  
 	[http://rseqc.sourceforge.net/](http://rseqc.sourceforge.net/)
-- SortMeRNA v4.3.3  
+- SortMeRNA value_sortmerna  
 	[https://github.com/biocore/sortmerna](https://github.com/biocore/sortmerna)
-- TrimGalore v0.6.5  
+- TrimGalore value_trimgalore  
 	[https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)  
-	Trimgalore is a wrapper and makes use of CutAdapt v2.6 and FastQC for actual processing
-- Sambamba v0.7.0  
+	Trimgalore is a wrapper and makes use of CutAdapt and FastQC for actual processing
+- Sambamba value_sambamba  
 	[https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html](https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html)
-- MultiQC v1.9  
+- MultiQC value_multiqc  
 	[https://multiqc.info/](https://multiqc.info/)
 - Custom_QC:  
 	A custom QC report for the inhouse pipeline
-- STAR v2.7.3a  
-	[https://github.com/alexdobin/STAR/releases/tag/2.7.3a](https://github.com/alexdobin/STAR/releases/tag/2.7.3a)
-- EdgeR v3.28  
+- STAR value_star  
+	[https://github.com/alexdobin/STAR/](https://github.com/alexdobin/STAR/)
+- EdgeR value_edger  
 	[https://bioconductor.org/packages/release/bioc/html/edgeR.html](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
-- DESeq2 v1.28  
+- DESeq2 value_deseq2  
 	[https://bioconductor.org/packages/release/bioc/html/DESeq2.html](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
-- Subreads v2.0.0  
+- Subreads value_subreads  
 	[http://subread.sourceforge.net/](http://subread.sourceforge.net/)
-- Salmon v1.2.1  
+- Salmon value_salmon  
 	[https://combine-lab.github.io/salmon/](https://combine-lab.github.io/salmon/)
 
-\<\<\<  
+\newpage
 
 ## Parameters
 
@@ -201,38 +204,29 @@ When parameters are not specifically specified, the default parameters are used
 	// Salmon additional options
 	saveUnaligned = false
 
-\<\<\<  
+\newpage
 
 ## Resources
 
 The following resources and pipeline/nextflow versions were used for this run:  
 
 - *Pipeline Version:*  
-     1.1  
+     value_pipeline  
 - *Nextflow Version:*  
-     20.04.1  
+     value_nextflow  
+- *Genome:*  
+     value_genome  
 - *Genome fasta:*  
-    Canis_lupus_familiaris.CanFam3.1.dna.toplevel.fa  
+    value_fasta  
 - *Genome GTF: *  
-    Canis_lupus_familiaris.CanFam3.1.103.gtf  
+    value_gtf  
 - *Mode:*  
-     Paired-end  
-- *Genome README:*  
-      
-	# https://www.ensembl.org/Canis_lupus_familiaris/Info/Index  
-	# Genome assembly: CanFam3.1 (GCA_000002285.2)  
-	# http://ftp.ensembl.org/pub/release-103/gtf/canis_lupus_familiaris/  
-	  
-	# DNA Sequence:  
-	fasta=Canis_lupus_familiaris.CanFam3.1.dna.toplevel.fa  
-	  
-	# Gene Annotation:  
-	gtf=Canis_lupus_familiaris.CanFam3.1.103.gtf  
-
-\<\<\<  
+    value_mode  
+    
+\newpage
 
 ## Material and Methods
 
 **RNA-Seq analysis**  
 
-Quality control on the sequence reads from the raw FASTQ files was done with FastQC (${fastqc}). TrimGalore (${trimgalore}) as used to trim reads based on quality and adapter presence after which FastQC was again used to check the resulting quality. rRNA reads were filtered out using SortMeRNA (${sortmerna}) after which the resulting reads were aligned to the reference genome (GRCh37) using the STAR (${star}) aligner. Followup QC on the mapped (bam) files was done using Sambamba (${sambamba}), RSeQC (${rseqc}) and PreSeq (${preseq}). Readcounts were then generated using the Subread FeatureCounts module (${subreads}) with the GRCh37.74 gtf file as annotation, after which normalization was done using the R-package edgeR (${edger}). Differential Expression analysis was performed with an inhouse R-script using DESeq2 (${deseq2}) taking the raw readcounts as input. Finally a summary report was created using MultiQC (${multiqc}).
+Quality control on the sequence reads from the raw FASTQ files was done with FastQC (value_fastqc). TrimGalore (value_trimgalore) as used to trim reads based on quality and adapter presence after which FastQC was again used to check the resulting quality. rRNA reads were filtered out using SortMeRNA (value_sortmerna) after which the resulting reads were aligned to the reference genome fasta (value_fasta) using the STAR (value_star) aligner. Followup QC on the mapped (bam) files was done using Sambamba (value_sambamba), RSeQC (value_rseqc) and PreSeq (value_preseq). Readcounts were then generated using the Subread FeatureCounts module (value_subreads) with the value_gtf gtf file as annotation, after which normalization was done using the R-package edgeR (value_edger). Differential Expression analysis was performed with an inhouse R-script using DESeq2 (value_deseq2) taking the raw readcounts as input. Finally a summary report was created using MultiQC (value_multiqc).

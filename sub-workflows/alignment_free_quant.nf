@@ -1,4 +1,4 @@
-include Quant from '../NextflowModules/Salmon/1.2.1/Quant.nf' params( singleEnd: params.singleEnd,
+include Quant from '../NextflowModules/Salmon/1.2.1/Quant.nf' params( single_end: params.single_end,
                                                                       stranded: params.stranded,
                                                                       unstranded: params.unstranded,
                                                                       revstranded: params.revstranded,

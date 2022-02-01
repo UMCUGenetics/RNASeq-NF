@@ -1,0 +1,12 @@
+value_fastqc=v0.11.8
+value_preseq=v2.0.3
+value_rseqc=v3.0.1
+value_sortmerna=v4.3.3
+value_trimgalore=v0.6.5
+value_sambamba=v0.7.0
+value_multiqc=v1.9
+value_star=v2.7.3a
+value_edger=v3.28
+value_deseq2=v1.28
+value_subreads=v2.0.0
+value_salmon=v1.2.1
