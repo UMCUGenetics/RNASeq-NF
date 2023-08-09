@@ -1,7 +1,7 @@
-include AlignReads from '../NextflowModules/STAR/2.7.3a/AlignReads.nf' params( single_end:params.single_end, optional:params.options.STAR )   
-include Index from '../NextflowModules/Sambamba/0.7.0/Index.nf' params( params )
-include GenomeGenerate from '../NextflowModules/STAR/2.7.3a/GenomeGenerate.nf' params( params )
-include Flagstat as Flagstat_raw from '../NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params )
+include { AlignReads } from params.nextflowmodules_path+'/STAR/2.7.10b/AlignReads.nf' params( single_end:params.single_end, optional:params.options.STAR )   
+include { Index } from params.nextflowmodules_path+'/Sambamba/0.8.2/Index.nf' params( params )
+include { GenomeGenerate } from params.nextflowmodules_path+'/STAR/2.7.10b/GenomeGenerate.nf' params( params )
+include { Flagstat as Flagstat_raw } from params.nextflowmodules_path+'/Sambamba/0.8.2/Flagstat.nf' params( params )
 
 workflow star_alignment {
     take:

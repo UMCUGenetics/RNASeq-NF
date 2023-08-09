@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>RNASeq_report_template</title>
+  <style>
+    html {
+      line-height: 1.5;
+      font-family: Georgia, serif;
+      font-size: 20px;
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 1em;
+      }
+    }
+    @media print {
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: blue;
+    }
+    a:visited {
+      color: blue;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, 'Lucida Console', Consolas, monospace;
+      font-size: 85%;
+      margin: 0;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#rna-seq-pipeline">RNA-SEQ PIPELINE</a>
+<ul>
+<li><a href="#core-analysis-workflow">Core analysis workflow</a></li>
+<li><a href="#download-and-information">Download and information</a></li>
+<li><a href="#output-description">Output description</a></li>
+<li><a href="#additional-information">Additional information</a></li>
+<li><a href="#featurecounts">FeatureCounts</a></li>
+<li><a href="#software">Software</a></li>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#resources">Resources</a></li>
+<li><a href="#material-and-methods">Material and Methods</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="rna-seq-pipeline">RNA-SEQ PIPELINE</h1>
+<p>RNASeq-NF is an NGS analysis pipeline for RNA expression quantification and germline variant calling (GATK4).</p>
+<p><a href="https://github.com/UMCUGenetics/RNASeq-NF/">https://github.com/UMCUGenetics/RNASeq-NF/</a></p>
+<p><strong>The pipeline performs the following tasks.</strong></p>
+<ul>
+<li>Read QC (FastQC)<br />
+</li>
+<li>Sequence trimming (TrimGalore)<br />
+</li>
+<li>rRNA removal (SortMeRNA)<br />
+</li>
+<li>Mapping and read-group annotation (STAR)<br />
+</li>
+<li>Alignment-QC (RSeQC, Preseq)<br />
+</li>
+<li>PCR duplicate detection (Sambamba MarkDup)<br />
+</li>
+<li>Gene-expression/biotype quantification ( featureCounts)<br />
+</li>
+<li>Gene-expression normalization ( edgeR, DESeq2)<br />
+</li>
+<li>Transcript quantification (Salmon)<br />
+</li>
+<li>Variant calling (GATK4)<br />
+</li>
+<li>QC report (MultiQC, CustomQC)</li>
+</ul>
+<h2 id="core-analysis-workflow">Core analysis workflow</h2>
+<p><img src="RNASeq-NF_workflow.png" width="600" ></p>
+<p>Please refer to the nf-core rnaseq <a href="https://nf-co.re/rnaseq/docs/output">manual</a> for a description on how to interpret the different output files.</p>
+<p>This implementation is a work in progress and aims to reach feature parity with the <a href="https://github.com/UMCUGenetics/RNASeq">UMCU RNASeq pipeline</a> while also introducing new features and methods according to developments in the field.</p>
+<p>Several components have been adapted from the <a href="https://github.com/nf-core/rnaseq">nf-core rnaseq</a> community pipeline and rewritten in <a href="https://www.nextflow.io/docs/edge/dsl2.html">DSL2</a> syntax to enable a more modular setup.</p>
+<h2 id="download-and-information">Download and information</h2>
+<p>The pipeline can be downloaded from the link below:</p>
+<p><a href="https://github.com/UMCUGenetics/RNASeq-NF/">https://github.com/UMCUGenetics/RNASeq-NF/</a></p>
+<p>Follow the “Getting Started” section to set up the pipeline for own use.</p>
+<h2 id="output-description">Output description</h2>
+<p>Descriptions of the contents of the resulting processed data folder.</p>
+<ul>
+<li><p><strong>.nextflow/</strong><br />
+Nextflow cache and logging files, not of importance for the user but kept for completeness</p></li>
+<li><p><strong>conf/</strong><br />
+A copy various general configuration files used for the pipeline, containing parameters, resources, etc</p></li>
+<li><p><strong>featureCounts/</strong><br />
+The various readcounts, this includes raw readcounts, normalized readcounts, a summary and assignment to biotypes</p>
+<ul>
+<li><strong>featureCounts/biotypes/</strong><br />
+An overview of count assignment to biotypes</li>
+</ul></li>
+<li><p><strong>log/</strong><br />
+Pipeline logs and nextflow report files (regarding resource usage, time taken, etc)</p></li>
+<li><p><strong>QC/</strong><br />
+Various QC logs and reports</p>
+<ul>
+<li><p><strong>QC/FastQC/</strong><br />
+FastQC reports on the raw fastq files</p></li>
+<li><p><strong>QC/Preseq/</strong><br />
+Output for PreSeq alignment QC package</p></li>
+<li><p><strong>QC/RSeQC/</strong><br />
+RSeQC provides a number of modules to evaluate sequence data, such as strandedness, read duplication, distribution, inner distance. This folder contains the log files as well as the removed rRNA reads in fastq.gz format for all samples</p></li>
+<li><p><strong>QC/SortMeRNA/</strong><br />
+SortMeRNA is used to remove rRNA reads, this folder contains the removed reads as well as the reports resulting from this process</p></li>
+<li><p><strong>QC/TrimGalore/</strong><br />
+TrimGalore is used to trim reads based on quality and adapter presence as well as quality control, this folder contains the logs from this process as well as the FastQC reports from the trimmed fastq data</p></li>
+</ul></li>
+<li><p><strong>report/</strong><br />
+Summary reports giving a broad summary of the various QC and other logs</p>
+<ul>
+<li><p><strong>report/MultiQC/</strong><br />
+MultiQC collects all information from the various QC modules as well as other tools (STAR, sambamba) and shows this in a summary overview in order to get a good and quick overview of the statistics of the various steps in the pipeline for this run</p></li>
+<li><p><strong>report/Custom_QC/</strong><br />
+A custom QC report for the inhouse pipeline</p></li>
+</ul></li>
+<li><p><strong>Sambamba/</strong><br />
+Sambamba flagstats report which contains statistics drawn from the generated .bam read flags</p></li>
+<li><p><strong>STAR/</strong><br />
+RNA-seq reads are aligned to the reference genome using STAR, which was designed to specifically address many of the challenges of RNA-seq data mapping, and uses a novel strategy for spliced alignments.</p>
+<ul>
+<li><p><strong>STAR/logs/</strong><br />
+Logs and reports from STAR regarding the alignment process</p></li>
+<li><p><strong>STAR/mapped/</strong><br />
+The resulting aligned data in .bam formwat with corresponding .bam.bai index files. These can be viewed in for example the IGV genome browser or used for further analysis</p></li>
+<li><p><strong>STAR/SJ/</strong><br />
+The _SJ.out.tab files contain the high confidence collapsed splice junctions in tab delimited format.</p></li>
+<li><p><strong>STAR/unmapped/</strong><br />
+Collection of reads that could not be mapped</p></li>
+</ul></li>
+<li><p><strong>work/</strong><br />
+The Nextflow working directory containing logs and script from the various cached steps. Kept for completeness and not of importance for the user</p></li>
+</ul>
+<h2 id="additional-information">Additional information</h2>
+
+<h2 id="featurecounts">FeatureCounts</h2>
+<p>Readcounts are generated using the featureCounts function from the Subreads package:</p>
+<p><a href="http://bioinf.wehi.edu.au/featureCounts/">http://bioinf.wehi.edu.au/featureCounts/</a></p>
+<p>This data consists of:</p>
+<ul>
+<li><p><strong>raw readcounts</strong><br />
+<em>*_exon_featureCounts.raw.txt</em><br />
+The raw readcounts outputted by Subreads.featureCounts</p></li>
+<li><p><strong>summary</strong><br />
+<em>*_exon.featureCounts.txt.summary</em><br />
+Summary of the assigned and unassigned reads per sample (as well as reason unassignment)</p></li>
+<li><p><strong>normalized readcounts</strong><br />
+<em>*_featureCounts_CPM.txt</em><br />
+<em>*_featureCounts_deseq2.txt</em><br />
+<em>*_featureCounts_RPKM.txt</em><br />
+A number of normalization methods are also included, we however only use the raw readcounts when doing further Differential Expression analysis</p></li>
+<li><p><strong>DESeq2</strong><br />
+The raw read counts are normalized using the DESeq method included in the DESeq Bioconductor package and is based on the hypothesis that most genes are not DE. A DESeq scaling factor for a given lane is computed as the median of the ratio, for each gene, of its read count over its geometric mean across all lanes. The underlying idea is that non-DE genes should have similar read counts across samples, leading to a ratio of 1. Assuming most genes are not DE, the median of this ratio for the lane provides an estimate of the correction factor that should be applied to all read counts of this lane to fulfill the hypothesis. By calling the estimateSizeFactors() and sizeFactors() functions in the DESeq Bioconductor package, this factor is computed for each lane, and raw read counts are divided by the factor associated with their sequencing lane.</p></li>
+<li><p><strong>RPKM</strong><br />
+RPKM is a method of quantifying gene expression from RNA sequencing data by normalizing for total read length and the number of sequencing reads. RPKMs are calculated using the RPKM() function included in the edgeR Bioconductor package.</p>
+<pre><code>  RPKM = [# of mapped reads]/([length of transcript]/1000)/([total reads]/10^6)   </code></pre>
+<p><em>CAUTION: Make sure the RPKM normalization is actually necessary in your analysis. If you are comparing gene expression among samples only, there really is no reason to normalize by length as you will be dividing each gene among the samples by a constant (gene length). You only need to use RPKM when you are comparing transcript expression within one sample.</em></p></li>
+<li><p><strong>CPM</strong><br />
+This unit is known as counts per million reads mapped (CPM). In its basic form, for each feature i , CPM is the count of sequenced fragments mapping to the feature (the random variable I am calling ri here) scaled by the total number of reads (R ) times one million (to bring it up to a more convenient number).</p>
+<pre><code>  CPMi = ([# of mapped reads for i]/[total reads])*10^6</code></pre></li>
+</ul>
+<h2 id="software">Software</h2>
+<p>Tools used:</p>
+<ul>
+<li>FastQC v0.11.8<br />
+<a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">https://www.bioinformatics.babraham.ac.uk/projects/fastqc/</a><br />
+</li>
+<li>PreSeq v2.0.3<br />
+<a href="https://github.com/smithlabcode/preseq">https://github.com/smithlabcode/preseq</a><br />
+</li>
+<li>RSeQC v3.0.1<br />
+<a href="http://rseqc.sourceforge.net/">http://rseqc.sourceforge.net/</a><br />
+</li>
+<li>SortMeRNA v4.3.3<br />
+<a href="https://github.com/biocore/sortmerna">https://github.com/biocore/sortmerna</a><br />
+</li>
+<li>TrimGalore v0.6.5<br />
+<a href="https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/">https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/</a><br />
+Trimgalore is a wrapper and makes use of CutAdapt and FastQC for actual processing<br />
+</li>
+<li>Sambamba v0.7.0<br />
+<a href="https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html">https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html</a><br />
+</li>
+<li>MultiQC v1.9<br />
+<a href="https://multiqc.info/">https://multiqc.info/</a><br />
+</li>
+<li>Custom_QC:<br />
+A custom QC report for the inhouse pipeline<br />
+</li>
+<li>STAR v2.7.3a<br />
+<a href="https://github.com/alexdobin/STAR/">https://github.com/alexdobin/STAR/</a><br />
+</li>
+<li>EdgeR v3.28<br />
+<a href="https://bioconductor.org/packages/release/bioc/html/edgeR.html">https://bioconductor.org/packages/release/bioc/html/edgeR.html</a><br />
+</li>
+<li>DESeq2 v1.28<br />
+<a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">https://bioconductor.org/packages/release/bioc/html/DESeq2.html</a><br />
+</li>
+<li>Subreads v2.0.0<br />
+<a href="http://subread.sourceforge.net/">http://subread.sourceforge.net/</a><br />
+</li>
+<li>Salmon v1.2.1<br />
+<a href="https://combine-lab.github.io/salmon/">https://combine-lab.github.io/salmon/</a></li>
+</ul>
+<h2 id="parameters">Parameters</h2>
+<p>When parameters are not specifically specified, the default parameters are used</p>
+<pre><code>// Custom settings of tools.
+options.TrimGalore = &#39;--fastqc&#39;
+options.STAR = &#39;--outReadsUnmapped Fastx&#39;
+options.Salmon_quant = &#39;--seqBias --useVBOpt --gcBias&#39;
+options.GATK4_SplitIntervals = &#39;-SCATTER_COUNT 100 --UNIQUE true -M BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW&#39;
+options.GATK4_HaplotypeCaller = &#39;--standard-min-confidence-threshold-for-calling 20.0 --dont-use-soft-clipped-bases&#39;
+options.GATK4_VariantFiltration = &#39;--cluster-window-size 35 --cluster-size 3&#39;
+options.Preseq = &quot;-v -B -D&quot;
+
+//featureCounts
+fc_group_features = &#39;gene_id&#39;
+fc_count_type = &#39;exon&#39;
+fc_group_features_type = &#39;gene_biotype&#39;
+fc_extra_attributes = &#39;gene_name&#39;
+
+// Salmon additional options
+saveUnaligned = false</code></pre>
+<h2 id="resources">Resources</h2>
+<p>The following resources and pipeline/nextflow versions were used for this run:</p>
+<ul>
+<li><em>Pipeline Version:</em><br />
+value_pipeline<br />
+</li>
+<li><em>Nextflow Version:</em><br />
+value_nextflow<br />
+</li>
+<li><em>Genome:</em><br />
+value_genome<br />
+</li>
+<li><em>Genome fasta:</em><br />
+value_fasta<br />
+</li>
+<li><em>Genome GTF: </em><br />
+value_gtf<br />
+</li>
+<li><em>Mode:</em><br />
+value_mode</li>
+</ul>
+<h2 id="material-and-methods">Material and Methods</h2>
+<p><strong>RNA-Seq analysis</strong></p>
+<p>Quality control on the sequence reads from the raw FASTQ files was done with FastQC (v0.11.8). TrimGalore (v0.6.5) as used to trim reads based on quality and adapter presence after which FastQC was again used to check the resulting quality. rRNA reads were filtered out using SortMeRNA (v4.3.3) after which the resulting reads were aligned to the reference genome fasta (value_fasta) using the STAR (v2.7.3a) aligner. Followup QC on the mapped (bam) files was done using Sambamba (v0.7.0), RSeQC (v3.0.1) and PreSeq (v2.0.3). Readcounts were then generated using the Subread FeatureCounts module (v2.0.0) with the value_gtf gtf file as annotation, after which normalization was done using the R-package edgeR (v3.28). Differential Expression analysis was performed with an inhouse R-script using DESeq2 (v1.28) taking the raw readcounts as input. Finally a summary report was created using MultiQC (v1.9).</p>
+</body>
+</html>

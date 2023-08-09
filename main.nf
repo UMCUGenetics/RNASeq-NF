@@ -1,5 +1,5 @@
 #!/usr/bin/env nextflow
-nextflow.preview.dsl=2
+nextflow.enable.dsl=2
 
 /*===========================================================
                 UMCUGenetics + EMC / RNASeq-NF
@@ -37,6 +37,10 @@ ${c_blue}    Standard options: ${c_reset}
          --stranded [bool]               Specifies that the input is from an forward-stranded library prep. (Default: false)
          --revstranded [bool]            Specifies that the input is from an reverse-stranded library prep. (Default: false)
          --MergeFQ [bool] Merge multi-lane Fastq files per sample before alignment. (Default: true)
+         --compress [bool] Compresses all vcfs generated in the variantcalling step. (Default: true)
+         --legacyMode [bool] Enables legacy variantCalling mode, producing one vcf per sample. As opposed to a single merged VCF for the entire run  (Default: false)
+         --saveBam [bool] Saves the aligned data in BAM format. (Default: true)
+         --saveCram [bool] Saves the aligned data in CRAM format. (Default: false)
 ${c_blue}    Standard references: ${c_reset}
       If not specified in the configuration file or you wish to overwrite any of standard references.
 ${c_yellow}        --genome [str] ${c_reset}                  The genome from resources.config to use for this analysis.
@@ -146,9 +150,9 @@ if (!params.genome){
   //set parameters
   params.genome_fasta = params.genomes[params.genome].genome_fasta
   params.genome_gtf = params.genomes[params.genome].genome_gtf
-  params.genome_bed  = params.genomes[params.genome].genome_bed
-  params.genome_dict  = params.genomes[params.genome].genome_dict
-  params.genome_index  = params.genomes[params.genome].genome_index
+  params.genome_bed = params.genomes[params.genome].genome_bed
+  params.genome_dict = params.genomes[params.genome].genome_dict
+  params.genome_index = params.genomes[params.genome].genome_index
   params.genome_known_sites  = params.genomes[params.genome].genome_known_sites
   params.scatter_interval_list  = params.genomes[params.genome].scatter_interval_list
   params.star_index  = params.genomes[params.genome].star_index
@@ -228,6 +232,10 @@ if ( params.runGermlineCallingGATK ) {
     if(!params.bam_path && !params.runMapping){
         exit 1, "--runGermlineCallingGATK specified. This requires mapped bam files, but neither --runMapping or --bam_path are specified. Exiting!"
     }
+    //if not in legacy mode, variantcalling makes use of GVCFs instead of direct VCFs so add setting to haplotypecaller options
+    if (!params.legacyMode ){
+        params.options.GATK4_HaplotypeCaller = params.options.GATK4_HaplotypeCaller+" -ERC GVCF"
+    }
 }
 
 def run_name
@@ -243,7 +251,6 @@ if ( params.custom_run_name) {
     run_name = params.custom_run_name
 }
 
-def report_values_file
 if ( params.runReport ) {
   if (!params.report_template ) {
       report_template = Channel
@@ -254,22 +261,32 @@ if ( params.runReport ) {
     report_template = Channel
         .fromPath( params.report_template, checkIfExists: true )
         .ifEmpty { exit 1, "Markdown report template not found: ${params.report_template}"}
-  }
-  if(params.report_values_file){
-    report_values_file = Channel
-        .fromPath( params.report_values_file, checkIfExists: true )
-        .ifEmpty { exit 1, "Report template values file not found: ${params.report_values_file}"}
-  } else {
-    def defaultValuesFile = new File("$baseDir/assets/rnaseq_template_values.txt")
-    if(defaultValuesFile.exists()){
-        report_values_file = Channel
-            .fromPath( defaultValuesFile )
-            .ifEmpty { exit 1, "Default report values template $baseDir/assets/rnaseq_template_values.txt not found, and none specified! Please specify one with --report_values_file, now none will be used..."}
-    } else {
-        println "Default report values template $baseDir/assets/rnaseq_template_values.txt not found, and none specified! Please specify one with --report_values_file, now none will be used..."
-    }
-  }
+  }  
 }
+
+if ( !params.nextflowmodules_path ){
+  println "No NextflowModules path specified, assuming '$baseDir/NextflowModules'. Otherwise please specify it using --nextflowmodules_path or by setting it in the nextflow.config file"
+  params.nextflowmodules_path = "$baseDir/NextflowModules"
+  Channel
+        .fromPath( params.nextflowmodules_path, checkIfExists: true )
+        .ifEmpty { exit 1, "NextflowModules path not found: ${params.nextflowmodules_path}"}    
+  
+}
+
+// Modules now need to be included OUTSIDE the workflow{}
+include { extractAllFastqFromDir } from params.nextflowmodules_path+'/Utils/fastq.nf' params(params)  
+include { MergeFastqLanes } from params.nextflowmodules_path+'/Utils/MergeFastqLanes.nf' params( params )    
+include { extractBamFromDir } from params.nextflowmodules_path+'/Utils/bam.nf' params( params )
+include { SamToCram } from params.nextflowmodules_path+'/Samtools/1.16.1/SamToCram.nf' params( params )
+include { pre_processing } from './sub-workflows/pre_processing.nf' params(params)
+include { star_alignment } from './sub-workflows/star_alignment.nf' params(params)
+include { post_mapping_QC } from './sub-workflows/post_mapping_QC.nf' params(params)
+include { alignment_based_quant } from './sub-workflows/alignment_based_quant.nf' params(params)
+include { alignment_free_quant } from './sub-workflows/alignment_free_quant.nf' params(params)
+include { gatk_germline_calling } from './sub-workflows/gatk_germline_calling.nf' params(params)
+include { qc_report } from './sub-workflows/qc_report.nf' params(params)
+include { generate_rnaseq_report } from './sub-workflows/generate_rnaseq_report.nf' params(params)
+
 
 //Start workflow
 workflow {
@@ -293,6 +310,8 @@ workflow {
     summary['Output dir']   = params.out_dir
     summary['Genome fasta']   = params.genome_fasta
     summary['Genome GTF']   = params.genome_gtf
+    summary['Genome BED']   = params.genome_bed
+    summary['Known sites']   = params.genome_known_sites
     summary['Working dir']  = workflow.workDir
     summary['Container Engine'] = workflow.containerEngine
     summary['Current home']   = "$HOME"
@@ -317,11 +336,9 @@ workflow {
     if ( params.fastq_path ){
         
         //Set run and retrieve input fastqs
-        include extractAllFastqFromDir from './NextflowModules/Utils/fastq.nf' params(params)  
         fastq_files = extractAllFastqFromDir(params.fastq_path).map { [it[0],it[1],it[4]]}
     
         // # 1) Pre-processing / QC
-        include pre_processing from './sub-workflows/pre_processing.nf' params(params)
         pre_processing ( fastq_files )
         //Logs
         trim_logs = pre_processing.out.trim_logs
@@ -333,7 +350,6 @@ workflow {
         fastqs_transformed = final_fastqs.groupTuple(by:0).map { sample_id, rg_id, reads -> [sample_id, rg_id[0], reads.flatten()]}
         //Merge Fastqs lanes before proceeding.
         if ( params.MergeFQ ) {
-            include MergeFastqLanes from './NextflowModules/Utils/MergeFastqLanes.nf' params( params )    
     	    fastqs_processed = MergeFastqLanes (fastqs_transformed)
         } else {
             fastqs_processed = fastqs_transformed
@@ -343,7 +359,6 @@ workflow {
     else if ( params.bam_path ){
 
         //alternative, direct way
-        include { extractBamFromDir } from './NextflowModules/Utils/bam.nf' params( params )
         //get bams from path, fill in sample id for rg id to make compatible for further processing
         sorted_bams = extractBamFromDir(params.bam_path).map { sample_id, bam, bai -> [sample_id, sample_id, bam, bai]}
 	empty_logs = Channel.empty()
@@ -355,19 +370,17 @@ workflow {
     star_logs = Channel.empty()
 
     if ( params.runMapping ) {        
-        if ( params.fastq_path ) { 
-            include star_alignment from './sub-workflows/star_alignment.nf' params(params)
+        if ( params.fastq_path ) {
             mapped = star_alignment ( fastqs_processed, genome_gtf )
             star_logs = mapped.logs
             flagstat_logs = mapped.star_flagstat
         }
     }
-
+    
     // # 3) Post-mapping QC
     post_qc_logs = Channel.empty()   
 
     if ( params.runPostQC) {
-        include post_mapping_QC from './sub-workflows/post_mapping_QC.nf' params(params)
         //adjusted
         post_mapping_QC( mapped.bam_sorted, genome_gtf )
         //original version
@@ -381,7 +394,6 @@ workflow {
     fc_logs = Channel.empty()
     
     if ( params.runFeatureCounts) {
-        include alignment_based_quant from './sub-workflows/alignment_based_quant.nf' params(params)
         alignment_based_quant ( run_name, mapped.bam_sorted.map { it[2] }, genome_gtf )
         fc_logs = alignment_based_quant.out.fc_summary
         count_file = alignment_based_quant.out.fc_read_counts
@@ -389,20 +401,17 @@ workflow {
     // # 5) Salmon    
     salmon_logs = Channel.empty()
 
-    if ( params.runSalmon ) {
-      include alignment_free_quant from './sub-workflows/alignment_free_quant.nf' params(params)
+    if ( params.runSalmon ) {      
       alignment_free_quant( fastqs_processed, run_name )
       salmon_logs = alignment_free_quant.out.logs
     }
     // # 6) GATK4 germline variant calling with optional BQSR
     if ( params.runGermlineCallingGATK ) {
-        include gatk_germline_calling from './sub-workflows/gatk_germline_calling.nf' params(params)
         gatk_germline_calling( run_name, mapped.bam_sorted ) 
     }
 
     // # 7) MultiQC report  
-    if ( params.runMultiQC ) {
-        include qc_report from './sub-workflows/qc_report.nf' params(params)
+    if ( params.runMultiQC ) {        
         qc_report(  run_name,
                     fastqc_logs,
                     trim_logs,
@@ -415,18 +424,18 @@ workflow {
     }
     // # 8) RNASeq general report  
     if ( params.runReport ) {
-        include { generate_rnaseq_report } from './sub-workflows/generate_rnaseq_report.nf' params(params)
-        generate_rnaseq_report (run_name, report_template, report_values_file )
+        generate_rnaseq_report (run_name, report_template )
     }
-    // # 9) DGE analysis and report  
-    if ( params.runDGE ) {
-        //use specified count file when featureCounts is not ran
-        if ( !params.runFeatureCounts && params.count_file ) {
-            count_file = params.count_file
+
+    //save to cram if desired
+    if ( params.saveCram && mapped) {
+        compress_bams = mapped.bam_sorted.map{sample_id, rg_id, bam, bai -> [bam, bai]}
+        SamToCram(compress_bams, params.genome_fasta)
+        if( ! params.cram_embedref ){
+            file(params.genome_fasta).copyTo("${params.out_dir}/${params.genome_fasta.split('/')[-1]}")
         }
-        include { generate_dge_report } from './sub-workflows/generate_dge_report.nf' params(params)
-        generate_dge_report (run_name, count_file , params.md_file, params.comparisons_file, params.dge_template )
-    }
+    } 
+
     // # 9) Workflow completion notification
 }
 

@@ -152,33 +152,33 @@ This unit is known as counts per million reads mapped (CPM). In its basic form, 
 ## Software
 Tools used:
 	
-- FastQC value_fastqc  
-    [https://www.bioinformatics.babraham.ac.uk/projects/fastqc/](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
-- PreSeq value_preseq  
-	[https://github.com/smithlabcode/preseq](https://github.com/smithlabcode/preseq)
-- RSeQC value_rseqc  
-	[http://rseqc.sourceforge.net/](http://rseqc.sourceforge.net/)
-- SortMeRNA value_sortmerna  
-	[https://github.com/biocore/sortmerna](https://github.com/biocore/sortmerna)
-- TrimGalore value_trimgalore  
+- FastQC v0.11.9  
+    [https://www.bioinformatics.babraham.ac.uk/projects/fastqc/](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)  
+- PreSeq v3.2.0  
+	[https://github.com/smithlabcode/preseq](https://github.com/smithlabcode/preseq)  
+- RSeQC v5.0.1  
+	[http://rseqc.sourceforge.net/](http://rseqc.sourceforge.net/)  
+- SortMeRNA v4.3.6  
+	[https://github.com/biocore/sortmerna](https://github.com/biocore/sortmerna)  
+- TrimGalore v0.6.7  
 	[https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)  
-	Trimgalore is a wrapper and makes use of CutAdapt and FastQC for actual processing
-- Sambamba value_sambamba  
-	[https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html](https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html)
-- MultiQC value_multiqc  
-	[https://multiqc.info/](https://multiqc.info/)
+	Trimgalore is a wrapper and makes use of CutAdapt and FastQC for actual processing  
+- Sambamba v0.8.2  
+	[https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html](https://lomereiter.github.io/sambamba/docs/sambamba-flagstat.html)  
+- MultiQC v1.14  
+	[https://multiqc.info/](https://multiqc.info/)  
 - Custom_QC:  
-	A custom QC report for the inhouse pipeline
-- STAR value_star  
-	[https://github.com/alexdobin/STAR/](https://github.com/alexdobin/STAR/)
-- EdgeR value_edger  
-	[https://bioconductor.org/packages/release/bioc/html/edgeR.html](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
-- DESeq2 value_deseq2  
-	[https://bioconductor.org/packages/release/bioc/html/DESeq2.html](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
-- Subreads value_subreads  
-	[http://subread.sourceforge.net/](http://subread.sourceforge.net/)
-- Salmon value_salmon  
-	[https://combine-lab.github.io/salmon/](https://combine-lab.github.io/salmon/)
+	A custom QC report for the inhouse pipeline  
+- STAR v2.7.10b  
+	[https://github.com/alexdobin/STAR/](https://github.com/alexdobin/STAR/)  
+- EdgeR v3.40  
+	[https://bioconductor.org/packages/release/bioc/html/edgeR.html](https://bioconductor.org/packages/release/bioc/html/edgeR.html)  
+- DESeq2 v1.38.0  
+	[https://bioconductor.org/packages/release/bioc/html/DESeq2.html](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)  
+- Subreads v2.0.3  
+	[http://subread.sourceforge.net/](http://subread.sourceforge.net/)  
+- Salmon v1.9.0  
+	[https://combine-lab.github.io/salmon/](https://combine-lab.github.io/salmon/)  
 
 \newpage
 
@@ -229,4 +229,4 @@ The following resources and pipeline/nextflow versions were used for this run:
 
 **RNA-Seq analysis**  
 
-Quality control on the sequence reads from the raw FASTQ files was done with FastQC (value_fastqc). TrimGalore (value_trimgalore) as used to trim reads based on quality and adapter presence after which FastQC was again used to check the resulting quality. rRNA reads were filtered out using SortMeRNA (value_sortmerna) after which the resulting reads were aligned to the reference genome fasta (value_fasta) using the STAR (value_star) aligner. Followup QC on the mapped (bam) files was done using Sambamba (value_sambamba), RSeQC (value_rseqc) and PreSeq (value_preseq). Readcounts were then generated using the Subread FeatureCounts module (value_subreads) with the value_gtf gtf file as annotation, after which normalization was done using the R-package edgeR (value_edger). Differential Expression analysis was performed with an inhouse R-script using DESeq2 (value_deseq2) taking the raw readcounts as input. Finally a summary report was created using MultiQC (value_multiqc).
+Quality control on the sequence reads from the raw FASTQ files was done with FastQC (v0.11.9). TrimGalore (v0.6.7) as used to trim reads based on quality and adapter presence after which FastQC was again used to check the resulting quality. rRNA reads were filtered out using SortMeRNA (v4.3.6) after which the resulting reads were aligned to the reference genome fasta (value_fasta) using the STAR (v2.7.10b) aligner. Followup QC on the mapped (bam) files was done using Sambamba (v0.8.2), RSeQC (v5.0.1) and PreSeq (v3.2.0). Readcounts were then generated using the Subread FeatureCounts module (v2.0.3) with the value_gtf gtf file as annotation, after which normalization was done using the R-package edgeR (v3.40). Differential Expression analysis was performed with an inhouse R-script using DESeq2 (v1.38.0) taking the raw readcounts as input. Finally a summary report was created using MultiQC (v1.14).

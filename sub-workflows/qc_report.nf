@@ -1,5 +1,5 @@
-include MultiQC from '../NextflowModules/MultiQC/1.9/MultiQC.nf' params(optional: "--interactive --config $baseDir/assets/mqc_config.yaml")
-include RNASeqNFQC from '../utils/RNASeqNFQC.nf' params(params)
+include { MultiQC } from params.nextflowmodules_path+'/MultiQC/1.14/MultiQC.nf' params(optional: "--interactive --config $baseDir/assets/mqc_config.yaml")
+include { RNASeqNFQC } from '../utils/RNASeqNFQC.nf' params(params)
 
 workflow qc_report {
     take:

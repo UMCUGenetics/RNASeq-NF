@@ -57,11 +57,6 @@ params {
     runGermlineCallingGATK = false
     runGATK4_BQSR = false
 
-    //Filtration
-    gatk_snp_filter="--filter-expression 'QD < 2.0' --filter-expression 'MQ < 40.0' --filter-expression 'FS > 60.0' --filter-expression 'HaplotypeScore > 13.0' --filter-expression 'MQRankSum < -12.5' --filter-expression 'ReadPosRankSum < -8.0' --filter-expression 'MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)' --filter-expression 'DP < 5' --filter-expression 'QUAL < 30' --filter-expression 'QUAL >= 30.0 && QUAL < 50.0' --filter-expression 'SOR > 4.0' --filter-name 'SNP_LowQualityDepth' --filter-name 'SNP_MappingQuality' --filter-name 'SNP_StrandBias' --filter-name 'SNP_HaplotypeScoreHigh' --filter-name 'SNP_MQRankSumLow' --filter-name 'SNP_ReadPosRankSumLow' --filter-name 'SNP_HardToValidate' --filter-name 'SNP_LowCoverage' --filter-name 'SNP_VeryLowQual' --filter-name 'SNP_LowQual' --filter-name 'SNP_SOR' -cluster 3 -window 10"
-    gatk_indel_filter="--filter-expression 'QD < 2.0' --filter-expression 'ReadPosRankSum < -20.0' --filter-expression 'FS > 200.0' --filter-name 'INDEL_LowQualityDepth' --filter-name 'INDEL_ReadPosRankSumLow' --filter-name 'INDEL_StrandBias'"
-    gatk_rna_filter="--filter-name 'FS' --filter-expression 'FS > 30.0' --filter-name 'QD' --filter-expression 'QD < 2.0'"
-
     runDGE = false
     runReport = true
 
@@ -89,69 +84,55 @@ params {
     multiqc.mem = '4G'
     
     email = null
-
-    //added
-    saveCram = false
-    saveBam = true
-    legacyMode = false
-    compress = true
 }
 
 process {
+    errorStrategy = 'retry'
     maxRetries = 1
-
-//    withLabel: retry_or_ignore {
-//        cpus = 1
-//        errorStrategy = {task.attempt <= 3 ? 'retry' : 'ignore'}
-//        memory = {10.GB * task.attempt}
-//        time = {6.h * task.attempt}
-//        maxRetries = 2
-//    }
-
     withLabel :  STAR_2_7_10b_AlignReads  {
-          time = {6.h * task.attempt}
+          time = '6h'
           penv = 'threaded'
           cpus = 4
-          memory = {40G * task.attempt}
+          memory = '40G'
           publishDir.path = "${params.out_dir}/STAR"
           publishDir.mode = 'copy'
           publishDir.saveAs = {filename -> if (filename.indexOf("_Log.out") > 0) "logs/$filename" 
                               else if  (filename.indexOf("_Log.final.out") > 0) "logs/$filename" 
-                              else if  (params.saveBam & filename.indexOf(".bam") > 0) "mapped/$filename" 
+                              else if  (filename.indexOf(".bam") > 0) "mapped/$filename" 
                               else if  (filename.indexOf("_SJ.out.tab") > 0) "SJ/$filename" 
                               else if  (filename.indexOf(".mate1") > 0) "unmapped/$filename" 
                               else if  (filename.indexOf(".mate2") > 0) "unmapped/$filename" }	 
      
     } 
     withLabel : Sambamba_0_8_2_Index {
-          time = {2.h * task.attempt}
+          time = '2h'
           penv = 'threaded'
           cpus = 2
-          memory = {4.GB * task.attempt}
+          memory = '4G'
           publishDir.path = "${params.out_dir}/STAR"
           publishDir.mode = 'copy'
           publishDir.saveAs = {filename -> if (filename.indexOf(".bai") > 0) "mapped/$filename" }
     }
     withLabel : MergeFastqLanes {
-          time = {1.h * task.attempt}
+          time = '35m'
           penv = 'threaded'
           cpus = 1
-          memory = {10.GB * task.attempt}
+          memory = '10G'
     }
     withLabel : Sambamba_0_8_2_Flagstat {
-          time = {2.h * task.attempt}
+          time = '2h'
           penv = 'threaded'
           cpus = 2
-          memory = {4.GB * task.attempt}
+          memory = '4G'
           publishDir.path = "${params.out_dir}/Sambamba/Flagstats"
           publishDir.mode = 'copy'
        
     }
     withLabel: RSeQC_5_0_1 {
-          time = {4.h * task.attempt}
+          time = '4h'
           penv = 'threaded'
           cpus = 2
-          memory = {24.GB * task.attempt}
+          memory = '24G'
           publishDir.path = "${params.out_dir}/QC/RSeQC"
           publishDir.mode = 'copy'
           publishDir.saveAs = {filename ->
@@ -180,192 +161,175 @@ process {
                               else filename }
      }
    withLabel: RSeQC_5_0_1_TIN {
-          time = {16.h * task.attempt}
+          time = '16h'
           penv = 'threaded'
           cpus = 2
-          memory = {16.GB * task.attempt}
+          memory = '16G'
           publishDir.path = "${params.out_dir}/QC/RSeQC/TIN"
           publishDir.mode = 'copy'     
     }
     withLabel: Preseq_3_2_0 {
-          time = {4.h * task.attempt}
+          time = '4h'
           penv = 'threaded'
           cpus = 2
-          memory = {8.GB * task.attempt}
+          memory = '8G'
           publishDir.path = "${params.out_dir}/QC/Preseq"
           publishDir.mode = 'copy'
           publishDir.saveAs = {filename -> if (filename.indexOf(".ccurve.txt") > 0) "complexity_curve/$filename" }
     }
     withLabel : Sambamba_0_8_2_Markdup {
-          time = {4.h * task.attempt}
+          time = '4h'
           penv = 'threaded'
           cpus = 6
-          memory = {24.GB * task.attempt}
+          memory = '24G'
           //publishDir.path = "${params.out_dir}/Sambamba/Markdup"
           //publishDir.mode = 'copy'
     }
     withLabel : GATK_4_3_0_0_SplitNCigarReads {
-          time = {8.h * task.attempt}
+          time = '8h'
           penv = 'threaded'
           cpus = 2
-          memory = {16.GB * task.attempt}
+          memory = '16G'
           //publishDir.path = "${params.out_dir}/GATK/bam"
     } 
     withLabel : Salmon_1_9_0_Quant {
-          time = {24.h * task.attempt}
+          time = '24h'
           penv = 'threaded'
           cpus = 2
-          memory = {24.GB * task.attempt}
+          memory = '25G'
           publishDir.path = "${params.out_dir}/Salmon"
           publishDir.mode = 'copy'
     }
     withLabel : Salmon_1_9_0_QuantMerge {
-          time = {4.h * task.attempt}
+          time = '4h'
           penv = 'threaded'
           cpus = 2
-          memory = {5.GB * task.attempt}
+          memory = '5G'
           publishDir.path = "${params.out_dir}/Salmon/merged"
           publishDir.mode = 'copy'
     }
     withLabel : Salmon_1_9_0_Index {
-          time = {24.h * task.attempt}
+          time = '24h'
           penv = 'threaded'
           cpus = 2
-          memory = {24.GB * task.attempt}
+          memory = '25G'
           publishDir.path = "${params.out_dir}/reference_resources/Salmon"
           publishDir.mode = 'copy'
     }
     withLabel: GATK_4_3_0_0_SplitIntervals {
-          memory = {9.GB * task.attempt}
-          time = {1.h * task.attempt}
+          memory = '8G'
+          time = '1h'
      }
     withLabel : GATK_4_3_0_0_BaseRecalibration {
-          memory = {9.GB * task.attempt}
-          time = {12.h * task.attempt}
+          memory = '9G'
+          time = '12h'
     }
     withLabel : GATK_4_3_0_0_GatherBaseRecalibrationTables {
-          memory = {9.GB * task.attempt}
-          time = {2.h * task.attempt}
+          memory = '6G'
+          time = '2h'
     }
     withLabel : GATK_4_3_0_0_BaseRecalibrationTable {
-          memory = {9.GB * task.attempt}
-          time = {2.h * task.attempt}
-    }
-    withLabel : GATK_4_3_0_0_CombineGVCFs {
-      params.combinegvcfs.mem = '16G'
-      memory = params.combinegvcfs.mem
-      time = '4h'
-    }
-    withLabel : GATK_4_3_0_0_GenotypeGVCFs {
-      params.genotypegvcfs.mem = '16G'
-      memory = params.genotypegvcfs.mem
-      time = '4h'
+          memory = '9G'
+          time = '2h'
     }
     withLabel : GATK_4_3_0_0_HaplotypeCaller {
-          memory = {25.GB * task.attempt}
-          time = {12.h * task.attempt}
+          memory = '25G'
+          time = '12h'
     }   
     withLabel : GATK_4_3_0_0_MergeVCFs {
-          memory = {16.GB * task.attempt}
+          memory = '14G'
           time = '4h'
-//          publishDir.path = "${params.out_dir}/GATK/vcf/raw"
-          publishDir.path = "${params.out_dir}/GATK/vcf/"
+          publishDir.path = "${params.out_dir}/GATK/vcf/raw"
           publishDir.mode = 'copy'
     }
     withLabel : GATK_4_3_0_0_VariantFiltration {
-          memory = {10.GB * task.attempt}
-          time = {4.h * task.attempt}
+          memory = '10G'
+          time = '4h'
           publishDir.path = "${params.out_dir}/GATK/vcf/filtered"
           publishDir.mode = 'copy'
     }
     withLabel : Sambamba_0_8_2_Merge {
           cpus = 10
           penv = 'threaded'
-          memory = {5.GB * task.attempt}
-          time = {2.h * task.attempt}
+          memory = '5G'
+          time = '2h'
           //publishDir.path = "${params.out_dir}/GATK/bam"
     }
-    withLabel : Sambamba_0_8_2_MergeBams {
-          params.mergebams.mem = '12G'
-          cpus = 10
-          penv = 'threaded'
-          memory = params.mergebams.mem
-          time = '4h'
-    }
     withLabel : MultiQC_1_14 {
-          memory = {8.GB * task.attempt}
-          time = {1.h * task.attempt}
+          memory = '4G'
+          time = '1h'
           publishDir.path = "${params.out_dir}/report/MultiQC"
           publishDir.mode = 'copy'
     }
    withLabel : rnaseqnfqc_1_0_0 {
-          memory = {8.GB * task.attempt}
-          time = {1.h * task.attempt}
+          memory = '4G'
+          time = '1h'
           publishDir.path = "${params.out_dir}/report/Custom_QC"
           publishDir.mode = 'copy'
     }
     withLabel : biconductor_3_40_0_edger_normalize {
-          memory = {8.GB * task.attempt}
-          time = {1.h * task.attempt}
+          memory = '4G'
+          time = '1h'
           publishDir.path = "${params.out_dir}/featureCounts"
           publishDir.mode = 'copy'
     }
     withLabel : biconductor_1_38_0_deseq2normalize {
-          memory = {8.GB * task.attempt}
-          time = {1.h * task.attempt}
+          memory = '4G'
+          time = '1h'
           publishDir.path = "${params.out_dir}/featureCounts"
           publishDir.mode = 'copy'
        
     }
     withLabel : Subread_2_0_3_FeatureCounts {
-          time = {8.h * task.attempt}
+          time = '8h'
           penv = 'threaded'
           cpus = 10
-          memory = {16.GB * task.attempt}
+          memory = '16G'
           publishDir.path = "${params.out_dir}/featureCounts"
           publishDir.mode = 'copy'
           publishDir.saveAs = {filename -> if (filename.indexOf("_biotype_") > 0) "biotypes/$filename" 
 			       else filename }
+
      }
      withLabel : STAR_2_7_10b_GenomeGenerate {
-          time = {24.h * task.attempt}
+          time = '24h'
           penv = 'threaded'
           cpus = 12
-          memory = {160.GB * task.attempt}
+          memory = '150G'
           publishDir.path = "${params.out_dir}/reference_resources/STAR"
           publishDir.mode = 'copy'
      }
      withLabel : ucsc_377_GenePredToBed {
-          time = {1.h * task.attempt}
+          time = '1h'
           penv = 'threaded'
           cpus = 2
-          memory = {4.GB * task.attempt}
+          memory = '4G'
           publishDir.path = "${params.out_dir}/reference_resources"
           publishDir.mode = 'copy'
      }
      withLabel : ucsc_377_GtfToGenePred {
-          time = {1.h * task.attempt}
+          time = '1h'
           penv = 'threaded'
           cpus = 2
-          memory = {4.GB * task.attempt}
+          memory = '4G'
      }
      withLabel : CreateIntervalList {
-          time = {1.h * task.attempt}
-          memory = {4.GB * task.attempt}
+          time = '1h'
+          memory = '4G'
           publishDir.path = "${params.out_dir}/reference_resources"
           publishDir.mode = 'copy'
      }
      withLabel : FASTQC_0_11_9 {
-          time = {1.h * task.attempt}
-          memory = {4.GB * task.attempt}
+          time = '1h'
+          memory = '2G'
           publishDir.path = "${params.out_dir}/QC/FastQC/raw"
           publishDir.mode = 'copy'
      }
      withLabel : SortMeRNA_4_3_6 {
-          time = {16.h * task.attempt}
+          time = '16h'
           penv = 'threaded'
           cpus = 4
-          memory = {24.GB * task.attempt}
+          memory = '24G'
           publishDir.path = "${params.out_dir}/QC/"
           publishDir.mode = 'copy'
           publishDir.saveAs = {filename ->
@@ -375,10 +339,10 @@ process {
           
      }
      withLabel : TrimGalore_0_6_7 {
-          time = {12.h * task.attempt}
+          time = '14h'
           penv = 'threaded'
           cpus = 2
-          memory = {8.GB * task.attempt}
+          memory = '6G'
           publishDir.path = "${params.out_dir}/QC/TrimGalore"
           publishDir.mode = 'copy'
           publishDir.saveAs = {filename ->
@@ -387,29 +351,17 @@ process {
                          else null }
      }
     withLabel : Pandocker_21_02_MarkdownToPdf  {
-        time = {10.m * task.attempt}
-        memory = {4.GB * task.attempt}
+        time = '10m'
+        memory = '2G'
         publishDir.path = "${params.out_dir}"
         publishDir.mode = 'copy'
         publishDir.overwrite = 'true'
     }
     withLabel : FillMdTemplate_1_0  {
-        time = {10.m * task.attempt}
-        memory = {4.GB * task.attempt}
+        time = '10m'
+        memory = '1G'
         publishDir.path = "${params.out_dir}"
         publishDir.mode = 'copy'
         publishDir.overwrite = 'true'
-    }
-    withLabel : Samtools_1_16_1_SamToCram {
-      params.samtocram.mem = {16.G * task.attempt}
-//      memory = params.samtocram.mem
-      memory = 16G
-      cpus = 2
-      penv = 'threaded'
-//      time = {2.h * task.attempt}
-      time = 2.h
-      params.cram_embedref = false
-      publishDir.path = "${params.out_dir}/CRAMS"
-      publishDir.mode = 'copy'
     }
 }

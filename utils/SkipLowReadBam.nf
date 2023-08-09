@@ -6,17 +6,17 @@ process SkipLowReadBam {
     //shell = ['/bin/bash', '-euo', 'pipefail']
 
     input:
-        tuple(sample_id, rg_id, path(bam_file), path(bai_file))
+        tuple(val(sample_id), val(rg_id), path(bam_file), path(bai_file))
 
     output:
-        tuple(sample_id, rg_id, path(bam_file), path(bai_file), optional:true, emit: bam)
+        tuple(val(sample_id), val(rg_id), path(bam_file), path(bai_file), optional:true, emit: bam)
 
     script:
     """
-        #get nr of reads (up to a maximum of 10)
-        count_value=`samtools view ${bam_file} | head -10 | wc -l`
+        #get nr of reads (up to a maximum of params.minReadcount)
+        count_value=`samtools view ${bam_file} | head -${params.minReadcount} | wc -l`
 
-        if [[ \$count_value -lt 10 ]]; then
+        if [[ \$count_value -lt ${params.minReadcount} ]]; then
             mv ${bam_file} ${bam_file}.skip
             mv ${bai_file} ${bai_file}.skip
         fi

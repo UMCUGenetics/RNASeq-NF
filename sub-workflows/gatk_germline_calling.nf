@@ -2,27 +2,41 @@ if (!params.genome_fasta) {
   exit 1, "GATK requires a genome fasta file. Please provide the correct filepath! (--genome_fasta)"
 } 
 //Import GATK modules
-include HaplotypeCaller from '../NextflowModules/GATK/4.1.3.0/HaplotypeCaller.nf' params ( mem:params.haplotypecaller.mem,
+include { HaplotypeCaller } from params.nextflowmodules_path+'/GATK/4.3.0.0/HaplotypeCaller.nf' params ( mem:params.haplotypecaller.mem,
+                                                                                           compress: params.compress,
                                                                                            genome_fasta:params.genome_fasta,
                                                                                            optional: params.options.GATK4_HaplotypeCaller )
-include VariantFiltration from '../NextflowModules/GATK/4.1.3.0/VariantFiltration.nf' params( mem:params.variantfiltration.mem,
+include { GenotypeGVCFs } from params.nextflowmodules_path+'/GATK/4.3.0.0/GenotypeGVCFs.nf' params(mem: "", 
+                                                                                            genome_fasta: "${params.genome_fasta}", 
+                                                                                            genome_dbsnp: "${params.genome_dbsnp}", 
+//                                                                                            genome_dbsnp: "", 
+                                                                                            compress: "${params.compress}")
+include { CombineGVCFs } from params.nextflowmodules_path+'/GATK/4.3.0.0/CombineGVCFs.nf' params(mem: "", 
+                                                                                            genome_fasta: "${params.genome_fasta}", 
+                                                                                            compress: "${params.compress}")
+include { VariantFiltration } from params.nextflowmodules_path+'/GATK/4.3.0.0/VariantFiltration.nf' params( mem:params.variantfiltration.mem,
                                                                                               genome_fasta:params.genome_fasta,
+                                                                                              gatk_snp_filter: params.gatk_snp_filter, 
+                                                                                              gatk_indel_filter: params.gatk_indel_filter, 
+                                                                                              gatk_rna_filter: params.gatk_rna_filter,
+                                                                                              compress: params.compress,
                                                                                               optional: params.options.GATK4_VariantFiltration )
-include MergeVCFs as MergeVCF from '../NextflowModules/GATK/4.1.3.0/MergeVCFs.nf' params( mem: params.mergevcf.mem )
-include BaseRecalibrationTable from '../NextflowModules/GATK/4.1.3.0/BaseRecalibrationTable.nf' params( mem:params.baserecalibrator.mem,
+include { MergeVCFs as MergeVCF } from params.nextflowmodules_path+'/GATK/4.3.0.0/MergeVCFs.nf' params( mem:params.mergevcf.mem,
+                                                                                                        compress: params.compress)
+include { BaseRecalibrationTable } from params.nextflowmodules_path+'/GATK/4.3.0.0/BaseRecalibrationTable.nf' params( mem:params.baserecalibrator.mem,
                                                                                                         optional:params.options.GATK4_BQRS,
                                                                                                         genome_known_sites:params.genome_known_sites,
                                                                                                         genome_fasta:params.genome_fasta )
-include GatherBaseRecalibrationTables from '../NextflowModules/GATK/4.1.3.0/GatherBaseRecalibrationTables.nf' params( mem:params.gatherbaserecalibrator.mem )
-include BaseRecalibration from '../NextflowModules/GATK/4.1.3.0/BaseRecalibration.nf' params ( mem:params.applybqsr.mem,
+include { GatherBaseRecalibrationTables } from params.nextflowmodules_path+'/GATK/4.3.0.0/GatherBaseRecalibrationTables.nf' params( mem:params.gatherbaserecalibrator.mem )
+include { BaseRecalibration } from params.nextflowmodules_path+'/GATK/4.3.0.0/BaseRecalibration.nf' params ( mem:params.applybqsr.mem,
                                                                                                genome_fasta:params.genome_fasta )
-include Merge from '../NextflowModules/Sambamba/0.7.0/Merge.nf' params( params )
-include SplitIntervals from '../NextflowModules/GATK/4.1.3.0/SplitIntervals.nf' params( optional: params.options.GATK4_SplitIntervals )
-include SplitNCigarReads from '../NextflowModules/GATK/4.1.3.0/SplitNCigarReads.nf' params( genome_fasta:params.genome_fasta)                     
-include CreateIntervalList from '../NextflowModules/Utils/CreateIntervaList.nf' params( params )
+include { MergeBams } from params.nextflowmodules_path+'/Sambamba/0.8.2/MergeBams.nf' params(mem: "${params.mergebams.mem}")
+include { SplitIntervals } from params.nextflowmodules_path+'/GATK/4.3.0.0/SplitIntervals.nf' params( optional: params.options.GATK4_SplitIntervals )
+include { SplitNCigarReads } from params.nextflowmodules_path+'/GATK/4.3.0.0/SplitNCigarReads.nf' params( genome_fasta:params.genome_fasta)                     
+include { CreateIntervalList } from params.nextflowmodules_path+'/Utils/CreateIntervaList.nf' params( params )
 //Sambamba modules
-include Markdup from '../NextflowModules/Sambamba/0.7.0/Markdup.nf' params( mem:params.sambambamarkdup.mem )
-include Flagstat as Flagstat_markdup from '../NextflowModules/Sambamba/0.7.0/Flagstat.nf' params( params )
+include { Markdup } from params.nextflowmodules_path+'/Sambamba/0.8.2/Markdup.nf' params( mem:params.sambambamarkdup.mem )
+include { Flagstat as Flagstat_markdup } from params.nextflowmodules_path+'/Sambamba/0.8.2/Flagstat.nf' params( params )
 
 
 workflow gatk_germline_calling {
@@ -61,7 +75,6 @@ workflow gatk_germline_calling {
         if ( params.runGATK4_BQSR  ) {
             if ( !params.genome_known_sites ) {
                  exit 1, "BQSR requires known variant sites for recalibration (--genome_known_sites). "
-
             }
             BaseRecalibrationTable(final_bam.combine(scatter_intervals))
             GatherBaseRecalibrationTables(BaseRecalibrationTable.out.groupTuple())
@@ -72,30 +85,52 @@ workflow gatk_germline_calling {
                 .combine(scatter_intervals)
             )
             //Merge recalibrated bams
-            Merge(
+              MergeBams(
               BaseRecalibration.out
                 .groupTuple()
                 .map{ [it[0],it[2],it[3]] }
             )
             //Set final bam file to recalibrated bam
-            final_bam = Merge.out
+            final_bam = MergeBams.out
         }
         //      
         HaplotypeCaller(final_bam.combine( scatter_intervals) )
-        //Merge scattered vcf chunks/sample
-        MergeVCF(
-          HaplotypeCaller.out.groupTuple(by:[0]).map{
-            sample_id, intervals, gvcfs, idxs, interval_files ->
-            [sample_id, gvcfs, idxs]
-          }
-        )
+
+        //Legacy mode generates a single VCF per sample
+        if( params.legacyMode ){
+            //Merge scattered vcf chunks/sample
+            MergeVCF(
+              HaplotypeCaller.out.groupTuple(by:[0]).map{
+                sample_id, intervals, vcfs, idxs, interval_files ->
+                [sample_id, vcfs, idxs] }
+            )
+        } else {
+            //By default now one VCF is generated for the run
+            gvcf_per_interval = HaplotypeCaller.out
+                .groupTuple(by:[1])
+                .map{ sample_ids, interval, gvcfs, idxs, interval_files ->
+                      [run_id, interval, gvcfs, idxs, interval_files[0]]
+                }
+        
+            //Combine GVCFs per interval (all samples per interval)
+            CombineGVCFs( gvcf_per_interval )
+            GenotypeGVCFs(CombineGVCFs.out)
+
+            //merge raw/unfiltered vcfs
+            MergeVCF(
+                GenotypeGVCFs.out.groupTuple().map{ 
+                    run_id, interval, gvcfs, idxs, intervalfile ->
+                    [run_id, gvcfs, idxs ] }
+            )
+        }
+
         //Filter raw vcf files/sample
         VariantFiltration( MergeVCF.out.map{
           sample_id, vcfs, idxs -> [sample_id, run_id, "RNA", vcfs, idxs] }
-        )
+    )
       
     emit:
-      bam_recal = Merge.out
+      bam_recal = MergeBams.out
       bam_markdup = Markdup.out
       markdup_flagstat = Flagstat_markdup.out
       bam_ncigar =  SplitNCigarReads.out	

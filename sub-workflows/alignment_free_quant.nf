@@ -1,11 +1,11 @@
-include Quant from '../NextflowModules/Salmon/1.2.1/Quant.nf' params( single_end: params.single_end,
+include { Quant } from params.nextflowmodules_path+'/Salmon/1.9.0/Quant.nf' params( single_end: params.single_end,
                                                                       stranded: params.stranded,
                                                                       unstranded: params.unstranded,
                                                                       revstranded: params.revstranded,
                                                                       saveUnaligned: params.saveUnaligned,
 								      optional: params.options.Salmon_quant )
-include QuantMerge from '../NextflowModules/Salmon/1.2.1/QuantMerge.nf' params( optional: params.options.Salmon_quantmerge  )
-include Index as SalmonIndex from '../NextflowModules/Salmon/1.2.1/Index.nf' params( gencode: params.gencode,
+include { QuantMerge } from params.nextflowmodules_path+'/Salmon/1.9.0/QuantMerge.nf' params( optional: params.options.Salmon_quantmerge  )
+include { Index as SalmonIndex } from params.nextflowmodules_path+'/Salmon/1.9.0/Index.nf' params( gencode: params.gencode,
                                                                                     optional: params.options.Salmon_index )
 
 workflow alignment_free_quant {
